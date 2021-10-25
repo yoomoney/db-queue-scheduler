@@ -1,8 +1,9 @@
 package ru.yoomoney.tech.dbqueue.scheduler.internal;
 
+import ru.yoomoney.tech.dbqueue.config.QueueService;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.queue.ScheduledTaskQueue;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.queue.ScheduledTaskQueueFactory;
-import ru.yoomoney.tech.dbqueue.scheduler.internal.queue.ScheduledTaskQueueRegistry;
+import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskIdentity;
 
 import javax.annotation.Nonnull;
 import java.util.Map;
@@ -11,20 +12,20 @@ import java.util.concurrent.ConcurrentHashMap;
 import static java.util.Objects.requireNonNull;
 
 /**
- * Registry of scheduled tasks - internal abstraction that hides the details of initializing and schedules periodic tasks.
+ * Manager of scheduled tasks - internal abstraction that hides the details of initializing and schedules periodic tasks.
  *
  * @author Petr Zinin pgzinin@yoomoney.ru
  * @since 22.10.2021
  */
-public class ScheduledTaskRegistry {
+public class ScheduledTaskManager {
+    private final QueueService queueService;
     private final ScheduledTaskQueueFactory scheduledTaskQueueFactory;
-    private final ScheduledTaskQueueRegistry scheduledTaskQueueRegistry;
-    private final Map<String, ScheduledTaskDefinition> registry = new ConcurrentHashMap<>();
+    private final Map<ScheduledTaskIdentity, ScheduledTaskDefinition> registry = new ConcurrentHashMap<>();
 
-    public ScheduledTaskRegistry(@Nonnull ScheduledTaskQueueFactory scheduledTaskQueueFactory,
-                                 @Nonnull ScheduledTaskQueueRegistry scheduledTaskQueueRegistry) {
+    ScheduledTaskManager(@Nonnull QueueService queueService,
+                         @Nonnull ScheduledTaskQueueFactory scheduledTaskQueueFactory) {
+        this.queueService = requireNonNull(queueService, "queueService");
         this.scheduledTaskQueueFactory = requireNonNull(scheduledTaskQueueFactory, "scheduledTaskQueueFactory");
-        this.scheduledTaskQueueRegistry = requireNonNull(scheduledTaskQueueRegistry, "scheduledTaskQueueRegistry");
     }
 
     /**
@@ -35,14 +36,14 @@ public class ScheduledTaskRegistry {
     public void register(@Nonnull ScheduledTaskDefinition scheduledTaskDefinition) {
         requireNonNull(scheduledTaskDefinition, "scheduledTaskDefinition");
 
-        if (registry.putIfAbsent(scheduledTaskDefinition.getName(), scheduledTaskDefinition) == null) {
-            throw new RuntimeException(String.format("scheduled task already registered: name=%s",
-                    scheduledTaskDefinition.getName()));
+        if (registry.putIfAbsent(scheduledTaskDefinition.getIdentity(), scheduledTaskDefinition) == null) {
+            throw new RuntimeException(String.format("scheduled task already registered: identity=%s",
+                    scheduledTaskDefinition.getIdentity()));
         }
 
         ScheduledTaskQueue scheduledTaskQueue = scheduledTaskQueueFactory.createScheduledTasksQueue(scheduledTaskDefinition);
         scheduledTaskQueue.trySchedule(scheduledTaskDefinition);
 
-        scheduledTaskQueueRegistry.register(scheduledTaskQueue);
+        queueService.registerQueue(scheduledTaskQueue.getQueueConsumer());
     }
 }

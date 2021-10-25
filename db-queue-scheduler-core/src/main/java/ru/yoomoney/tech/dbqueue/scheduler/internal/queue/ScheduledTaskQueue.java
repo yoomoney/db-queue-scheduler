@@ -68,7 +68,7 @@ public class ScheduledTaskQueue {
      * @return queue's consumer
      */
     @Nonnull
-    QueueConsumer<?> getQueueConsumer() {
+    public QueueConsumer<?> getQueueConsumer() {
         return queueConsumer;
     }
 }

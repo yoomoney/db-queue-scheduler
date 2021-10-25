@@ -12,18 +12,12 @@ import static java.util.Objects.requireNonNull;
  */
 public class ScheduledTaskSettings {
     /**
-     * Task name
-     */
-    @Nonnull
-    private final String name;
-    /**
      * Scheduled settings
      */
     @Nonnull
     private final ScheduleSettings scheduleSettings;
 
-    private ScheduledTaskSettings(@Nonnull String name, @Nonnull ScheduleSettings scheduleSettings) {
-        this.name = requireNonNull(name, "name");
+    private ScheduledTaskSettings(@Nonnull ScheduleSettings scheduleSettings) {
         this.scheduleSettings = requireNonNull(scheduleSettings, "scheduleSettings");
     }
 
@@ -36,11 +30,6 @@ public class ScheduledTaskSettings {
     }
 
     @Nonnull
-    public String getName() {
-        return name;
-    }
-
-    @Nonnull
     public ScheduleSettings getScheduleSettings() {
         return scheduleSettings;
     }
@@ -48,8 +37,7 @@ public class ScheduledTaskSettings {
     @Override
     public String toString() {
         return "ScheduledTaskSettings{" +
-                "name='" + name + '\'' +
-                ", scheduleSettings=" + scheduleSettings +
+                "scheduleSettings=" + scheduleSettings +
                 '}';
     }
 
@@ -57,15 +45,9 @@ public class ScheduledTaskSettings {
      * Builder for {@link ScheduledTaskSettings}
      */
     public static final class Builder {
-        private String name;
         private ScheduleSettings scheduleSettings;
 
         private Builder() {
-        }
-
-        public Builder withName(@Nonnull String name) {
-            this.name = name;
-            return this;
         }
 
         public Builder withScheduleSettings(@Nonnull ScheduleSettings scheduleSettings) {
@@ -78,7 +60,7 @@ public class ScheduledTaskSettings {
          */
         @Nonnull
         public ScheduledTaskSettings build() {
-            return new ScheduledTaskSettings(name, scheduleSettings);
+            return new ScheduledTaskSettings(scheduleSettings);
         }
     }
 }

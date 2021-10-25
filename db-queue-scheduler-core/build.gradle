@@ -1,0 +1,5 @@
+buildscript {
+    apply from: "$rootProject.projectDir/project.gradle", to: buildscript
+}
+
+apply from: 'dependencies.gradle'

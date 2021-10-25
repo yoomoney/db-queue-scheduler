@@ -2,23 +2,24 @@ package ru.yoomoney.tech.dbqueue.scheduler.internal;
 
 import ru.yoomoney.tech.dbqueue.scheduler.internal.schedule.NextExecutionTimeProvider;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTask;
+import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskIdentity;
 
 import javax.annotation.Nonnull;
 
 import static java.util.Objects.requireNonNull;
 
 /**
- * Definition of a scheduled task - contains meta information, eg: name, schedule, etc
+ * Definition of a scheduled task - contains meta information, eg: identity, schedule, etc
  *
  * @author Petr Zinin pgzinin@yoomoney.ru
  * @since 19.10.2021
  */
 public class ScheduledTaskDefinition {
     /**
-     * Unique task name
+     * Unique identity of a scheduled task
      */
     @Nonnull
-    private final String name;
+    private final ScheduledTaskIdentity identity;
 
     /**
      * Next execution time provider
@@ -32,10 +33,10 @@ public class ScheduledTaskDefinition {
     @Nonnull
     private final ScheduledTask scheduledTask;
 
-    private ScheduledTaskDefinition(@Nonnull String name,
+    private ScheduledTaskDefinition(@Nonnull ScheduledTaskIdentity identity,
                                     @Nonnull NextExecutionTimeProvider nextExecutionTimeProvider,
                                     @Nonnull ScheduledTask scheduledTask) {
-        this.name = requireNonNull(name, "name");
+        this.identity = requireNonNull(identity, "identity");
         this.nextExecutionTimeProvider = requireNonNull(nextExecutionTimeProvider, "nextExecutionTimeProvider");
         this.scheduledTask = requireNonNull(scheduledTask, "scheduledTask");
     }
@@ -49,8 +50,8 @@ public class ScheduledTaskDefinition {
     }
 
     @Nonnull
-    public String getName() {
-        return name;
+    public ScheduledTaskIdentity getIdentity() {
+        return identity;
     }
 
     @Nonnull
@@ -66,7 +67,7 @@ public class ScheduledTaskDefinition {
     @Override
     public String toString() {
         return "ScheduledTaskDefinition{" +
-                "name='" + name + '\'' +
+                "identity=" + identity +
                 ", nextExecutionTimeProvider=" + nextExecutionTimeProvider +
                 ", scheduledTask=" + scheduledTask +
                 '}';
@@ -76,15 +77,15 @@ public class ScheduledTaskDefinition {
      * Builder for {@link ScheduledTaskDefinition}
      */
     public static final class Builder {
-        private String name;
+        private ScheduledTaskIdentity identity;
         private NextExecutionTimeProvider nextExecutionTimeProvider;
         private ScheduledTask scheduledTask;
 
         private Builder() {
         }
 
-        public Builder withName(@Nonnull String name) {
-            this.name = name;
+        public Builder withScheduledTaskIdentity(@Nonnull ScheduledTaskIdentity identity) {
+            this.identity = identity;
             return this;
         }
 
@@ -103,7 +104,7 @@ public class ScheduledTaskDefinition {
          */
         @Nonnull
         public ScheduledTaskDefinition build() {
-            return new ScheduledTaskDefinition(name, nextExecutionTimeProvider, scheduledTask);
+            return new ScheduledTaskDefinition(identity, nextExecutionTimeProvider, scheduledTask);
         }
     }
 }

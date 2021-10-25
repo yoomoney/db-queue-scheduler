@@ -43,7 +43,7 @@ class ScheduledTaskQueueConsumer implements QueueConsumer<String> {
     @Nonnull
     @Override
     public TaskExecutionResult execute(@Nonnull Task<String> task) {
-        log.debug("execute(): scheduledTaskName={}, task={}", scheduledTaskDefinition.getName(), task);
+        log.debug("execute(): scheduledTaskIdentity={}, task={}", scheduledTaskDefinition.getIdentity(), task);
 
         ScheduledTaskExecutionContext context = new ScheduledTaskExecutionContext();
         ScheduledTaskExecutionResult executionResult = executeTask(context);

@@ -57,7 +57,7 @@ public class ScheduledTaskQueueFactory {
     private QueueConfig createQueueConfig(ScheduledTaskDefinition scheduledTaskDefinition) {
         return new QueueConfig(
                 QueueLocation.builder()
-                        .withQueueId(new QueueId(scheduledTaskDefinition.getName()))
+                        .withQueueId(new QueueId(scheduledTaskDefinition.getIdentity().getTaskName()))
                         .withTableName(queueTableName)
                         .build(),
                 queueSettings
