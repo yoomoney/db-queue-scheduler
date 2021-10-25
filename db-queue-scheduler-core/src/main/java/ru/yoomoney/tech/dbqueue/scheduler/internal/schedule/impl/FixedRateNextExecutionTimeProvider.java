@@ -1,9 +1,10 @@
 package ru.yoomoney.tech.dbqueue.scheduler.internal.schedule.impl;
 
-import ru.yoomoney.tech.dbqueue.scheduler.internal.schedule.ScheduledTaskExecutionContext;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.schedule.NextExecutionTimeProvider;
+import ru.yoomoney.tech.dbqueue.scheduler.internal.schedule.ScheduledTaskExecutionContext;
 
 import javax.annotation.Nonnull;
+import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 
@@ -18,14 +19,20 @@ import static java.util.Objects.requireNonNull;
  */
 public class FixedRateNextExecutionTimeProvider implements NextExecutionTimeProvider {
     private final Duration fixedRate;
+    private final Clock clock;
 
     public FixedRateNextExecutionTimeProvider(@Nonnull Duration fixedRate) {
+        this(fixedRate, Clock.systemDefaultZone());
+    }
+
+    public FixedRateNextExecutionTimeProvider(@Nonnull Duration fixedRate, @Nonnull Clock clock) {
         this.fixedRate = requireNonNull(fixedRate, "fixedRate");
+        this.clock = requireNonNull(clock, "clock");
     }
 
     @Override
     public Instant getNextExecutionTime(@Nonnull ScheduledTaskExecutionContext executionContext) {
         requireNonNull(executionContext, "executionContext");
-        return executionContext.getLastExecutionFinishTime().orElseGet(Instant::now).plus(fixedRate);
+        return executionContext.getLastExecutionStartTime().orElseGet(clock::instant).plus(fixedRate);
     }
 }

@@ -14,6 +14,7 @@ import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskExecutionResult;
 import ru.yoomoney.tech.dbqueue.settings.QueueConfig;
 
 import javax.annotation.Nonnull;
+import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 
@@ -33,11 +34,19 @@ class ScheduledTaskQueueConsumer implements QueueConsumer<String> {
 
     private final QueueConfig queueConfig;
     private final ScheduledTaskDefinition scheduledTaskDefinition;
+    private final Clock clock;
 
     ScheduledTaskQueueConsumer(@Nonnull QueueConfig queueConfig,
                                @Nonnull ScheduledTaskDefinition scheduledTaskDefinition) {
+        this(queueConfig, scheduledTaskDefinition, Clock.systemDefaultZone());
+    }
+
+    ScheduledTaskQueueConsumer(@Nonnull QueueConfig queueConfig,
+                               @Nonnull ScheduledTaskDefinition scheduledTaskDefinition,
+                               @Nonnull Clock clock) {
         this.queueConfig = requireNonNull(queueConfig, "queueConfig");
         this.scheduledTaskDefinition = requireNonNull(scheduledTaskDefinition, "scheduledTaskDefinition");
+        this.clock = requireNonNull(clock, "clock");
     }
 
     @Nonnull
@@ -52,18 +61,18 @@ class ScheduledTaskQueueConsumer implements QueueConsumer<String> {
                         scheduledTaskDefinition.getNextExecutionTimeProvider().getNextExecutionTime(context));
 
         log.debug("task executed: executionResult={}, nextExecutionTime={}", executionResult, nextExecutionTime);
-        return TaskExecutionResult.reenqueue(Duration.between(Instant.now(), nextExecutionTime));
+        return TaskExecutionResult.reenqueue(Duration.between(clock.instant(), nextExecutionTime));
     }
 
     private ScheduledTaskExecutionResult executeTask(ScheduledTaskExecutionContext context) {
-        context.setLastExecutionStartTime(Instant.now());
+        context.setLastExecutionStartTime(clock.instant());
         try {
             return scheduledTaskDefinition.getScheduledTask().execute();
         } catch (RuntimeException ex) {
             log.warn("failed to execute scheduled task: scheduledTask={}", scheduledTaskDefinition, ex);
             return ScheduledTaskExecutionResult.error();
         } finally {
-            context.setLastExecutionFinishTime(Instant.now());
+            context.setLastExecutionFinishTime(clock.instant());
         }
     }
 

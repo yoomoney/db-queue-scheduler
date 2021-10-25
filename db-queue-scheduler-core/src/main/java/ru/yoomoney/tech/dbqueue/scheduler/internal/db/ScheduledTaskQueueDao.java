@@ -18,11 +18,4 @@ public interface ScheduledTaskQueueDao {
      * @return true if the queue is empty otherwise false
      */
     boolean isQueueEmpty(@Nonnull QueueLocation queueLocation);
-
-    /**
-     * Deletes all tasks from a queue
-     *
-     * @param queueLocation location of the queue which should be cleaned
-     */
-    void clean(@Nonnull QueueLocation queueLocation);
 }

@@ -26,7 +26,7 @@ public class ScheduledTaskIdentity {
      * Builds scheduled task identity by taskName
      */
     @Nonnull
-    public static ScheduledTaskIdentity ofTaskName(@Nonnull String taskName) {
+    public static ScheduledTaskIdentity of(@Nonnull String taskName) {
         requireNonNull(taskName, "taskName");
         return new ScheduledTaskIdentity(taskName);
     }

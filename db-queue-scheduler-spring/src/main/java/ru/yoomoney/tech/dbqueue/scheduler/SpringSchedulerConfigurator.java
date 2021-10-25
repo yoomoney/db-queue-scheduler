@@ -72,7 +72,7 @@ public class SpringSchedulerConfigurator implements SchedulerConfigurator {
         requireNonNull(jdbcOperations, "jdbcOperations");
         requireNonNull(transactionOperations, "transactionOperations");
 
-        return new Scheduler(
+        return new ClassicScheduler(
                 new ScheduledTaskManagerBuilder(tableName, databaseDialect)
                         .withSpringConfiguration(jdbcOperations, transactionOperations)
                         .build(),

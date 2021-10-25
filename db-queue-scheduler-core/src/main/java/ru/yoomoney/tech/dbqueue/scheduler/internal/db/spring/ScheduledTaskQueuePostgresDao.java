@@ -24,7 +24,6 @@ public class ScheduledTaskQueuePostgresDao implements ScheduledTaskQueueDao {
 
     private final QueueTableSchema queueTableSchema;
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
-    private final TransactionOperations transactionOperations;
 
     public ScheduledTaskQueuePostgresDao(@Nonnull JdbcOperations jdbcOperations,
                                          @Nonnull TransactionOperations transactionOperations,
@@ -35,7 +34,6 @@ public class ScheduledTaskQueuePostgresDao implements ScheduledTaskQueueDao {
 
         this.queueTableSchema = queueTableSchema;
         this.namedParameterJdbcTemplate = new NamedParameterJdbcTemplate(jdbcOperations);
-        this.transactionOperations = transactionOperations;
     }
 
     @Override
@@ -44,29 +42,15 @@ public class ScheduledTaskQueuePostgresDao implements ScheduledTaskQueueDao {
 
         String isQueueEmptyQuery = String.format(
                 "select count(1) from %s where %s = :queueName",
-                queueTableSchema.getQueueNameField(),
-                queueLocation.getQueueId()
+                queueLocation.getTableName(),
+                queueTableSchema.getQueueNameField()
+
         );
-        return namedParameterJdbcTemplate.queryForObject(
+        Long taskCount = namedParameterJdbcTemplate.queryForObject(
                 isQueueEmptyQuery,
                 Map.of("queueName", queueLocation.getQueueId().asString()),
-                Boolean.class
-        ) == null;
-    }
-
-    @Override
-    public void clean(@Nonnull QueueLocation queueLocation) {
-        requireNonNull(queueLocation, "queueLocation");
-
-        String cleanQueueQuery = String.format(
-                "delete from %s where %s = :queueName",
-                queueTableSchema.getQueueNameField(),
-                queueLocation.getQueueId()
+                Long.class
         );
-
-        transactionOperations.executeWithoutResult(status -> namedParameterJdbcTemplate.update(
-                cleanQueueQuery,
-                Map.of("queueName", queueLocation.getQueueId().asString()))
-        );
+        return taskCount == null || taskCount.equals(0L);
     }
 }

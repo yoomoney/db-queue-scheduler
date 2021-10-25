@@ -36,7 +36,7 @@ public class ScheduledTaskManager {
     public void register(@Nonnull ScheduledTaskDefinition scheduledTaskDefinition) {
         requireNonNull(scheduledTaskDefinition, "scheduledTaskDefinition");
 
-        if (registry.putIfAbsent(scheduledTaskDefinition.getIdentity(), scheduledTaskDefinition) == null) {
+        if (registry.putIfAbsent(scheduledTaskDefinition.getIdentity(), scheduledTaskDefinition) != null) {
             throw new RuntimeException(String.format("scheduled task already registered: identity=%s",
                     scheduledTaskDefinition.getIdentity()));
         }
@@ -45,5 +45,20 @@ public class ScheduledTaskManager {
         scheduledTaskQueue.trySchedule(scheduledTaskDefinition);
 
         queueService.registerQueue(scheduledTaskQueue.getQueueConsumer());
+        queueService.start(scheduledTaskQueue.getQueueConsumer().getQueueConfig().getLocation().getQueueId());
+    }
+
+    /**
+     * Unpauses executing scheduled tasks
+     */
+    public void unpause() {
+        queueService.unpause();
+    }
+
+    /**
+     * Pauses executing scheduled tasks
+     */
+    public void pause() {
+        queueService.pause();
     }
 }
