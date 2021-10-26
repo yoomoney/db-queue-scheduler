@@ -4,10 +4,14 @@ import ru.yoomoney.tech.dbqueue.config.QueueService;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.queue.ScheduledTaskQueue;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.queue.ScheduledTaskQueueFactory;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskIdentity;
+import ru.yoomoney.tech.dbqueue.settings.QueueId;
 
 import javax.annotation.Nonnull;
+import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
 
@@ -21,8 +25,9 @@ public class ScheduledTaskManager {
     private final QueueService queueService;
     private final ScheduledTaskQueueFactory scheduledTaskQueueFactory;
     private final Map<ScheduledTaskIdentity, ScheduledTaskDefinition> registry = new ConcurrentHashMap<>();
-    private volatile boolean started = false;
+    private final Map<QueueId, ScheduledTaskIdentity> queueToScheduledTaskMap = new ConcurrentHashMap<>();
     private final Object mutex = new Object();
+    private volatile boolean started = false;
 
     ScheduledTaskManager(@Nonnull QueueService queueService,
                          @Nonnull ScheduledTaskQueueFactory scheduledTaskQueueFactory) {
@@ -31,11 +36,12 @@ public class ScheduledTaskManager {
     }
 
     /**
-     * Registers a task for periodic execution
+     * Schedules a task for periodic execution
      *
      * @param scheduledTaskDefinition definition of a scheduled task
+     * @throws RuntimeException if any scheduled task with the same identity already registered
      */
-    public void register(@Nonnull ScheduledTaskDefinition scheduledTaskDefinition) {
+    public void schedule(@Nonnull ScheduledTaskDefinition scheduledTaskDefinition) {
         requireNonNull(scheduledTaskDefinition, "scheduledTaskDefinition");
 
         if (registry.putIfAbsent(scheduledTaskDefinition.getIdentity(), scheduledTaskDefinition) != null) {
@@ -48,6 +54,11 @@ public class ScheduledTaskManager {
 
         queueService.registerQueue(scheduledTaskQueue.getQueueConsumer());
 
+        queueToScheduledTaskMap.put(
+                scheduledTaskQueue.getQueueConsumer().getQueueConfig().getLocation().getQueueId(),
+                scheduledTaskDefinition.getIdentity()
+        );
+
         synchronized (mutex) {
             if (started) {
                 queueService.start(scheduledTaskQueue.getQueueConsumer().getQueueConfig().getLocation().getQueueId());
@@ -59,9 +70,6 @@ public class ScheduledTaskManager {
      * Starts executing scheduled tasks
      */
     public void start() {
-        if (started) {
-            return;
-        }
         synchronized (mutex) {
             if (started) {
                 return;
@@ -83,5 +91,25 @@ public class ScheduledTaskManager {
      */
     public void pause() {
         queueService.pause();
+    }
+
+    /**
+     * Shutdowns the executor
+     */
+    public void shutdown() {
+        queueService.shutdown();
+    }
+
+    /**
+     * Waits for tasks (and threads) termination within given timeout.
+     *
+     * @param timeout wait timeout.
+     * @return list of scheduled task identities, which didn't stop their work (didn't terminate).
+     */
+    public List<ScheduledTaskIdentity> awaitTermination(@Nonnull Duration timeout) {
+        requireNonNull(timeout, "timeout");
+        return queueService.awaitTermination(timeout).stream()
+                .map(queueToScheduledTaskMap::get)
+                .collect(Collectors.toList());
     }
 }

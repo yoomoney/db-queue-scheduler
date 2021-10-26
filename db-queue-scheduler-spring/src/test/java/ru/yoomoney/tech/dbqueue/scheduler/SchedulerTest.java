@@ -35,8 +35,8 @@ public class SchedulerTest extends BaseTest {
         // when
         scheduler.start();
         scheduler.schedule(
-                ScheduledTaskIdentity.of("scheduled-task" + uniqueCounter.incrementAndGet()),
                 ScheduledTaskSettings.builder()
+                        .withIdentity(ScheduledTaskIdentity.of("scheduled-task" + uniqueCounter.incrementAndGet()))
                         .withMaxExecutionLockInterval(Duration.ofHours(1L))
                         .withScheduleSettings(ScheduleSettings.fixedDelay(Duration.ofSeconds(0L)))
                         .build(),
@@ -69,16 +69,16 @@ public class SchedulerTest extends BaseTest {
 
         // when
         scheduler1.schedule(
-                ScheduledTaskIdentity.of(taskName),
                 ScheduledTaskSettings.builder()
+                        .withIdentity(ScheduledTaskIdentity.of(taskName))
                         .withMaxExecutionLockInterval(Duration.ofHours(1L))
                         .withScheduleSettings(ScheduleSettings.fixedDelay(Duration.ofSeconds(1L)))
                         .build(),
                 ScheduledTaskExecutionResult::success
         );
         scheduler2.schedule(
-                ScheduledTaskIdentity.of(taskName),
                 ScheduledTaskSettings.builder()
+                        .withIdentity(ScheduledTaskIdentity.of(taskName))
                         .withMaxExecutionLockInterval(Duration.ofHours(1L))
                         .withScheduleSettings(ScheduleSettings.fixedDelay(Duration.ofSeconds(1L)))
                         .build(),
@@ -105,8 +105,8 @@ public class SchedulerTest extends BaseTest {
 
         // when
         scheduler.schedule(
-                ScheduledTaskIdentity.of(taskName),
                 ScheduledTaskSettings.builder()
+                        .withIdentity(ScheduledTaskIdentity.of(taskName))
                         .withMaxExecutionLockInterval(Duration.ofHours(1L))
                         .withScheduleSettings(ScheduleSettings.fixedDelay(Duration.ofSeconds(1L)))
                         .build(),
@@ -115,8 +115,8 @@ public class SchedulerTest extends BaseTest {
 
         // then
         assertThrows(RuntimeException.class, () -> scheduler.schedule(
-                ScheduledTaskIdentity.of(taskName),
                 ScheduledTaskSettings.builder()
+                        .withIdentity(ScheduledTaskIdentity.of(taskName))
                         .withMaxExecutionLockInterval(Duration.ofHours(1L))
                         .withScheduleSettings(ScheduleSettings.fixedDelay(Duration.ofSeconds(1L)))
                         .build(),

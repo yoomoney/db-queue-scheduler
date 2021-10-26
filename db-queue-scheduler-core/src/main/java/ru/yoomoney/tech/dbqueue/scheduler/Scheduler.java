@@ -5,6 +5,8 @@ import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskIdentity;
 import ru.yoomoney.tech.dbqueue.scheduler.settings.ScheduledTaskSettings;
 
 import javax.annotation.Nonnull;
+import java.time.Duration;
+import java.util.List;
 
 /**
  * Scheduler manages {@link ScheduledTask}s for periodic execution - configures, registers, starts and pauses.
@@ -19,19 +21,17 @@ import javax.annotation.Nonnull;
  */
 public interface Scheduler {
     /**
-     * Register a task for periodic executions
+     * Registers a task for periodic executions
      *
-     * @param scheduledTaskIdentity unique identity of a scheduled task
      * @param scheduledTaskSettings settings of the scheduled task
      * @param scheduledTask task for periodic executions
      * @throws RuntimeException if any scheduled task with the same identity already registered
      */
-    void schedule(@Nonnull ScheduledTaskIdentity scheduledTaskIdentity,
-                  @Nonnull ScheduledTaskSettings scheduledTaskSettings,
+    void schedule(@Nonnull ScheduledTaskSettings scheduledTaskSettings,
                   @Nonnull ScheduledTask scheduledTask);
 
     /**
-     * Starts executing scheduled tasks
+     * Starts scheduler - makes scheduler available for executing scheduled tasks
      */
     void start();
 
@@ -46,4 +46,17 @@ public interface Scheduler {
      * <p>Method does not interrupt currently processing tasks but prevents starting the new ones.
      */
     void pause();
+
+    /**
+     * Shutdowns the executor
+     */
+    void shutdown();
+
+    /**
+     * Waits for tasks (and threads) termination within given timeout.
+     *
+     * @param timeout wait timeout.
+     * @return list of scheduled task identities, which didn't stop their work (didn't terminate).
+     */
+    List<ScheduledTaskIdentity> awaitTermination(@Nonnull Duration timeout);
 }

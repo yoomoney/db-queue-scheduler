@@ -18,6 +18,9 @@ import static java.util.Objects.requireNonNull;
 /**
  * Entry point for the library configuration via {@code spring framework}
  *
+ * <p>Database configuration is required as scheduler uses it for storing scheduled tasks and guaranteeing
+ * exactly-once task execution.
+ *
  * <p>Example:
  *
  * <pre> {@code
@@ -58,14 +61,17 @@ public class SpringSchedulerConfigurator implements SchedulerConfigurator {
      *  ON scheduled_tasks USING btree (queue_name, next_process_at, id DESC);
      *  }</pre>
      */
-    @Override
     public SpringSchedulerConfigurator withTableName(@Nonnull String tableName) {
         requireNonNull(tableName, "tableName");
         this.tableName = tableName;
         return this;
     }
 
-    @Override
+    /**
+     * Sets database dialect.
+     *
+     * <p>The dialect is required for querying the database properly.
+     */
     public SpringSchedulerConfigurator withDatabaseDialect(@Nonnull DatabaseDialect databaseDialect) {
         requireNonNull(databaseDialect, "databaseDialect");
         this.databaseDialect = databaseDialect;
@@ -112,7 +118,7 @@ public class SpringSchedulerConfigurator implements SchedulerConfigurator {
                 transactionOperations,
                 QueueTableSchema.builder().build()
         );
-        return new ClassicScheduler(
+        return new DefaultScheduler(
                 new ScheduledTaskManagerBuilder()
                         .withTableName(tableName)
                         .withScheduledTaskQueueDao(scheduledTaskQueueDao)
