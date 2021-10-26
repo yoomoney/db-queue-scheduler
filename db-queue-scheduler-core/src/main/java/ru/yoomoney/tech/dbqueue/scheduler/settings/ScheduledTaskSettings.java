@@ -55,7 +55,7 @@ public class ScheduledTaskSettings {
     @Override
     public String toString() {
         return "ScheduledTaskSettings{" +
-                "executionLock=" + maxExecutionLockInterval +
+                "maxExecutionLockInterval=" + maxExecutionLockInterval +
                 ", scheduleSettings=" + scheduleSettings +
                 '}';
     }
@@ -64,14 +64,14 @@ public class ScheduledTaskSettings {
      * Builder for {@link ScheduledTaskSettings}
      */
     public static final class Builder {
-        private Duration executionLock;
+        private Duration maxExecutionLockInterval;
         private ScheduleSettings scheduleSettings;
 
         private Builder() {
         }
 
-        public Builder withExecutionLock(@Nonnull Duration executionLock) {
-            this.executionLock = executionLock;
+        public Builder withMaxExecutionLockInterval(@Nonnull Duration maxExecutionLockInterval) {
+            this.maxExecutionLockInterval = maxExecutionLockInterval;
             return this;
         }
 
@@ -85,7 +85,7 @@ public class ScheduledTaskSettings {
          */
         @Nonnull
         public ScheduledTaskSettings build() {
-            return new ScheduledTaskSettings(executionLock, scheduleSettings);
+            return new ScheduledTaskSettings(maxExecutionLockInterval, scheduleSettings);
         }
     }
 }
