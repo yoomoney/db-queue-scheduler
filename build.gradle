@@ -1,0 +1,9 @@
+buildscript {
+    apply from: 'project.gradle', to: buildscript
+}
+
+apply plugin: "ru.yoomoney.gradle.plugins.library-project-plugin"
+
+apply from: 'dependencies.gradle'
+
+artifactId = 'db-queue-scheduler'
