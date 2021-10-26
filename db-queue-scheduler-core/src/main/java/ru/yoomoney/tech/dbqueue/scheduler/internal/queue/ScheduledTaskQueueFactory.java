@@ -8,6 +8,8 @@ import ru.yoomoney.tech.dbqueue.api.impl.ShardingQueueProducer;
 import ru.yoomoney.tech.dbqueue.config.DatabaseAccessLayer;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.ScheduledTaskDefinition;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.db.ScheduledTaskQueueDao;
+import ru.yoomoney.tech.dbqueue.settings.FailRetryType;
+import ru.yoomoney.tech.dbqueue.settings.FailureSettings;
 import ru.yoomoney.tech.dbqueue.settings.QueueConfig;
 import ru.yoomoney.tech.dbqueue.settings.QueueId;
 import ru.yoomoney.tech.dbqueue.settings.QueueLocation;
@@ -25,16 +27,16 @@ import static java.util.Objects.requireNonNull;
  */
 public class ScheduledTaskQueueFactory {
     private final String queueTableName;
-    private final QueueSettings queueSettings;
+    private final QueueSettings defaultQueueSettings;
     private final ScheduledTaskQueueDao scheduledTaskQueueDao;
     private final QueueShardRouter<String, ? extends DatabaseAccessLayer> queueShardRouter;
 
     public ScheduledTaskQueueFactory(@Nonnull String queueTableName,
-                                     @Nonnull QueueSettings queueSettings,
+                                     @Nonnull QueueSettings defaultQueueSettings,
                                      @Nonnull ScheduledTaskQueueDao scheduledTaskQueueDao,
                                      @Nonnull QueueShardRouter<String, ? extends DatabaseAccessLayer> queueShardRouter) {
         this.queueTableName = requireNonNull(queueTableName, "queueTableName");
-        this.queueSettings = requireNonNull(queueSettings, "queueSettings");
+        this.defaultQueueSettings = requireNonNull(defaultQueueSettings, "defaultQueueSettings");
         this.scheduledTaskQueueDao = requireNonNull(scheduledTaskQueueDao, "scheduledTaskQueueDao");
         this.queueShardRouter = requireNonNull(queueShardRouter, "queueShardRouter");
     }
@@ -60,7 +62,17 @@ public class ScheduledTaskQueueFactory {
                         .withQueueId(new QueueId(scheduledTaskDefinition.getIdentity().getTaskName()))
                         .withTableName(queueTableName)
                         .build(),
-                queueSettings
+                QueueSettings.builder()
+                        .withProcessingSettings(defaultQueueSettings.getProcessingSettings())
+                        .withPollSettings(defaultQueueSettings.getPollSettings())
+                        .withFailureSettings(FailureSettings.builder()
+                                .withRetryType(FailRetryType.LINEAR_BACKOFF)
+                                .withRetryInterval(scheduledTaskDefinition.getMaxExecutionLockInterval())
+                                .build()
+                        )
+                        .withReenqueueSettings(defaultQueueSettings.getReenqueueSettings())
+                        .withExtSettings(defaultQueueSettings.getExtSettings())
+                        .build()
         );
     }
 

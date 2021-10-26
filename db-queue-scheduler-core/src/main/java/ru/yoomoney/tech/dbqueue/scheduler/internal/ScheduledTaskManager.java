@@ -21,6 +21,8 @@ public class ScheduledTaskManager {
     private final QueueService queueService;
     private final ScheduledTaskQueueFactory scheduledTaskQueueFactory;
     private final Map<ScheduledTaskIdentity, ScheduledTaskDefinition> registry = new ConcurrentHashMap<>();
+    private volatile boolean started = false;
+    private final Object mutex = new Object();
 
     ScheduledTaskManager(@Nonnull QueueService queueService,
                          @Nonnull ScheduledTaskQueueFactory scheduledTaskQueueFactory) {
@@ -45,7 +47,28 @@ public class ScheduledTaskManager {
         scheduledTaskQueue.trySchedule(scheduledTaskDefinition);
 
         queueService.registerQueue(scheduledTaskQueue.getQueueConsumer());
-        queueService.start(scheduledTaskQueue.getQueueConsumer().getQueueConfig().getLocation().getQueueId());
+
+        synchronized (mutex) {
+            if (started) {
+                queueService.start(scheduledTaskQueue.getQueueConsumer().getQueueConfig().getLocation().getQueueId());
+            }
+        }
+    }
+
+    /**
+     * Starts executing scheduled tasks
+     */
+    public void start() {
+        if (started) {
+            return;
+        }
+        synchronized (mutex) {
+            if (started) {
+                return;
+            }
+            queueService.start();
+            started = true;
+        }
     }
 
     /**

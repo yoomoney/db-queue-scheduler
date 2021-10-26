@@ -27,6 +27,7 @@ import static java.util.Objects.requireNonNull;
  *       .withJdbcOperations(jdbcOperations)
  *       .withTransactionOperations(transactionOperations)
  *       .build();
+ *  scheduler.start();
  * }</pre>
  *
  * @author Petr Zinin pgzinin@yoomoney.ru
@@ -41,7 +42,7 @@ public class SpringSchedulerConfigurator implements SchedulerConfigurator {
     /**
      * Sets backed table name for storing scheduled tasks.
      *
-     * <p>Table schema:</p>
+     * <p>PostgreSQL table schema:</p>
      * <pre>{@code
      *  CREATE TABLE scheduled_tasks (
      *     id                BIGSERIAL PRIMARY KEY,
@@ -95,6 +96,10 @@ public class SpringSchedulerConfigurator implements SchedulerConfigurator {
         requireNonNull(databaseDialect, "databaseDialect");
         requireNonNull(jdbcOperations, "jdbcOperations");
         requireNonNull(transactionOperations, "transactionOperations");
+
+        if (databaseDialect != DatabaseDialect.POSTGRESQL) {
+            throw new IllegalStateException("got unsupported databaseDialect: databaseDialect=" + databaseDialect);
+        }
 
         DatabaseAccessLayer databaseAccessLayer = new SpringDatabaseAccessLayer(
                 ru.yoomoney.tech.dbqueue.config.DatabaseDialect.POSTGRESQL,

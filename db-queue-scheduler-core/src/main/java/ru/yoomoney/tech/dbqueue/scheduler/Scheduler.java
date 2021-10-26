@@ -31,6 +31,11 @@ public interface Scheduler {
                   @Nonnull ScheduledTask scheduledTask);
 
     /**
+     * Starts executing scheduled tasks
+     */
+    void start();
+
+    /**
      * Resumes executing scheduled tasks
      */
     void unpause();
@@ -38,7 +43,7 @@ public interface Scheduler {
     /**
      * Pauses executing scheduled tasks.
      *
-     * <p>Method does not interrupt currently processing tasks but prevents starting the new one.
+     * <p>Method does not interrupt currently processing tasks but prevents starting the new ones.
      */
     void pause();
 }

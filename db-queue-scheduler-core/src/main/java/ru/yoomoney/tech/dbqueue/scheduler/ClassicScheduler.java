@@ -45,6 +45,7 @@ class ClassicScheduler implements Scheduler {
 
         ScheduledTaskDefinition scheduledTaskDefinition = ScheduledTaskDefinition.builder()
                 .withScheduledTaskIdentity(scheduledTaskIdentity)
+                .withMaxExecutionLockInterval(scheduledTaskSettings.getMaxExecutionLockInterval())
                 .withScheduledTask(scheduledTask)
                 .withNextExecutionTimeProvider(executionTimeProvider)
                 .build();
@@ -53,6 +54,11 @@ class ClassicScheduler implements Scheduler {
 
         log.debug("task scheduled: scheduledTaskIdentity={}, scheduledTaskSettings={}, scheduledTaskDefinition={}",
                 scheduledTaskIdentity, scheduledTaskSettings, scheduledTaskDefinition);
+    }
+
+    @Override
+    public void start() {
+        scheduledTaskManager.start();
     }
 
     @Override

@@ -46,6 +46,7 @@ class ScheduledTaskQueueConsumerTest {
                     return ScheduledTaskExecutionResult.success();
                 })
                 .withScheduledTaskIdentity(ScheduledTaskIdentity.of("scheduled-task"))
+                .withMaxExecutionLockInterval(Duration.ofHours(1L))
                 .withNextExecutionTimeProvider(new FixedRateNextExecutionTimeProvider(Duration.ZERO))
                 .build();
         ScheduledTaskQueueConsumer scheduledTaskQueueConsumer = new ScheduledTaskQueueConsumer(
@@ -68,6 +69,7 @@ class ScheduledTaskQueueConsumerTest {
                     throw new RuntimeException("test exception");
                 })
                 .withScheduledTaskIdentity(ScheduledTaskIdentity.of("scheduled-task"))
+                .withMaxExecutionLockInterval(Duration.ofHours(1L))
                 .withNextExecutionTimeProvider(new FixedRateNextExecutionTimeProvider(Duration.ZERO))
                 .build();
         ScheduledTaskQueueConsumer scheduledTaskQueueConsumer = new ScheduledTaskQueueConsumer(
@@ -89,6 +91,7 @@ class ScheduledTaskQueueConsumerTest {
         ScheduledTaskDefinition scheduledTaskDefinition = ScheduledTaskDefinition.builder()
                 .withScheduledTask(ScheduledTaskExecutionResult::success)
                 .withScheduledTaskIdentity(ScheduledTaskIdentity.of("scheduled-task"))
+                .withMaxExecutionLockInterval(Duration.ofHours(1L))
                 .withNextExecutionTimeProvider(new FixedRateNextExecutionTimeProvider(Duration.ofDays(1L), clock))
                 .build();
         ScheduledTaskQueueConsumer scheduledTaskQueueConsumer = new ScheduledTaskQueueConsumer(
@@ -113,6 +116,7 @@ class ScheduledTaskQueueConsumerTest {
                 .withScheduledTask(() ->
                         ScheduledTaskExecutionResult.success().shiftExecutionTime(clock.instant().plus(Duration.ofDays(10L))))
                 .withScheduledTaskIdentity(ScheduledTaskIdentity.of("scheduled-task"))
+                .withMaxExecutionLockInterval(Duration.ofHours(1L))
                 .withNextExecutionTimeProvider(new FixedRateNextExecutionTimeProvider(Duration.ofDays(1L), clock))
                 .build();
         ScheduledTaskQueueConsumer scheduledTaskQueueConsumer = new ScheduledTaskQueueConsumer(

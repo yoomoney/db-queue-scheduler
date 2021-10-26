@@ -73,7 +73,7 @@ public class ScheduledTaskManagerBuilder {
         requireNonNull(scheduledTaskQueueDao, "scheduledTaskQueueDao");
 
         QueueShard<?> singleQueueShard = new QueueShard<>(DEFAULT_DB_QUEUE_SHARD_ID, databaseAccessLayer);
-        QueueSettings queueSettings = buildQueueSettings();
+        QueueSettings defaultQueueSettings = buildDefaultQueueSettings();
 
         QueueService queueService = new QueueService(
                 Collections.singletonList(singleQueueShard),
@@ -82,7 +82,7 @@ public class ScheduledTaskManagerBuilder {
         );
         ScheduledTaskQueueFactory scheduledTaskQueueFactory = new ScheduledTaskQueueFactory(
                 tableName,
-                queueSettings,
+                defaultQueueSettings,
                 scheduledTaskQueueDao,
                 new SingleQueueShardRouter<>(singleQueueShard)
         );
@@ -90,7 +90,7 @@ public class ScheduledTaskManagerBuilder {
         return new ScheduledTaskManager(queueService, scheduledTaskQueueFactory);
     }
 
-    private QueueSettings buildQueueSettings() {
+    private QueueSettings buildDefaultQueueSettings() {
         return QueueSettings.builder()
                 .withProcessingSettings(ProcessingSettings.builder()
                         .withProcessingMode(ProcessingMode.SEPARATE_TRANSACTIONS)
