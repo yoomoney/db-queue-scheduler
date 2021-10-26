@@ -20,7 +20,7 @@ import static java.util.Objects.requireNonNull;
  * Queue represents a particular task that should be executed periodically.
  * That means the periodic execution backed on queues, namely {@code db-queue} library.
  *
- * <p>One scheduled tasks equals to one db-queue queue.
+ * <p>One scheduled task equals to one db-queue queue.
  *
  * @author Petr Zinin pgzinin@yoomoney.ru
  * @since 21.10.2021
@@ -47,7 +47,6 @@ public class ScheduledTaskQueue {
      * Schedules a task if it has not benn scheduled yet
      *
      * @param taskDefinition scheduled task definition
-     * @throws RuntimeException if any task with the same name already registered
      */
     public void trySchedule(@Nonnull ScheduledTaskDefinition taskDefinition) {
         requireNonNull(taskDefinition, "taskDefinition");
