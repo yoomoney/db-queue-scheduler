@@ -3,7 +3,3 @@ buildscript {
 }
 
 apply from: 'dependencies.gradle'
-
-test {
-    useJUnitPlatform()
-}

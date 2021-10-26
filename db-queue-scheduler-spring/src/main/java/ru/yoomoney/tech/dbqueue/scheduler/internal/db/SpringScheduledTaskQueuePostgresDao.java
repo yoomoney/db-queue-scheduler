@@ -1,4 +1,4 @@
-package ru.yoomoney.tech.dbqueue.scheduler.internal.db.spring;
+package ru.yoomoney.tech.dbqueue.scheduler.internal.db;
 
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -20,14 +20,14 @@ import static java.util.Objects.requireNonNull;
  * @author Petr Zinin pgzinin@yoomoney.ru
  * @since 25.10.2021
  */
-public class ScheduledTaskQueuePostgresDao implements ScheduledTaskQueueDao {
+public class SpringScheduledTaskQueuePostgresDao implements ScheduledTaskQueueDao {
 
     private final QueueTableSchema queueTableSchema;
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
-    public ScheduledTaskQueuePostgresDao(@Nonnull JdbcOperations jdbcOperations,
-                                         @Nonnull TransactionOperations transactionOperations,
-                                         @Nonnull QueueTableSchema queueTableSchema) {
+    public SpringScheduledTaskQueuePostgresDao(@Nonnull JdbcOperations jdbcOperations,
+                                               @Nonnull TransactionOperations transactionOperations,
+                                               @Nonnull QueueTableSchema queueTableSchema) {
         requireNonNull(jdbcOperations, "jdbcOperations");
         requireNonNull(transactionOperations, "transactionOperations");
         requireNonNull(queueTableSchema, "queueTableSchema");

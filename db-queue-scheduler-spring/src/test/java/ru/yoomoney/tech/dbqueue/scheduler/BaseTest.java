@@ -35,7 +35,7 @@ public abstract class BaseTest {
             "  ON scheduled_tasks (queue_name, next_process_at, id DESC);";
 
     @Container
-    private static PostgreSQLContainer postgresqlContainer = new PostgreSQLContainer("postgres:9.5");
+    private static final PostgreSQLContainer<?> postgresqlContainer = new PostgreSQLContainer<>("postgres:9.5");
 
     protected static JdbcTemplate jdbcTemplate;
     protected static TransactionTemplate transactionTemplate;

@@ -2,10 +2,6 @@ dependencies {
     implementation 'org.slf4j:slf4j-api:1.7.32',
             'ru.yoomoney.tech:db-queue-core:15.0.0'
 
-    optional 'ru.yoomoney.tech:db-queue-spring:15.0.0',
-            'org.springframework:spring-jdbc:5.3.2',
-            'org.springframework:spring-tx:5.3.2'
-
     compileOnly 'com.google.code.findbugs:jsr305:3.0.2',
             'com.google.code.findbugs:annotations:3.0.1'
 

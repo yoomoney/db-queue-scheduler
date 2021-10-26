@@ -17,15 +17,12 @@ def rootJavaArtifactPublishExtension = project.extensions.getByType(JavaArtifact
 
 subprojects {
     apply plugin: 'ru.yoomoney.gradle.plugins.java-plugin'
+    apply plugin: 'ru.yoomoney.gradle.plugins.java-artifact-publish-plugin'
 
     javaModule {
         repositories = rootJavaExtension.repositories
         snapshotsRepositories = rootJavaExtension.snapshotsRepositories
     }
-
-    rootProject.tasks.getByName('build').dependsOn(tasks.getByName('build'))
-
-    apply plugin: 'ru.yoomoney.gradle.plugins.java-artifact-publish-plugin'
 
     javaArtifactPublishSettings {
         artifactId = "${project.name}"
@@ -40,5 +37,10 @@ subprojects {
         publicationAdditionalInfo = rootJavaArtifactPublishExtension.publicationAdditionalInfo
     }
 
+    test {
+        useJUnitPlatform()
+    }
+
+    rootProject.tasks.getByName('build').dependsOn(tasks.getByName('build'))
     rootProject.tasks.getByName('publish').dependsOn(tasks.getByName('publish'))
 }

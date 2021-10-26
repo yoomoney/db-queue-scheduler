@@ -1,17 +1,13 @@
 package ru.yoomoney.tech.dbqueue.scheduler.internal;
 
-import org.springframework.jdbc.core.JdbcOperations;
-import org.springframework.transaction.support.TransactionOperations;
 import ru.yoomoney.tech.dbqueue.api.impl.SingleQueueShardRouter;
+import ru.yoomoney.tech.dbqueue.config.DatabaseAccessLayer;
 import ru.yoomoney.tech.dbqueue.config.QueueService;
 import ru.yoomoney.tech.dbqueue.config.QueueShard;
 import ru.yoomoney.tech.dbqueue.config.QueueShardId;
-import ru.yoomoney.tech.dbqueue.config.QueueTableSchema;
 import ru.yoomoney.tech.dbqueue.config.impl.NoopTaskLifecycleListener;
 import ru.yoomoney.tech.dbqueue.config.impl.NoopThreadLifecycleListener;
-import ru.yoomoney.tech.dbqueue.scheduler.config.DatabaseDialect;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.db.ScheduledTaskQueueDao;
-import ru.yoomoney.tech.dbqueue.scheduler.internal.db.spring.ScheduledTaskQueuePostgresDao;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.queue.ScheduledTaskQueueFactory;
 import ru.yoomoney.tech.dbqueue.settings.ExtSettings;
 import ru.yoomoney.tech.dbqueue.settings.FailRetryType;
@@ -22,7 +18,6 @@ import ru.yoomoney.tech.dbqueue.settings.ProcessingSettings;
 import ru.yoomoney.tech.dbqueue.settings.QueueSettings;
 import ru.yoomoney.tech.dbqueue.settings.ReenqueueRetryType;
 import ru.yoomoney.tech.dbqueue.settings.ReenqueueSettings;
-import ru.yoomoney.tech.dbqueue.spring.dao.SpringDatabaseAccessLayer;
 
 import javax.annotation.Nonnull;
 import java.time.Duration;
@@ -41,42 +36,31 @@ public class ScheduledTaskManagerBuilder {
     private static final Duration DEFAULT_DB_QUEUE_FETCH_TASK_TIMEOUT = Duration.ofSeconds(1L);
     private static final Duration DEFAULT_DB_QUEUE_TIMEOUT_AFTER_FAILURE = Duration.ofSeconds(1L);
 
-    private final String tableName;
-    private final DatabaseDialect databaseDialect;
-    private SpringDatabaseAccessLayer databaseAccessLayer;
+    private String tableName;
+    private DatabaseAccessLayer databaseAccessLayer;
     private ScheduledTaskQueueDao scheduledTaskQueueDao;
 
-    public ScheduledTaskManagerBuilder(@Nonnull String tableName,
-                                       @Nonnull DatabaseDialect databaseDialect) {
+    /**
+     * Sets backed table name for storing scheduled tasks
+     */
+    public ScheduledTaskManagerBuilder withTableName(@Nonnull String tableName) {
         this.tableName = requireNonNull(tableName, "tableName");
-        this.databaseDialect = requireNonNull(databaseDialect, "databaseDialect");
+        return this;
     }
 
     /**
-     * Configures data access objects via spring jdbc abstractions
+     * Sets {@link DatabaseAccessLayer} for db-queue configuring
      */
-    public ScheduledTaskManagerBuilder withSpringConfiguration(
-            @Nonnull JdbcOperations jdbcOperations,
-            @Nonnull TransactionOperations transactionOperations
-    ) {
-        requireNonNull(jdbcOperations, "jdbcOperations");
-        requireNonNull(transactionOperations, "transactionOperations");
+    public ScheduledTaskManagerBuilder withDatabaseAccessLayer(@Nonnull DatabaseAccessLayer databaseAccessLayer) {
+        this.databaseAccessLayer = requireNonNull(databaseAccessLayer, "databaseAccessLayer");
+        return this;
+    }
 
-        if (databaseDialect != DatabaseDialect.POSTGRESQL) {
-            throw new IllegalStateException("received unsupported dialect: databaseDialec=" + databaseDialect);
-        }
-
-        this.databaseAccessLayer = new SpringDatabaseAccessLayer(
-                ru.yoomoney.tech.dbqueue.config.DatabaseDialect.POSTGRESQL,
-                buildQueueTableSchema(),
-                jdbcOperations,
-                transactionOperations
-        );
-        this.scheduledTaskQueueDao = new ScheduledTaskQueuePostgresDao(
-                jdbcOperations,
-                transactionOperations,
-                QueueTableSchema.builder().build()
-        );
+    /**
+     * Sets {@link ScheduledTaskQueueDao} for direct access to db-queue tables
+     */
+    public ScheduledTaskManagerBuilder withScheduledTaskQueueDao(@Nonnull ScheduledTaskQueueDao scheduledTaskQueueDao) {
+        this.scheduledTaskQueueDao = requireNonNull(scheduledTaskQueueDao, "scheduledTaskQueueDao");
         return this;
     }
 
@@ -84,6 +68,10 @@ public class ScheduledTaskManagerBuilder {
      * Builds {@link ScheduledTaskManager} according to set properties
      */
     public ScheduledTaskManager build() {
+        requireNonNull(tableName, "tableName");
+        requireNonNull(databaseAccessLayer, "databaseAccessLayer");
+        requireNonNull(scheduledTaskQueueDao, "scheduledTaskQueueDao");
+
         QueueShard<?> singleQueueShard = new QueueShard<>(DEFAULT_DB_QUEUE_SHARD_ID, databaseAccessLayer);
         QueueSettings queueSettings = buildQueueSettings();
 
@@ -100,10 +88,6 @@ public class ScheduledTaskManagerBuilder {
         );
 
         return new ScheduledTaskManager(queueService, scheduledTaskQueueFactory);
-    }
-
-    private QueueTableSchema buildQueueTableSchema() {
-        return QueueTableSchema.builder().build();
     }
 
     private QueueSettings buildQueueSettings() {
