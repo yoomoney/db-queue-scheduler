@@ -1,0 +1,11 @@
+repositories {
+    maven {
+        url 'https://repo.maven.apache.org/maven2'
+        name 'Maven Central'
+    }
+}
+buildscript {
+    apply from: "$rootProject.projectDir/project.gradle", to: buildscript
+}
+
+apply from: 'dependencies.gradle'

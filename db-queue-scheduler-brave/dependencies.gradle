@@ -1,0 +1,5 @@
+dependencies {
+    api project(':db-queue-scheduler-core')
+
+    implementation 'io.zipkin.brave:brave:5.10.2'
+}
