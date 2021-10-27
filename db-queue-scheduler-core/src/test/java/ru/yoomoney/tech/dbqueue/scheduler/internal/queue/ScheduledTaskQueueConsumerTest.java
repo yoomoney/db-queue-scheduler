@@ -1,9 +1,12 @@
 package ru.yoomoney.tech.dbqueue.scheduler.internal.queue;
 
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import ru.yoomoney.tech.dbqueue.api.Task;
 import ru.yoomoney.tech.dbqueue.api.TaskExecutionResult;
 import ru.yoomoney.tech.dbqueue.config.QueueShardId;
+import ru.yoomoney.tech.dbqueue.scheduler.config.impl.NoopScheduledTaskLifecycleListener;
+import ru.yoomoney.tech.dbqueue.scheduler.config.ScheduledTaskLifecycleListener;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.ScheduledTaskDefinition;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.schedule.impl.FixedRateNextExecutionTimeProvider;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskExecutionResult;
@@ -51,7 +54,8 @@ class ScheduledTaskQueueConsumerTest {
                 .build();
         ScheduledTaskQueueConsumer scheduledTaskQueueConsumer = new ScheduledTaskQueueConsumer(
                 dummyQueueConfig(),
-                scheduledTaskDefinition
+                scheduledTaskDefinition,
+                NoopScheduledTaskLifecycleListener.getInstance()
         );
 
         // when
@@ -74,7 +78,8 @@ class ScheduledTaskQueueConsumerTest {
                 .build();
         ScheduledTaskQueueConsumer scheduledTaskQueueConsumer = new ScheduledTaskQueueConsumer(
                 dummyQueueConfig(),
-                scheduledTaskDefinition
+                scheduledTaskDefinition,
+                NoopScheduledTaskLifecycleListener.getInstance()
         );
 
         // when
@@ -97,6 +102,7 @@ class ScheduledTaskQueueConsumerTest {
         ScheduledTaskQueueConsumer scheduledTaskQueueConsumer = new ScheduledTaskQueueConsumer(
                 dummyQueueConfig(),
                 scheduledTaskDefinition,
+                NoopScheduledTaskLifecycleListener.getInstance(),
                 clock
         );
 
@@ -109,7 +115,7 @@ class ScheduledTaskQueueConsumerTest {
     }
 
     @Test
-    public void should_postpone_execution_according_to_overrid() {
+    public void should_postpone_execution_according_to_overridden_next_execution_time() {
         // given
         Clock clock = Clock.fixed(Instant.now(), ZoneId.systemDefault());
         ScheduledTaskDefinition scheduledTaskDefinition = ScheduledTaskDefinition.builder()
@@ -122,6 +128,7 @@ class ScheduledTaskQueueConsumerTest {
         ScheduledTaskQueueConsumer scheduledTaskQueueConsumer = new ScheduledTaskQueueConsumer(
                 dummyQueueConfig(),
                 scheduledTaskDefinition,
+                NoopScheduledTaskLifecycleListener.getInstance(),
                 clock
         );
 
@@ -131,6 +138,36 @@ class ScheduledTaskQueueConsumerTest {
         // then
         assertThat(taskExecutionResult.getActionType(), equalTo(TaskExecutionResult.Type.REENQUEUE));
         assertThat(taskExecutionResult.getExecutionDelay().get(), equalTo(Duration.ofDays(10L)));
+    }
+
+    @Test
+    @SuppressWarnings("AccessingNonPublicFieldOfAnotherObject")
+    public void should_receive_lifecycle_events() {
+        // given
+        Clock clock = Clock.fixed(Instant.now(), ZoneId.systemDefault());
+        ScheduledTaskDefinition scheduledTaskDefinition = ScheduledTaskDefinition.builder()
+                .withScheduledTask(ScheduledTaskExecutionResult::success)
+                .withScheduledTaskIdentity(ScheduledTaskIdentity.of("scheduled-task"))
+                .withMaxExecutionLockInterval(Duration.ofHours(1L))
+                .withNextExecutionTimeProvider(new FixedRateNextExecutionTimeProvider(Duration.ofDays(1L), clock))
+                .build();
+        DummyScheduledTaskLifecycleListener listener = new DummyScheduledTaskLifecycleListener();
+        ScheduledTaskQueueConsumer scheduledTaskQueueConsumer = new ScheduledTaskQueueConsumer(
+                dummyQueueConfig(),
+                scheduledTaskDefinition,
+                listener,
+                clock
+        );
+
+        // when
+        scheduledTaskQueueConsumer.execute(dummyTask());
+
+        // then
+        assertThat(listener.startedTaskIdentity, equalTo(ScheduledTaskIdentity.of("scheduled-task")));
+        assertThat(listener.finishedTaskIdentity, equalTo(ScheduledTaskIdentity.of("scheduled-task")));
+        assertThat(listener.executionResult, equalTo(ScheduledTaskExecutionResult.success()));
+        assertThat(listener.processTaskTimeInMills, equalTo(0L));
+        assertThat(listener.nextExecutionTime, equalTo(clock.instant().plus(Duration.ofDays(1L))));
     }
 
     private Task<String> dummyTask() {
@@ -169,5 +206,29 @@ class ScheduledTaskQueueConsumerTest {
                         .withExtSettings(ExtSettings.builder().withSettings(Collections.emptyMap()).build())
                         .build()
         );
+    }
+
+    private static class DummyScheduledTaskLifecycleListener implements ScheduledTaskLifecycleListener {
+        private ScheduledTaskIdentity startedTaskIdentity;
+        private ScheduledTaskIdentity finishedTaskIdentity;
+        private ScheduledTaskExecutionResult executionResult;
+        private Instant nextExecutionTime;
+        private Long processTaskTimeInMills;
+
+        @Override
+        public void started(@NotNull ScheduledTaskIdentity taskIdentity) {
+            this.startedTaskIdentity = taskIdentity;
+        }
+
+        @Override
+        public void finished(@NotNull ScheduledTaskIdentity taskIdentity,
+                             @NotNull ScheduledTaskExecutionResult executionResult,
+                             @NotNull Instant nextExecutionTime,
+                             long processTaskTimeInMills) {
+            this.finishedTaskIdentity = taskIdentity;
+            this.executionResult = executionResult;
+            this.nextExecutionTime = nextExecutionTime;
+            this.processTaskTimeInMills = processTaskTimeInMills;
+        }
     }
 }

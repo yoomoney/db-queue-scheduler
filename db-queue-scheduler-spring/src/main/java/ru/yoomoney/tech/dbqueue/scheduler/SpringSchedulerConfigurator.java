@@ -5,6 +5,8 @@ import org.springframework.transaction.support.TransactionOperations;
 import ru.yoomoney.tech.dbqueue.config.DatabaseAccessLayer;
 import ru.yoomoney.tech.dbqueue.config.QueueTableSchema;
 import ru.yoomoney.tech.dbqueue.scheduler.config.DatabaseDialect;
+import ru.yoomoney.tech.dbqueue.scheduler.config.ScheduledTaskLifecycleListener;
+import ru.yoomoney.tech.dbqueue.scheduler.config.impl.NoopScheduledTaskLifecycleListener;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.ScheduledTaskManagerBuilder;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.db.ScheduledTaskQueueDao;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.db.SpringScheduledTaskQueuePostgresDao;
@@ -41,6 +43,7 @@ public class SpringSchedulerConfigurator implements SchedulerConfigurator {
     private DatabaseDialect databaseDialect;
     private JdbcOperations jdbcOperations;
     private TransactionOperations transactionOperations;
+    private ScheduledTaskLifecycleListener scheduledTaskLifecycleListener = NoopScheduledTaskLifecycleListener.getInstance();
 
     /**
      * Sets backed table name for storing scheduled tasks.
@@ -96,12 +99,23 @@ public class SpringSchedulerConfigurator implements SchedulerConfigurator {
         return this;
     }
 
+    /**
+     * Sets {@link ScheduledTaskLifecycleListener} for observing task execution
+     */
+    public SpringSchedulerConfigurator withScheduledTaskLifecycleListener(
+            @Nonnull ScheduledTaskLifecycleListener scheduledTaskLifecycleListener
+    ) {
+        this.scheduledTaskLifecycleListener = requireNonNull(scheduledTaskLifecycleListener, "scheduledTaskLifecycleListener");
+        return this;
+    }
+
     @Override
     public Scheduler configure() {
         requireNonNull(tableName, "tableName");
         requireNonNull(databaseDialect, "databaseDialect");
         requireNonNull(jdbcOperations, "jdbcOperations");
         requireNonNull(transactionOperations, "transactionOperations");
+        requireNonNull(scheduledTaskLifecycleListener, "scheduledTaskLifecycleListener");
 
         if (databaseDialect != DatabaseDialect.POSTGRESQL) {
             throw new IllegalStateException("got unsupported databaseDialect: databaseDialect=" + databaseDialect);
@@ -123,6 +137,7 @@ public class SpringSchedulerConfigurator implements SchedulerConfigurator {
                         .withTableName(tableName)
                         .withScheduledTaskQueueDao(scheduledTaskQueueDao)
                         .withDatabaseAccessLayer(databaseAccessLayer)
+                        .withScheduledTaskLifecycleListener(scheduledTaskLifecycleListener)
                         .build(),
                 new NextExecutionTimeProviderFactory()
         );

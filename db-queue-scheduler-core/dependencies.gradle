@@ -1,5 +1,5 @@
 dependencies {
-    implementation 'org.slf4j:slf4j-api:1.7.32',
+    implementation 'org.slf4j:slf4j-api:1.7.30',
             'ru.yoomoney.tech:db-queue-core:15.0.0'
 
     implementation ('com.cronutils:cron-utils:9.1.5') {

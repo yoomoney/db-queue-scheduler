@@ -7,6 +7,7 @@ import ru.yoomoney.tech.dbqueue.config.QueueShard;
 import ru.yoomoney.tech.dbqueue.config.QueueShardId;
 import ru.yoomoney.tech.dbqueue.config.impl.NoopTaskLifecycleListener;
 import ru.yoomoney.tech.dbqueue.config.impl.NoopThreadLifecycleListener;
+import ru.yoomoney.tech.dbqueue.scheduler.config.ScheduledTaskLifecycleListener;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.db.ScheduledTaskQueueDao;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.queue.ScheduledTaskQueueFactory;
 import ru.yoomoney.tech.dbqueue.settings.ExtSettings;
@@ -39,6 +40,7 @@ public class ScheduledTaskManagerBuilder {
     private String tableName;
     private DatabaseAccessLayer databaseAccessLayer;
     private ScheduledTaskQueueDao scheduledTaskQueueDao;
+    private ScheduledTaskLifecycleListener scheduledTaskLifecycleListener;
 
     /**
      * Sets backed table name for storing scheduled tasks
@@ -65,12 +67,23 @@ public class ScheduledTaskManagerBuilder {
     }
 
     /**
+     * Sets {@link ScheduledTaskLifecycleListener} for observing task execution
+     */
+    public ScheduledTaskManagerBuilder withScheduledTaskLifecycleListener(
+            @Nonnull ScheduledTaskLifecycleListener scheduledTaskLifecycleListener
+    ) {
+        this.scheduledTaskLifecycleListener = requireNonNull(scheduledTaskLifecycleListener, "scheduledTaskLifecycleListener");
+        return this;
+    }
+
+    /**
      * Builds {@link ScheduledTaskManager} according to set properties
      */
     public ScheduledTaskManager build() {
         requireNonNull(tableName, "tableName");
         requireNonNull(databaseAccessLayer, "databaseAccessLayer");
         requireNonNull(scheduledTaskQueueDao, "scheduledTaskQueueDao");
+        requireNonNull(scheduledTaskLifecycleListener, "scheduledTaskLifecycleListener");
 
         QueueShard<?> singleQueueShard = new QueueShard<>(DEFAULT_DB_QUEUE_SHARD_ID, databaseAccessLayer);
         QueueSettings defaultQueueSettings = buildDefaultQueueSettings();
@@ -84,7 +97,8 @@ public class ScheduledTaskManagerBuilder {
                 tableName,
                 defaultQueueSettings,
                 scheduledTaskQueueDao,
-                new SingleQueueShardRouter<>(singleQueueShard)
+                new SingleQueueShardRouter<>(singleQueueShard),
+                scheduledTaskLifecycleListener
         );
 
         return new ScheduledTaskManager(queueService, scheduledTaskQueueFactory);

@@ -1,5 +1,7 @@
-### NEXT_VERSION_TYPE=MAJOR|MINOR|PATCH
+### NEXT_VERSION_TYPE=MINOR
 ### NEXT_VERSION_DESCRIPTION_BEGIN
+* `ScheduledTaskLifecycleListener` introduced - that helps to observe task execution, eg: configuring tracing, logging,
+  monitoring, etc.
 ### NEXT_VERSION_DESCRIPTION_END
 ## [0.2.0](https://github.com/yoomoney/db-queue-scheduler/pull/2) (27-10-2021)
 
