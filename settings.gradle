@@ -1,0 +1,2 @@
+include 'db-queue-scheduler-core',
+        'db-queue-scheduler-spring'
