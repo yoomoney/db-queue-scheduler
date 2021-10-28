@@ -7,6 +7,7 @@ import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskExecutionResult;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskIdentity;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.time.Instant;
 
 /**
@@ -35,5 +36,10 @@ public class LoggingScheduledTaskLifecycleListener implements ScheduledTaskLifec
             log.info("task finished: identity={}, executionResult={}, nextExecutionTime={}, time={}",
                     taskIdentity.asString(), executionResult.getType(), nextExecutionTime, processTaskTimeInMills);
         }
+    }
+
+    @Override
+    public void crashed(@Nonnull ScheduledTaskIdentity taskIdentity, @Nullable Throwable exc) {
+        log.error("task crashed: identity={}", taskIdentity.asString(), exc);
     }
 }

@@ -24,6 +24,7 @@ import ru.yoomoney.tech.dbqueue.settings.ReenqueueRetryType;
 import ru.yoomoney.tech.dbqueue.settings.ReenqueueSettings;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -145,8 +146,11 @@ class ScheduledTaskQueueConsumerTest {
     public void should_receive_lifecycle_events() {
         // given
         Clock clock = Clock.fixed(Instant.now(), ZoneId.systemDefault());
+        RuntimeException exception = new RuntimeException("test exception");
         ScheduledTaskDefinition scheduledTaskDefinition = ScheduledTaskDefinition.builder()
-                .withScheduledTask(ScheduledTaskExecutionResult::success)
+                .withScheduledTask(() -> {
+                    throw exception;
+                })
                 .withScheduledTaskIdentity(ScheduledTaskIdentity.of("scheduled-task"))
                 .withMaxExecutionLockInterval(Duration.ofHours(1L))
                 .withNextExecutionTimeProvider(new FixedRateNextExecutionTimeProvider(Duration.ofDays(1L), clock))
@@ -165,9 +169,11 @@ class ScheduledTaskQueueConsumerTest {
         // then
         assertThat(listener.startedTaskIdentity, equalTo(ScheduledTaskIdentity.of("scheduled-task")));
         assertThat(listener.finishedTaskIdentity, equalTo(ScheduledTaskIdentity.of("scheduled-task")));
-        assertThat(listener.executionResult, equalTo(ScheduledTaskExecutionResult.success()));
+        assertThat(listener.crashedTaskIdentity, equalTo(ScheduledTaskIdentity.of("scheduled-task")));
+        assertThat(listener.executionResult, equalTo(ScheduledTaskExecutionResult.error()));
         assertThat(listener.processTaskTimeInMills, equalTo(0L));
         assertThat(listener.nextExecutionTime, equalTo(clock.instant().plus(Duration.ofDays(1L))));
+        assertThat(listener.throwable, equalTo(exception));
     }
 
     private Task<String> dummyTask() {
@@ -211,9 +217,11 @@ class ScheduledTaskQueueConsumerTest {
     private static class DummyScheduledTaskLifecycleListener implements ScheduledTaskLifecycleListener {
         private ScheduledTaskIdentity startedTaskIdentity;
         private ScheduledTaskIdentity finishedTaskIdentity;
+        private ScheduledTaskIdentity crashedTaskIdentity;
         private ScheduledTaskExecutionResult executionResult;
         private Instant nextExecutionTime;
         private Long processTaskTimeInMills;
+        private Throwable throwable;
 
         @Override
         public void started(@Nonnull ScheduledTaskIdentity taskIdentity) {
@@ -229,6 +237,12 @@ class ScheduledTaskQueueConsumerTest {
             this.executionResult = executionResult;
             this.nextExecutionTime = nextExecutionTime;
             this.processTaskTimeInMills = processTaskTimeInMills;
+        }
+
+        @Override
+        public void crashed(@Nonnull ScheduledTaskIdentity taskIdentity, @Nullable Throwable exc) {
+            this.crashedTaskIdentity = taskIdentity;
+            this.throwable = exc;
         }
     }
 }

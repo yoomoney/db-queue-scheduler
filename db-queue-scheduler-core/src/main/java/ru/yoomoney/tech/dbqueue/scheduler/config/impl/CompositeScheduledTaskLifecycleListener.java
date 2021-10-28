@@ -5,6 +5,7 @@ import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskExecutionResult;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskIdentity;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -43,5 +44,10 @@ public class CompositeScheduledTaskLifecycleListener implements ScheduledTaskLif
                          long processTaskTimeInMills) {
         reverseListeners.forEach(listener -> listener.finished(taskIdentity, executionResult, nextExecutionTime,
                 processTaskTimeInMills));
+    }
+
+    @Override
+    public void crashed(@Nonnull ScheduledTaskIdentity taskIdentity, @Nullable Throwable exc) {
+        reverseListeners.forEach(listener -> listener.crashed(taskIdentity, exc));
     }
 }

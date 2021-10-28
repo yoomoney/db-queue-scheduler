@@ -6,6 +6,7 @@ import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskExecutionResult;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskIdentity;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -51,6 +52,22 @@ class CompositeScheduledTaskLifecycleListenerTest {
         assertThat(events, equalTo(List.of("2:finished", "1:finished")));
     }
 
+    @Test
+    public void should_handle_crashed_event_in_reverse_order() {
+        // given
+        List<String> events = new ArrayList<>();
+        DummyScheduledTaskLifecycleListener listener1 = new DummyScheduledTaskLifecycleListener("1", events);
+        DummyScheduledTaskLifecycleListener listener2 = new DummyScheduledTaskLifecycleListener("2", events);
+        CompositeScheduledTaskLifecycleListener listener = new CompositeScheduledTaskLifecycleListener(List.of(
+                listener1, listener2));
+
+        // when
+        listener.crashed(ScheduledTaskIdentity.of("task_name"), new RuntimeException());
+
+        // then
+        assertThat(events, equalTo(List.of("2:crashed", "1:crashed")));
+    }
+
     private static class DummyScheduledTaskLifecycleListener implements ScheduledTaskLifecycleListener {
         private final String id;
         private final List<String> events;
@@ -70,6 +87,11 @@ class CompositeScheduledTaskLifecycleListenerTest {
                              @Nonnull ScheduledTaskExecutionResult executionResult,
                              @Nonnull Instant nextExecutionTime, long processTaskTimeInMills) {
             events.add(id + ":finished");
+        }
+
+        @Override
+        public void crashed(@Nonnull ScheduledTaskIdentity taskIdentity, @Nullable Throwable exc) {
+            events.add(id + ":crashed");
         }
     }
 }

@@ -5,6 +5,7 @@ import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskExecutionResult;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskIdentity;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.time.Instant;
 
 /**
@@ -26,6 +27,11 @@ public class NoopScheduledTaskLifecycleListener implements ScheduledTaskLifecycl
                          @Nonnull ScheduledTaskExecutionResult executionResult,
                          @Nonnull Instant nextExecutionTime,
                          long processTaskTimeInMills) {
+        // do nothing
+    }
+
+    @Override
+    public void crashed(@Nonnull ScheduledTaskIdentity taskIdentity, @Nullable Throwable exc) {
         // do nothing
     }
 

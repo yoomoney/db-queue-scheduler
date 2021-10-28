@@ -4,6 +4,7 @@ import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskExecutionResult;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskIdentity;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.time.Instant;
 
 /**
@@ -40,4 +41,16 @@ public interface ScheduledTaskLifecycleListener {
                   @Nonnull ScheduledTaskExecutionResult executionResult,
                   @Nonnull Instant nextExecutionTime,
                   long processTaskTimeInMills);
+
+    /**
+     * Event for abnormal scheduled task processing.
+     *
+     * <p> Triggered when unexpected error occurs during task processing.
+     *
+     * <p> Might be useful for tracking and monitoring errors in the system.
+     *
+     * @param taskIdentity identity of executing task
+     * @param exc an error caused the crash.
+     */
+    void crashed(@Nonnull ScheduledTaskIdentity taskIdentity, @Nullable Throwable exc);
 }

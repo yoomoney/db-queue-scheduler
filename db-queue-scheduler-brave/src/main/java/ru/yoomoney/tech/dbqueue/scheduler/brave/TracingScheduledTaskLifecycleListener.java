@@ -9,6 +9,7 @@ import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskExecutionResult;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskIdentity;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.time.Instant;
 
 import static java.util.Objects.requireNonNull;
@@ -33,9 +34,9 @@ public class TracingScheduledTaskLifecycleListener implements ScheduledTaskLifec
         Tracer tracer = tracing.tracer();
         TraceContext traceContext = tracer.newTrace().context().toBuilder().build();
         Span span = tracer.toSpan(traceContext)
-                .name(taskIdentity.asString())
+                .name("scheduler/" + taskIdentity.asString())
                 .tag("scheduler.task", taskIdentity.asString())
-                .kind(Span.Kind.PRODUCER)
+                .kind(Span.Kind.CONSUMER)
                 .start();
         threadLocalSpan.set(new SpanAndScope(span, tracer.withSpanInScope(span)));
     }
@@ -52,6 +53,15 @@ public class TracingScheduledTaskLifecycleListener implements ScheduledTaskLifec
         threadLocalSpan.remove();
         spanAndScope.getSpanInScope().close();
         spanAndScope.getSpan().finish();
+    }
+
+    @Override
+    public void crashed(@Nonnull ScheduledTaskIdentity taskIdentity, @Nullable Throwable exc) {
+        SpanAndScope spanAndScope = threadLocalSpan.get();
+        if (spanAndScope == null) {
+            return;
+        }
+        spanAndScope.getSpan().error(exc);
     }
 
     private static final class SpanAndScope {

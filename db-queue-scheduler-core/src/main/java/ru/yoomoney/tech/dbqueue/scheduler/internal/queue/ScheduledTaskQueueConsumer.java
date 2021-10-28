@@ -79,7 +79,8 @@ class ScheduledTaskQueueConsumer implements QueueConsumer<String> {
         try {
             return scheduledTaskDefinition.getScheduledTask().execute();
         } catch (RuntimeException ex) {
-            log.warn("failed to execute scheduled task: scheduledTask={}", scheduledTaskDefinition, ex);
+            scheduledTaskLifecycleListener.crashed(scheduledTaskDefinition.getIdentity(), ex);
+            log.debug("failed to execute scheduled task: scheduledTask={}", scheduledTaskDefinition, ex);
             return ScheduledTaskExecutionResult.error();
         } finally {
             context.setLastExecutionFinishTime(clock.instant());

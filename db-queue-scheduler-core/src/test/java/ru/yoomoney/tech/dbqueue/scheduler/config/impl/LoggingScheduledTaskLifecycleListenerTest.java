@@ -78,4 +78,16 @@ class LoggingScheduledTaskLifecycleListenerTest {
                         "executionResult=ERROR, nextExecutionTime=2010-01-01T00:00:00Z, time=800"))
         );
     }
+
+    @Test
+    public void should_log_crash_event() throws IOException {
+        // when
+        listener.crashed(identity, null);
+
+        // then
+        assertThat(
+                Files.readAllLines(LOG_PATH),
+                equalTo(List.of("ERROR [LoggingScheduledTaskLifecycleListener] task crashed: identity=taskIdentity"))
+        );
+    }
 }
