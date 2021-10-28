@@ -1,9 +1,9 @@
-### NEXT_VERSION_TYPE=MINOR
-### NEXT_VERSION_DESCRIPTION_BEGIN
+## [0.3.0](https://github.com/yoomoney/db-queue-scheduler/pull/4) (28-10-2021)
+
 * `ScheduledTaskLifecycleListener` introduced - that helps to observe task execution, eg: tracing, logging, monitoring, etc.
 * tracing support, logging support implemented;
 * brave tracing support implemented in a separate module - `db-queue-scheduler-brave`.
-### NEXT_VERSION_DESCRIPTION_END
+
 ## [0.2.0](https://github.com/yoomoney/db-queue-scheduler/pull/2) (27-10-2021)
 
 * Library split into 2 modules: `db-queue-scheduler-core` and `db-queue-scheduler-spring` that gives spring library
