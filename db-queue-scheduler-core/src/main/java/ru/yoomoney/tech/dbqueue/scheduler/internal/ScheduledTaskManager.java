@@ -49,6 +49,10 @@ public class ScheduledTaskManager {
                     scheduledTaskDefinition.getIdentity()));
         }
 
+        if (!scheduledTaskDefinition.isEnabled()) {
+            return;
+        }
+
         ScheduledTaskQueue scheduledTaskQueue = scheduledTaskQueueFactory.createScheduledTasksQueue(scheduledTaskDefinition);
         scheduledTaskQueue.trySchedule(scheduledTaskDefinition);
 

@@ -44,6 +44,7 @@ class DefaultScheduler implements Scheduler {
                 .createExecutionTimeProvider(scheduledTaskSettings.getScheduleSettings());
 
         ScheduledTaskDefinition scheduledTaskDefinition = ScheduledTaskDefinition.builder()
+                .withEnabled(scheduledTaskSettings.isEnabled())
                 .withScheduledTaskIdentity(scheduledTaskSettings.getIdentity())
                 .withMaxExecutionLockInterval(scheduledTaskSettings.getMaxExecutionLockInterval())
                 .withScheduledTask(scheduledTask)
@@ -52,7 +53,7 @@ class DefaultScheduler implements Scheduler {
 
         scheduledTaskManager.schedule(scheduledTaskDefinition);
 
-        log.debug("task scheduled: scheduledTaskSettings={}, scheduledTaskDefinition={}",
+        log.info("task scheduled: scheduledTaskSettings={}, scheduledTaskDefinition={}",
                 scheduledTaskSettings, scheduledTaskDefinition);
     }
 

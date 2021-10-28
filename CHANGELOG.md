@@ -1,5 +1,6 @@
-### NEXT_VERSION_TYPE=MAJOR|MINOR|PATCH
+### NEXT_VERSION_TYPE=MINOR
 ### NEXT_VERSION_DESCRIPTION_BEGIN
+* Toggling scheduled tasks feature implemented - `ScheduledTaskSettings.enabled`;
 ### NEXT_VERSION_DESCRIPTION_END
 ## [0.3.0](https://github.com/yoomoney/db-queue-scheduler/pull/4) (28-10-2021)
 

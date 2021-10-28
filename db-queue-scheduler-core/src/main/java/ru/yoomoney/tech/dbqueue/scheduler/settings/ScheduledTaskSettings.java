@@ -15,6 +15,11 @@ import static java.util.Objects.requireNonNull;
  */
 public class ScheduledTaskSettings {
     /**
+     * Flag that enables/disables scheduled task
+     */
+    private final boolean enabled;
+
+    /**
      * Unique identity of a scheduled task
      */
     @Nonnull
@@ -37,9 +42,11 @@ public class ScheduledTaskSettings {
     @Nonnull
     private final ScheduleSettings scheduleSettings;
 
-    private ScheduledTaskSettings(@Nonnull ScheduledTaskIdentity identity,
+    private ScheduledTaskSettings(boolean enabled,
+                                  @Nonnull ScheduledTaskIdentity identity,
                                   @Nonnull Duration executionLock,
                                   @Nonnull ScheduleSettings scheduleSettings) {
+        this.enabled = enabled;
         this.identity = requireNonNull(identity, "identity");
         this.maxExecutionLockInterval = requireNonNull(executionLock, "executionLock");
         this.scheduleSettings = requireNonNull(scheduleSettings, "scheduleSettings");
@@ -51,6 +58,10 @@ public class ScheduledTaskSettings {
     @Nonnull
     public static Builder builder() {
         return new Builder();
+    }
+
+    public boolean isEnabled() {
+        return enabled;
     }
 
     @Nonnull
@@ -71,7 +82,8 @@ public class ScheduledTaskSettings {
     @Override
     public String toString() {
         return "ScheduledTaskSettings{" +
-                "identity=" + identity +
+                "enabled=" + enabled +
+                ", identity=" + identity +
                 ", maxExecutionLockInterval=" + maxExecutionLockInterval +
                 ", scheduleSettings=" + scheduleSettings +
                 '}';
@@ -81,11 +93,17 @@ public class ScheduledTaskSettings {
      * Builder for {@link ScheduledTaskSettings}
      */
     public static final class Builder {
+        private boolean enabled = true;
         private ScheduledTaskIdentity identity;
         private Duration maxExecutionLockInterval;
         private ScheduleSettings scheduleSettings;
 
         private Builder() {
+        }
+
+        public Builder withEnabled(boolean enabled) {
+            this.enabled = enabled;
+            return this;
         }
 
         public Builder withIdentity(@Nonnull ScheduledTaskIdentity identity) {
@@ -108,7 +126,7 @@ public class ScheduledTaskSettings {
          */
         @Nonnull
         public ScheduledTaskSettings build() {
-            return new ScheduledTaskSettings(identity, maxExecutionLockInterval, scheduleSettings);
+            return new ScheduledTaskSettings(enabled, identity, maxExecutionLockInterval, scheduleSettings);
         }
     }
 }
