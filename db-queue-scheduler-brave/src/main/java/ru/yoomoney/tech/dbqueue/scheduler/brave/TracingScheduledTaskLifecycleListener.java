@@ -34,7 +34,7 @@ public class TracingScheduledTaskLifecycleListener implements ScheduledTaskLifec
         Tracer tracer = tracing.tracer();
         TraceContext traceContext = tracer.newTrace().context().toBuilder().build();
         Span span = tracer.toSpan(traceContext)
-                .name("scheduler/" + taskIdentity.asString())
+                .name("scheduler " + taskIdentity.asString())
                 .tag("scheduler.task", taskIdentity.asString())
                 .kind(Span.Kind.CONSUMER)
                 .start();
