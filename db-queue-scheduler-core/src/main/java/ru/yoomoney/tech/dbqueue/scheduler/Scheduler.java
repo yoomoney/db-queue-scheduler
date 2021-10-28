@@ -14,7 +14,7 @@ import java.util.List;
  * <p>Scheduler guarantees exactly-once task execution that means that any registered tasks is executed exactly once per each
  * scheduled time in spite of any numbers of working application nodes.
  *
- * <p>Scheduler uses RDBMS for persisting registered tasks. Currently, scheduled backed on {@code db-queue} library.
+ * <p>Scheduler uses RDBMS for persisting registered tasks. Currently, scheduler backed on {@code db-queue} library.
  *
  * @author Petr Zinin pgzinin@yoomoney.ru
  * @since 19.10.2021

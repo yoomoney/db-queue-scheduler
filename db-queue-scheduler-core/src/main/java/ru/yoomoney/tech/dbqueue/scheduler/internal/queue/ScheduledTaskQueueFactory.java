@@ -6,6 +6,7 @@ import ru.yoomoney.tech.dbqueue.api.QueueShardRouter;
 import ru.yoomoney.tech.dbqueue.api.impl.NoopPayloadTransformer;
 import ru.yoomoney.tech.dbqueue.api.impl.ShardingQueueProducer;
 import ru.yoomoney.tech.dbqueue.config.DatabaseAccessLayer;
+import ru.yoomoney.tech.dbqueue.scheduler.config.ScheduledTaskLifecycleListener;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.ScheduledTaskDefinition;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.db.ScheduledTaskQueueDao;
 import ru.yoomoney.tech.dbqueue.settings.FailRetryType;
@@ -30,15 +31,18 @@ public class ScheduledTaskQueueFactory {
     private final QueueSettings defaultQueueSettings;
     private final ScheduledTaskQueueDao scheduledTaskQueueDao;
     private final QueueShardRouter<String, ? extends DatabaseAccessLayer> queueShardRouter;
+    private final ScheduledTaskLifecycleListener scheduledTaskLifecycleListener;
 
     public ScheduledTaskQueueFactory(@Nonnull String queueTableName,
                                      @Nonnull QueueSettings defaultQueueSettings,
                                      @Nonnull ScheduledTaskQueueDao scheduledTaskQueueDao,
-                                     @Nonnull QueueShardRouter<String, ? extends DatabaseAccessLayer> queueShardRouter) {
+                                     @Nonnull QueueShardRouter<String, ? extends DatabaseAccessLayer> queueShardRouter,
+                                     @Nonnull ScheduledTaskLifecycleListener scheduledTaskLifecycleListener) {
         this.queueTableName = requireNonNull(queueTableName, "queueTableName");
         this.defaultQueueSettings = requireNonNull(defaultQueueSettings, "defaultQueueSettings");
         this.scheduledTaskQueueDao = requireNonNull(scheduledTaskQueueDao, "scheduledTaskQueueDao");
         this.queueShardRouter = requireNonNull(queueShardRouter, "queueShardRouter");
+        this.scheduledTaskLifecycleListener = requireNonNull(scheduledTaskLifecycleListener, "scheduledTaskLifecycleListener");
     }
 
     /**
@@ -59,7 +63,7 @@ public class ScheduledTaskQueueFactory {
     private QueueConfig createQueueConfig(ScheduledTaskDefinition scheduledTaskDefinition) {
         return new QueueConfig(
                 QueueLocation.builder()
-                        .withQueueId(new QueueId(scheduledTaskDefinition.getIdentity().getTaskName()))
+                        .withQueueId(new QueueId(scheduledTaskDefinition.getIdentity().asString()))
                         .withTableName(queueTableName)
                         .build(),
                 QueueSettings.builder()
@@ -77,7 +81,7 @@ public class ScheduledTaskQueueFactory {
     }
 
     private QueueConsumer<String> createQueueConsumer(QueueConfig queueConfig, ScheduledTaskDefinition scheduledTaskDefinition) {
-        return new ScheduledTaskQueueConsumer(queueConfig, scheduledTaskDefinition);
+        return new ScheduledTaskQueueConsumer(queueConfig, scheduledTaskDefinition, scheduledTaskLifecycleListener);
     }
 
     private QueueProducer<String> createQueueProducer(QueueConfig queueConfig) {

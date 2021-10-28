@@ -1,5 +1,8 @@
-### NEXT_VERSION_TYPE=MAJOR|MINOR|PATCH
+### NEXT_VERSION_TYPE=MINOR
 ### NEXT_VERSION_DESCRIPTION_BEGIN
+* `ScheduledTaskLifecycleListener` introduced - that helps to observe task execution, eg: tracing, logging, monitoring, etc.
+* tracing support, logging support implemented;
+* brave tracing support implemented in a separate module - `db-queue-scheduler-brave`.
 ### NEXT_VERSION_DESCRIPTION_END
 ## [0.2.0](https://github.com/yoomoney/db-queue-scheduler/pull/2) (27-10-2021)
 
