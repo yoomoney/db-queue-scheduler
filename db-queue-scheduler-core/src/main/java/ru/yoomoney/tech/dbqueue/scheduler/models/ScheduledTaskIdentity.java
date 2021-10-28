@@ -36,6 +36,16 @@ public class ScheduledTaskIdentity {
         return taskName;
     }
 
+    /**
+     * Get flat string identity representation
+     *
+     * @return representation of the identity
+     */
+    @Nonnull
+    public String asString() {
+        return taskName;
+    }
+
     @Override
     public String toString() {
         return "ScheduledTaskIdentity{" +

@@ -2,6 +2,7 @@ package ru.yoomoney.tech.dbqueue.scheduler.brave;
 
 import brave.Span;
 import brave.Tracer;
+import brave.Tracing;
 import brave.propagation.TraceContext;
 import ru.yoomoney.tech.dbqueue.scheduler.config.ScheduledTaskLifecycleListener;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskExecutionResult;
@@ -21,16 +22,21 @@ import static java.util.Objects.requireNonNull;
 public class TracingScheduledTaskLifecycleListener implements ScheduledTaskLifecycleListener {
     private static final ThreadLocal<SpanAndScope> threadLocalSpan = new ThreadLocal<>();
 
-    private final Tracer tracer;
+    private final Tracing tracing;
 
-    public TracingScheduledTaskLifecycleListener(@Nonnull Tracer tracer) {
-        this.tracer = requireNonNull(tracer, "tracer");
+    public TracingScheduledTaskLifecycleListener(@Nonnull Tracing tracing) {
+        this.tracing = requireNonNull(tracing, "tracing");
     }
 
     @Override
     public void started(@Nonnull ScheduledTaskIdentity taskIdentity) {
+        Tracer tracer = tracing.tracer();
         TraceContext traceContext = tracer.newTrace().context().toBuilder().build();
-        Span span = tracer.toSpan(traceContext).name(taskIdentity.getTaskName()).start();
+        Span span = tracer.toSpan(traceContext)
+                .name(taskIdentity.asString())
+                .tag("scheduler.task", taskIdentity.asString())
+                .kind(Span.Kind.PRODUCER)
+                .start();
         threadLocalSpan.set(new SpanAndScope(span, tracer.withSpanInScope(span)));
     }
 

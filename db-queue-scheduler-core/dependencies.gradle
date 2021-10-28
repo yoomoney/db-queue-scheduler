@@ -11,7 +11,10 @@ dependencies {
 
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1',
             'org.hamcrest:hamcrest:2.2',
-            'com.tngtech.archunit:archunit:0.21.0'
+            'com.tngtech.archunit:archunit:0.21.0',
+
+            'org.apache.logging.log4j:log4j-core:2.14.1',
+            'org.apache.logging.log4j:log4j-slf4j-impl:2.14.1'
 
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
 }

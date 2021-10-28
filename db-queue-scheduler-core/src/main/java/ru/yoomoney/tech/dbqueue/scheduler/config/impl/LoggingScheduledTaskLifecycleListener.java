@@ -20,7 +20,7 @@ public class LoggingScheduledTaskLifecycleListener implements ScheduledTaskLifec
 
     @Override
     public void started(@Nonnull ScheduledTaskIdentity taskIdentity) {
-        log.info("task started: identity={}", taskIdentity.getTaskName());
+        log.info("task started: identity={}", taskIdentity.asString());
     }
 
     @Override
@@ -28,7 +28,12 @@ public class LoggingScheduledTaskLifecycleListener implements ScheduledTaskLifec
                          @Nonnull ScheduledTaskExecutionResult executionResult,
                          @Nonnull Instant nextExecutionTime,
                          long processTaskTimeInMills) {
-        log.info("task finished: identity={}, executionResult={}, processTaskTime={}, nextExecutionTime={}",
-                taskIdentity.getTaskName(), executionResult.getType(), processTaskTimeInMills, nextExecutionTime);
+        if (executionResult.getType() == ScheduledTaskExecutionResult.Type.ERROR) {
+            log.error("task failed: identity={}, executionResult={}, nextExecutionTime={}, time={}",
+                    taskIdentity.asString(), executionResult.getType(), nextExecutionTime, processTaskTimeInMills);
+        } else {
+            log.info("task finished: identity={}, executionResult={}, nextExecutionTime={}, time={}",
+                    taskIdentity.asString(), executionResult.getType(), nextExecutionTime, processTaskTimeInMills);
+        }
     }
 }

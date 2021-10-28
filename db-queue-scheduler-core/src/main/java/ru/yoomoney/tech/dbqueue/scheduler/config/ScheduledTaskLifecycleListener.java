@@ -15,10 +15,10 @@ import java.time.Instant;
 public interface ScheduledTaskLifecycleListener {
     /**
      * Event of task starting execution.
-     * <p>
-     * Always triggered before scheduled task execution.
-     * <p>
-     * Might be useful for updating a logging context.
+     *
+     * <p> Always triggered before scheduled task execution.
+     *
+     * <p> Might be useful for updating a logging context.
      *
      * @param taskIdentity identity of executing task
      */
@@ -26,10 +26,10 @@ public interface ScheduledTaskLifecycleListener {
 
     /**
      * Event for completion of client logic when task processing.
-     * <p>
-     * Always triggered when task processing has finished with any result.
-     * <p>
-     * Might be useful for recovery of initial logging context state.
+     *
+     * <p> Always triggered when task processing has finished with any result.
+     *
+     * <p> Might be useful for recovery of initial logging context state.
      *
      * @param taskIdentity identity of executing task
      * @param executionResult result of task processing

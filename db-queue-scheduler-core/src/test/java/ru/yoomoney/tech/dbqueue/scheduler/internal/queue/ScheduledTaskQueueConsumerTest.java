@@ -1,12 +1,11 @@
 package ru.yoomoney.tech.dbqueue.scheduler.internal.queue;
 
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import ru.yoomoney.tech.dbqueue.api.Task;
 import ru.yoomoney.tech.dbqueue.api.TaskExecutionResult;
 import ru.yoomoney.tech.dbqueue.config.QueueShardId;
-import ru.yoomoney.tech.dbqueue.scheduler.config.impl.NoopScheduledTaskLifecycleListener;
 import ru.yoomoney.tech.dbqueue.scheduler.config.ScheduledTaskLifecycleListener;
+import ru.yoomoney.tech.dbqueue.scheduler.config.impl.NoopScheduledTaskLifecycleListener;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.ScheduledTaskDefinition;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.schedule.impl.FixedRateNextExecutionTimeProvider;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskExecutionResult;
@@ -24,6 +23,7 @@ import ru.yoomoney.tech.dbqueue.settings.QueueSettings;
 import ru.yoomoney.tech.dbqueue.settings.ReenqueueRetryType;
 import ru.yoomoney.tech.dbqueue.settings.ReenqueueSettings;
 
+import javax.annotation.Nonnull;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -216,14 +216,14 @@ class ScheduledTaskQueueConsumerTest {
         private Long processTaskTimeInMills;
 
         @Override
-        public void started(@NotNull ScheduledTaskIdentity taskIdentity) {
+        public void started(@Nonnull ScheduledTaskIdentity taskIdentity) {
             this.startedTaskIdentity = taskIdentity;
         }
 
         @Override
-        public void finished(@NotNull ScheduledTaskIdentity taskIdentity,
-                             @NotNull ScheduledTaskExecutionResult executionResult,
-                             @NotNull Instant nextExecutionTime,
+        public void finished(@Nonnull ScheduledTaskIdentity taskIdentity,
+                             @Nonnull ScheduledTaskExecutionResult executionResult,
+                             @Nonnull Instant nextExecutionTime,
                              long processTaskTimeInMills) {
             this.finishedTaskIdentity = taskIdentity;
             this.executionResult = executionResult;
