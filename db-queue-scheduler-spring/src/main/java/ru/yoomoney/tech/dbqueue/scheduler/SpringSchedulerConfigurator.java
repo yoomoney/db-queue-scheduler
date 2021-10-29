@@ -63,6 +63,9 @@ public class SpringSchedulerConfigurator implements SchedulerConfigurator {
      *  CREATE INDEX scheduled_tasks_name_time_desc_idx
      *  ON scheduled_tasks USING btree (queue_name, next_process_at, id DESC);
      *  }</pre>
+     *
+     * @param tableName table name that stores scheduled tasks
+     * @return the same instance of {@link SpringSchedulerConfigurator}
      */
     public SpringSchedulerConfigurator withTableName(@Nonnull String tableName) {
         requireNonNull(tableName, "tableName");
@@ -74,6 +77,9 @@ public class SpringSchedulerConfigurator implements SchedulerConfigurator {
      * Sets database dialect.
      *
      * <p>The dialect is required for querying the database properly.
+     *
+     * @param databaseDialect type of using database
+     * @return the same instance of {@link SpringSchedulerConfigurator}
      */
     public SpringSchedulerConfigurator withDatabaseDialect(@Nonnull DatabaseDialect databaseDialect) {
         requireNonNull(databaseDialect, "databaseDialect");
@@ -83,6 +89,9 @@ public class SpringSchedulerConfigurator implements SchedulerConfigurator {
 
     /**
      * Set preconfigured {@link JdbcOperations} instance
+     *
+     * @param jdbcOperations preconfigured {@link JdbcOperations}
+     * @return the same instance of {@link SpringSchedulerConfigurator}
      */
     public SpringSchedulerConfigurator withJdbcOperations(@Nonnull JdbcOperations jdbcOperations) {
         requireNonNull(jdbcOperations, "jdbcOperations");
@@ -92,6 +101,9 @@ public class SpringSchedulerConfigurator implements SchedulerConfigurator {
 
     /**
      * Set preconfigured {@link TransactionOperations} instance
+     *
+     * @param transactionOperations preconfigured {@link TransactionOperations}
+     * @return the same instance of {@link SpringSchedulerConfigurator}
      */
     public SpringSchedulerConfigurator withTransactionOperations(@Nonnull TransactionOperations transactionOperations) {
         requireNonNull(transactionOperations, "transactionOperations");
@@ -101,6 +113,9 @@ public class SpringSchedulerConfigurator implements SchedulerConfigurator {
 
     /**
      * Sets {@link ScheduledTaskLifecycleListener} for observing task execution
+     *
+     * @param scheduledTaskLifecycleListener listener of scheduled task lifecycles
+     * @return the same instance of {@link SpringSchedulerConfigurator}
      */
     public SpringSchedulerConfigurator withScheduledTaskLifecycleListener(
             @Nonnull ScheduledTaskLifecycleListener scheduledTaskLifecycleListener

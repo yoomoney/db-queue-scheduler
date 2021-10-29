@@ -17,6 +17,10 @@ import static java.util.Objects.requireNonNull;
  */
 public class ScheduledTaskDefinition {
     /**
+     * Flag that enables/disables scheduled task
+     */
+    private final boolean enabled;
+    /**
      * Unique identity of a scheduled task
      */
     @Nonnull
@@ -39,22 +43,29 @@ public class ScheduledTaskDefinition {
     @Nonnull
     private final ScheduledTask scheduledTask;
 
-    private ScheduledTaskDefinition(@Nonnull ScheduledTaskIdentity identity,
+    private ScheduledTaskDefinition(boolean enabled,
                                     @Nonnull Duration maxExecutionLockInterval,
                                     @Nonnull NextExecutionTimeProvider nextExecutionTimeProvider,
                                     @Nonnull ScheduledTask scheduledTask) {
-        this.identity = requireNonNull(identity, "identity");
+        this.enabled = enabled;
         this.maxExecutionLockInterval = requireNonNull(maxExecutionLockInterval, "maxExecutionLockInterval");
         this.nextExecutionTimeProvider = requireNonNull(nextExecutionTimeProvider, "nextExecutionTimeProvider");
         this.scheduledTask = requireNonNull(scheduledTask, "scheduledTask");
+        this.identity = scheduledTask.getIdentity();
     }
 
     /**
      * Creates an object builder
+     *
+     * @return a new instance of {@link Builder}
      */
     @Nonnull
     public static Builder builder() {
         return new Builder();
+    }
+
+    public boolean isEnabled() {
+        return enabled;
     }
 
     @Nonnull
@@ -79,7 +90,8 @@ public class ScheduledTaskDefinition {
     @Override
     public String toString() {
         return "ScheduledTaskDefinition{" +
-                "identity=" + identity +
+                "enabled=" + enabled +
+                ", identity=" + identity +
                 ", maxExecutionLockInterval=" + maxExecutionLockInterval +
                 ", nextExecutionTimeProvider=" + nextExecutionTimeProvider +
                 ", scheduledTask=" + scheduledTask +
@@ -90,7 +102,7 @@ public class ScheduledTaskDefinition {
      * Builder for {@link ScheduledTaskDefinition}
      */
     public static final class Builder {
-        private ScheduledTaskIdentity identity;
+        private boolean enabled;
         private Duration maxExecutionLockInterval;
         private NextExecutionTimeProvider nextExecutionTimeProvider;
         private ScheduledTask scheduledTask;
@@ -98,8 +110,8 @@ public class ScheduledTaskDefinition {
         private Builder() {
         }
 
-        public Builder withScheduledTaskIdentity(@Nonnull ScheduledTaskIdentity identity) {
-            this.identity = identity;
+        public Builder withEnabled(boolean enabled) {
+            this.enabled = enabled;
             return this;
         }
 
@@ -120,10 +132,12 @@ public class ScheduledTaskDefinition {
 
         /**
          * Creates an object
+         *
+         * @return configured instance of {@link ScheduledTaskDefinition}
          */
         @Nonnull
         public ScheduledTaskDefinition build() {
-            return new ScheduledTaskDefinition(identity, maxExecutionLockInterval, nextExecutionTimeProvider, scheduledTask);
+            return new ScheduledTaskDefinition(enabled, maxExecutionLockInterval, nextExecutionTimeProvider, scheduledTask);
         }
     }
 }

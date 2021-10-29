@@ -11,7 +11,7 @@ import javax.annotation.Nullable;
 import java.time.Instant;
 
 /**
- * Listener that writes INFO logs
+ * Listener that writes logs
  *
  * @author Petr Zinin pgzinin@yoomoney.ru
  * @since 27.10.2021

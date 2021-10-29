@@ -1,7 +1,5 @@
 package ru.yoomoney.tech.dbqueue.scheduler.settings;
 
-import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskIdentity;
-
 import javax.annotation.Nonnull;
 import java.time.Duration;
 
@@ -15,11 +13,9 @@ import static java.util.Objects.requireNonNull;
  */
 public class ScheduledTaskSettings {
     /**
-     * Unique identity of a scheduled task
+     * Flag that enables/disables scheduled task
      */
-    @Nonnull
-    private final ScheduledTaskIdentity identity;
-
+    private final boolean enabled;
     /**
      * Max interval during which task is not executed again unless task is rescheduled or the interval exceeded.
      *
@@ -37,25 +33,26 @@ public class ScheduledTaskSettings {
     @Nonnull
     private final ScheduleSettings scheduleSettings;
 
-    private ScheduledTaskSettings(@Nonnull ScheduledTaskIdentity identity,
+    private ScheduledTaskSettings(boolean enabled,
                                   @Nonnull Duration executionLock,
                                   @Nonnull ScheduleSettings scheduleSettings) {
-        this.identity = requireNonNull(identity, "identity");
+        this.enabled = enabled;
         this.maxExecutionLockInterval = requireNonNull(executionLock, "executionLock");
         this.scheduleSettings = requireNonNull(scheduleSettings, "scheduleSettings");
     }
 
     /**
      * Creates an object builder
+     *
+     * @return a new instance of {@link Builder}
      */
     @Nonnull
     public static Builder builder() {
         return new Builder();
     }
 
-    @Nonnull
-    public ScheduledTaskIdentity getIdentity() {
-        return identity;
+    public boolean isEnabled() {
+        return enabled;
     }
 
     @Nonnull
@@ -71,7 +68,7 @@ public class ScheduledTaskSettings {
     @Override
     public String toString() {
         return "ScheduledTaskSettings{" +
-                "identity=" + identity +
+                "enabled=" + enabled +
                 ", maxExecutionLockInterval=" + maxExecutionLockInterval +
                 ", scheduleSettings=" + scheduleSettings +
                 '}';
@@ -81,15 +78,15 @@ public class ScheduledTaskSettings {
      * Builder for {@link ScheduledTaskSettings}
      */
     public static final class Builder {
-        private ScheduledTaskIdentity identity;
+        private boolean enabled = true;
         private Duration maxExecutionLockInterval;
         private ScheduleSettings scheduleSettings;
 
         private Builder() {
         }
 
-        public Builder withIdentity(@Nonnull ScheduledTaskIdentity identity) {
-            this.identity = identity;
+        public Builder withEnabled(boolean enabled) {
+            this.enabled = enabled;
             return this;
         }
 
@@ -105,10 +102,12 @@ public class ScheduledTaskSettings {
 
         /**
          * Creates an object
+         *
+         * @return configured instance of {@link ScheduledTaskSettings}
          */
         @Nonnull
         public ScheduledTaskSettings build() {
-            return new ScheduledTaskSettings(identity, maxExecutionLockInterval, scheduleSettings);
+            return new ScheduledTaskSettings(enabled, maxExecutionLockInterval, scheduleSettings);
         }
     }
 }

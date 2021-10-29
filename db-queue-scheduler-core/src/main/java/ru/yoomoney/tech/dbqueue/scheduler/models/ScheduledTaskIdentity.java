@@ -24,6 +24,9 @@ public class ScheduledTaskIdentity {
 
     /**
      * Builds scheduled task identity by taskName
+     *
+     * @param taskName unique task name according to which {@link ScheduledTaskIdentity} is build
+     * @return new instance of {@link ScheduledTaskIdentity}
      */
     @Nonnull
     public static ScheduledTaskIdentity of(@Nonnull String taskName) {

@@ -20,6 +20,7 @@ public class ScheduleSettings {
      */
     @Nullable
     private final CronSettings cronSettings;
+
     /**
      * Fixed execution interval between start of the last execution and start of the next one
      */
@@ -67,6 +68,10 @@ public class ScheduleSettings {
      *  </ul>
      *
      *  <p>For example, {@code "0 * * * * MON-FRI"} means once per minute on weekdays
+     *
+     * @param cron expression describes rules of periodic task execution
+     * @param zoneId time-zone in which cron expression should be evaluated
+     * @return configured instance of {@link ScheduleSettings}
      */
     @Nonnull
     public static ScheduleSettings cron(@Nonnull String cron, @Nonnull ZoneId zoneId) {
@@ -77,6 +82,9 @@ public class ScheduleSettings {
 
     /**
      * Fixed execution interval between start of the last execution and start of the next one
+     *
+     * @param fixedRate fixed execution interval between start of the last execution and start of the next one
+     * @return configured instance of {@link ScheduleSettings}
      */
     @Nonnull
     public static ScheduleSettings fixedRate(@Nonnull Duration fixedRate) {
@@ -86,6 +94,8 @@ public class ScheduleSettings {
 
     /**
      * Fixed execution interval between end of the last execution and start of the next one
+     * @param fixedDelay fixed execution interval between end of the last execution and start of the next one
+     * @return configured instance of {@link ScheduleSettings}
      */
     @Nonnull
     public static ScheduleSettings fixedDelay(@Nonnull Duration fixedDelay) {

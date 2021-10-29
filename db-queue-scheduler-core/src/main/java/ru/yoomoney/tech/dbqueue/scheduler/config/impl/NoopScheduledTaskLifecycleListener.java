@@ -37,6 +37,8 @@ public class NoopScheduledTaskLifecycleListener implements ScheduledTaskLifecycl
 
     /**
      * Get empty listener for task processing lifecycle
+     *
+     * @return flyweight object of empty listener
      */
     public static NoopScheduledTaskLifecycleListener getInstance() {
         return INSTANCE;

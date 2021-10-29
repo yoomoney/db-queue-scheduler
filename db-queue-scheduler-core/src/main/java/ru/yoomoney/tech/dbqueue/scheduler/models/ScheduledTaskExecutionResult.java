@@ -40,6 +40,8 @@ public class ScheduledTaskExecutionResult {
 
     /**
      * Task execution succeeded
+     *
+     * @return flyweight instance of a simple succeed execution result
      */
     @Nonnull
     public static ScheduledTaskExecutionResult success() {
@@ -48,6 +50,8 @@ public class ScheduledTaskExecutionResult {
 
     /**
      * Task execution failed
+     *
+     * @return flyweight instance of a simple failed execution result
      */
     @Nonnull
     public static ScheduledTaskExecutionResult error() {
@@ -56,6 +60,9 @@ public class ScheduledTaskExecutionResult {
 
     /**
      * Shift next execution time
+     *
+     * @param nextExecutionTime date time at which related scheduled task should be executed again
+     * @return new instance of {@link ScheduledTaskExecutionResult} that overrides scheduled task next execution time
      */
     @Nonnull
     public ScheduledTaskExecutionResult shiftExecutionTime(@Nonnull Instant nextExecutionTime) {

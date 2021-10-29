@@ -1,5 +1,11 @@
-### NEXT_VERSION_TYPE=MAJOR|MINOR|PATCH
+### NEXT_VERSION_TYPE=MAJOR
 ### NEXT_VERSION_DESCRIPTION_BEGIN
+* Toggling scheduled tasks feature implemented - `ScheduledTaskSettings.enabled`;
+* Improved library api usage experience - look at the breaking changes;
+* **breaking changes**
+* `ru.yoomoney.tech.dbqueue.scheduler.Scheduler.schedule` method argument order changed;
+* `ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTask.getIdentity` method added;
+* `scheduledTaskIdentity` field pruned from `ScheduledTaskSettings`.
 ### NEXT_VERSION_DESCRIPTION_END
 ## [0.3.0](https://github.com/yoomoney/db-queue-scheduler/pull/4) (28-10-2021)
 

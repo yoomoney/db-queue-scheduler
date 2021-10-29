@@ -16,8 +16,8 @@ import static java.util.Objects.requireNonNull;
 /**
  * Composite listener. It allows combining several listeners into one.
  *
- * Listeners for picked and started events are executed in straight order.
- * Listeners for executed, finished and crashed events are executed in reverse order.
+ * Listeners for started events are executed in straight order.
+ * Listeners for finished and crashed events are executed in reverse order.
  *
  * @author Petr Zinin pgzinin@yoomoney.ru
  * @since 27.10.2021

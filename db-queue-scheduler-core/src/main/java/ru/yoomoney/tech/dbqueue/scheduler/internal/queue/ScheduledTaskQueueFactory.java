@@ -46,8 +46,9 @@ public class ScheduledTaskQueueFactory {
     }
 
     /**
-     * Create a {@link ScheduledTaskQueue} according to passed {@code queueConfig}
+     * Create a {@link ScheduledTaskQueue} according to passed {@code scheduledTaskDefinition}
      *
+     * @param scheduledTaskDefinition definition of a scheduled task
      * @return created scheduled task queue
      */
     public ScheduledTaskQueue createScheduledTasksQueue(@Nonnull ScheduledTaskDefinition scheduledTaskDefinition) {
