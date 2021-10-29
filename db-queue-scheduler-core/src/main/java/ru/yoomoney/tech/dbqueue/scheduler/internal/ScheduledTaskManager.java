@@ -1,7 +1,5 @@
 package ru.yoomoney.tech.dbqueue.scheduler.internal;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import ru.yoomoney.tech.dbqueue.config.QueueService;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.queue.ScheduledTaskQueue;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.queue.ScheduledTaskQueueFactory;

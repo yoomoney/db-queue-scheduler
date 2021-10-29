@@ -43,6 +43,8 @@ public class ScheduledTaskSettings {
 
     /**
      * Creates an object builder
+     *
+     * @return a new instance of {@link Builder}
      */
     @Nonnull
     public static Builder builder() {
@@ -100,6 +102,8 @@ public class ScheduledTaskSettings {
 
         /**
          * Creates an object
+         *
+         * @return configured instance of {@link ScheduledTaskSettings}
          */
         @Nonnull
         public ScheduledTaskSettings build() {

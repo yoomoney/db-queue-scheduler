@@ -56,6 +56,8 @@ public class ScheduledTaskDefinition {
 
     /**
      * Creates an object builder
+     *
+     * @return a new instance of {@link Builder}
      */
     @Nonnull
     public static Builder builder() {
@@ -130,6 +132,8 @@ public class ScheduledTaskDefinition {
 
         /**
          * Creates an object
+         *
+         * @return configured instance of {@link ScheduledTaskDefinition}
          */
         @Nonnull
         public ScheduledTaskDefinition build() {

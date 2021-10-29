@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * Scheduler manages {@link ScheduledTask}s for periodic execution - configures, registers, starts and pauses.
  *
- * <p>Scheduler guarantees exactly-once task execution that means that any registered tasks is executed exactly once per each
+ * <p>Scheduler guarantees exactly-once task execution that means that any registered tasks are executed exactly once per each
  * scheduled time in spite of any numbers of working application nodes.
  *
  * <p>Scheduler uses RDBMS for persisting registered tasks. Currently, scheduler backed on {@code db-queue} library.

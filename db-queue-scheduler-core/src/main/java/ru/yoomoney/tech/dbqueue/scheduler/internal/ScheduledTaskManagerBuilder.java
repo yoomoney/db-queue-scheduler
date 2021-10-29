@@ -44,6 +44,9 @@ public class ScheduledTaskManagerBuilder {
 
     /**
      * Sets backed table name for storing scheduled tasks
+     *
+     * @param tableName table name that stores scheduled tasks
+     * @return the same instance of {@link ScheduledTaskManagerBuilder}
      */
     public ScheduledTaskManagerBuilder withTableName(@Nonnull String tableName) {
         this.tableName = requireNonNull(tableName, "tableName");
@@ -52,6 +55,9 @@ public class ScheduledTaskManagerBuilder {
 
     /**
      * Sets {@link DatabaseAccessLayer} for db-queue configuring
+     *
+     * @param databaseAccessLayer layer for interacting with a database
+     * @return the same instance of {@link ScheduledTaskManagerBuilder}
      */
     public ScheduledTaskManagerBuilder withDatabaseAccessLayer(@Nonnull DatabaseAccessLayer databaseAccessLayer) {
         this.databaseAccessLayer = requireNonNull(databaseAccessLayer, "databaseAccessLayer");
@@ -60,6 +66,9 @@ public class ScheduledTaskManagerBuilder {
 
     /**
      * Sets {@link ScheduledTaskQueueDao} for direct access to db-queue tables
+     *
+     * @param scheduledTaskQueueDao DAO that implements direct access to {@link #tableName}
+     * @return the same instance of {@link ScheduledTaskManagerBuilder}
      */
     public ScheduledTaskManagerBuilder withScheduledTaskQueueDao(@Nonnull ScheduledTaskQueueDao scheduledTaskQueueDao) {
         this.scheduledTaskQueueDao = requireNonNull(scheduledTaskQueueDao, "scheduledTaskQueueDao");
@@ -68,6 +77,9 @@ public class ScheduledTaskManagerBuilder {
 
     /**
      * Sets {@link ScheduledTaskLifecycleListener} for observing task execution
+     *
+     * @param scheduledTaskLifecycleListener listener of scheduled task lifecycles
+     * @return the same instance of {@link ScheduledTaskManagerBuilder}
      */
     public ScheduledTaskManagerBuilder withScheduledTaskLifecycleListener(
             @Nonnull ScheduledTaskLifecycleListener scheduledTaskLifecycleListener
@@ -78,6 +90,8 @@ public class ScheduledTaskManagerBuilder {
 
     /**
      * Builds {@link ScheduledTaskManager} according to set properties
+     *
+     * @return configured instance of {@link ScheduledTaskManager}
      */
     public ScheduledTaskManager build() {
         requireNonNull(tableName, "tableName");
