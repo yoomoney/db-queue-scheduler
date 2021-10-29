@@ -23,12 +23,12 @@ public interface Scheduler {
     /**
      * Registers a task for periodic executions
      *
-     * @param scheduledTaskSettings settings of the scheduled task
      * @param scheduledTask task for periodic executions
+     * @param scheduledTaskSettings settings of the scheduled task
      * @throws RuntimeException if any scheduled task with the same identity already registered
      */
-    void schedule(@Nonnull ScheduledTaskSettings scheduledTaskSettings,
-                  @Nonnull ScheduledTask scheduledTask);
+    void schedule(@Nonnull ScheduledTask scheduledTask,
+                  @Nonnull ScheduledTaskSettings scheduledTaskSettings);
 
     /**
      * Starts scheduler - makes scheduler available for executing scheduled tasks

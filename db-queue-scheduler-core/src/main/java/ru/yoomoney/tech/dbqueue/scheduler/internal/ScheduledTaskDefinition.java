@@ -44,15 +44,14 @@ public class ScheduledTaskDefinition {
     private final ScheduledTask scheduledTask;
 
     private ScheduledTaskDefinition(boolean enabled,
-                                    @Nonnull ScheduledTaskIdentity identity,
                                     @Nonnull Duration maxExecutionLockInterval,
                                     @Nonnull NextExecutionTimeProvider nextExecutionTimeProvider,
                                     @Nonnull ScheduledTask scheduledTask) {
         this.enabled = enabled;
-        this.identity = requireNonNull(identity, "identity");
         this.maxExecutionLockInterval = requireNonNull(maxExecutionLockInterval, "maxExecutionLockInterval");
         this.nextExecutionTimeProvider = requireNonNull(nextExecutionTimeProvider, "nextExecutionTimeProvider");
         this.scheduledTask = requireNonNull(scheduledTask, "scheduledTask");
+        this.identity = scheduledTask.getIdentity();
     }
 
     /**
@@ -102,7 +101,6 @@ public class ScheduledTaskDefinition {
      */
     public static final class Builder {
         private boolean enabled;
-        private ScheduledTaskIdentity identity;
         private Duration maxExecutionLockInterval;
         private NextExecutionTimeProvider nextExecutionTimeProvider;
         private ScheduledTask scheduledTask;
@@ -112,11 +110,6 @@ public class ScheduledTaskDefinition {
 
         public Builder withEnabled(boolean enabled) {
             this.enabled = enabled;
-            return this;
-        }
-
-        public Builder withScheduledTaskIdentity(@Nonnull ScheduledTaskIdentity identity) {
-            this.identity = identity;
             return this;
         }
 
@@ -140,8 +133,7 @@ public class ScheduledTaskDefinition {
          */
         @Nonnull
         public ScheduledTaskDefinition build() {
-            return new ScheduledTaskDefinition(enabled, identity, maxExecutionLockInterval, nextExecutionTimeProvider,
-                    scheduledTask);
+            return new ScheduledTaskDefinition(enabled, maxExecutionLockInterval, nextExecutionTimeProvider, scheduledTask);
         }
     }
 }

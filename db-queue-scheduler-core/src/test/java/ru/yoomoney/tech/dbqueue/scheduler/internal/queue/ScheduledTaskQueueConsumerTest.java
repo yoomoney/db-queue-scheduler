@@ -8,8 +8,10 @@ import ru.yoomoney.tech.dbqueue.scheduler.config.ScheduledTaskLifecycleListener;
 import ru.yoomoney.tech.dbqueue.scheduler.config.impl.NoopScheduledTaskLifecycleListener;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.ScheduledTaskDefinition;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.schedule.impl.FixedRateNextExecutionTimeProvider;
+import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTask;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskExecutionResult;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskIdentity;
+import ru.yoomoney.tech.dbqueue.scheduler.models.SimpleScheduledTask;
 import ru.yoomoney.tech.dbqueue.settings.ExtSettings;
 import ru.yoomoney.tech.dbqueue.settings.FailRetryType;
 import ru.yoomoney.tech.dbqueue.settings.FailureSettings;
@@ -44,12 +46,15 @@ class ScheduledTaskQueueConsumerTest {
     public void should_execute_scheduledTask() {
         // given
         boolean[] executed = { false };
-        ScheduledTaskDefinition scheduledTaskDefinition = ScheduledTaskDefinition.builder()
-                .withScheduledTask(() -> {
+        ScheduledTask scheduledTask = SimpleScheduledTask.create(
+                "scheduled-task",
+                () -> {
                     executed[0] = true;
                     return ScheduledTaskExecutionResult.success();
-                })
-                .withScheduledTaskIdentity(ScheduledTaskIdentity.of("scheduled-task"))
+                }
+        );
+        ScheduledTaskDefinition scheduledTaskDefinition = ScheduledTaskDefinition.builder()
+                .withScheduledTask(scheduledTask)
                 .withMaxExecutionLockInterval(Duration.ofHours(1L))
                 .withNextExecutionTimeProvider(new FixedRateNextExecutionTimeProvider(Duration.ZERO))
                 .build();
@@ -69,11 +74,14 @@ class ScheduledTaskQueueConsumerTest {
     @Test
     public void should_handle_RuntimeException_during_executing_scheduledTask() {
         // given
-        ScheduledTaskDefinition scheduledTaskDefinition = ScheduledTaskDefinition.builder()
-                .withScheduledTask(() -> {
+        ScheduledTask scheduledTask = SimpleScheduledTask.create(
+                "scheduled-task",
+                () -> {
                     throw new RuntimeException("test exception");
-                })
-                .withScheduledTaskIdentity(ScheduledTaskIdentity.of("scheduled-task"))
+                }
+        );
+        ScheduledTaskDefinition scheduledTaskDefinition = ScheduledTaskDefinition.builder()
+                .withScheduledTask(scheduledTask)
                 .withMaxExecutionLockInterval(Duration.ofHours(1L))
                 .withNextExecutionTimeProvider(new FixedRateNextExecutionTimeProvider(Duration.ZERO))
                 .build();
@@ -94,9 +102,9 @@ class ScheduledTaskQueueConsumerTest {
     public void should_postpone_execution_according_to_nextExectutionTimeProvider() {
         // given
         Clock clock = Clock.fixed(Instant.now(), ZoneId.systemDefault());
+        ScheduledTask scheduledTask = SimpleScheduledTask.create("scheduled-task", ScheduledTaskExecutionResult::success);
         ScheduledTaskDefinition scheduledTaskDefinition = ScheduledTaskDefinition.builder()
-                .withScheduledTask(ScheduledTaskExecutionResult::success)
-                .withScheduledTaskIdentity(ScheduledTaskIdentity.of("scheduled-task"))
+                .withScheduledTask(scheduledTask)
                 .withMaxExecutionLockInterval(Duration.ofHours(1L))
                 .withNextExecutionTimeProvider(new FixedRateNextExecutionTimeProvider(Duration.ofDays(1L), clock))
                 .build();
@@ -119,10 +127,12 @@ class ScheduledTaskQueueConsumerTest {
     public void should_postpone_execution_according_to_overridden_next_execution_time() {
         // given
         Clock clock = Clock.fixed(Instant.now(), ZoneId.systemDefault());
+        ScheduledTask scheduledTask = SimpleScheduledTask.create(
+                "scheduled-task",
+                () -> ScheduledTaskExecutionResult.success().shiftExecutionTime(clock.instant().plus(Duration.ofDays(10L)))
+        );
         ScheduledTaskDefinition scheduledTaskDefinition = ScheduledTaskDefinition.builder()
-                .withScheduledTask(() ->
-                        ScheduledTaskExecutionResult.success().shiftExecutionTime(clock.instant().plus(Duration.ofDays(10L))))
-                .withScheduledTaskIdentity(ScheduledTaskIdentity.of("scheduled-task"))
+                .withScheduledTask(scheduledTask)
                 .withMaxExecutionLockInterval(Duration.ofHours(1L))
                 .withNextExecutionTimeProvider(new FixedRateNextExecutionTimeProvider(Duration.ofDays(1L), clock))
                 .build();
@@ -147,11 +157,14 @@ class ScheduledTaskQueueConsumerTest {
         // given
         Clock clock = Clock.fixed(Instant.now(), ZoneId.systemDefault());
         RuntimeException exception = new RuntimeException("test exception");
-        ScheduledTaskDefinition scheduledTaskDefinition = ScheduledTaskDefinition.builder()
-                .withScheduledTask(() -> {
+        ScheduledTask scheduledTask = SimpleScheduledTask.create(
+                "scheduled-task",
+                () -> {
                     throw exception;
-                })
-                .withScheduledTaskIdentity(ScheduledTaskIdentity.of("scheduled-task"))
+                }
+        );
+        ScheduledTaskDefinition scheduledTaskDefinition = ScheduledTaskDefinition.builder()
+                .withScheduledTask(scheduledTask)
                 .withMaxExecutionLockInterval(Duration.ofHours(1L))
                 .withNextExecutionTimeProvider(new FixedRateNextExecutionTimeProvider(Duration.ofDays(1L), clock))
                 .build();

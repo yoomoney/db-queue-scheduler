@@ -35,8 +35,8 @@ class DefaultScheduler implements Scheduler {
     }
 
     @Override
-    public void schedule(@Nonnull ScheduledTaskSettings scheduledTaskSettings,
-                         @Nonnull ScheduledTask scheduledTask) {
+    public void schedule(@Nonnull ScheduledTask scheduledTask,
+                         @Nonnull ScheduledTaskSettings scheduledTaskSettings) {
         requireNonNull(scheduledTaskSettings, "scheduledTaskSettings");
         requireNonNull(scheduledTask, "scheduledTask");
 
@@ -45,7 +45,6 @@ class DefaultScheduler implements Scheduler {
 
         ScheduledTaskDefinition scheduledTaskDefinition = ScheduledTaskDefinition.builder()
                 .withEnabled(scheduledTaskSettings.isEnabled())
-                .withScheduledTaskIdentity(scheduledTaskSettings.getIdentity())
                 .withMaxExecutionLockInterval(scheduledTaskSettings.getMaxExecutionLockInterval())
                 .withScheduledTask(scheduledTask)
                 .withNextExecutionTimeProvider(executionTimeProvider)
@@ -53,8 +52,7 @@ class DefaultScheduler implements Scheduler {
 
         scheduledTaskManager.schedule(scheduledTaskDefinition);
 
-        log.info("task scheduled: scheduledTaskSettings={}, scheduledTaskDefinition={}",
-                scheduledTaskSettings, scheduledTaskDefinition);
+        log.info("task scheduled: identity={}, settings={}", scheduledTask.getIdentity(), scheduledTaskSettings);
     }
 
     @Override

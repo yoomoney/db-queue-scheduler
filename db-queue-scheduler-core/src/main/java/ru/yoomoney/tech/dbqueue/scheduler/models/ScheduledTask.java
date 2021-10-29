@@ -10,6 +10,14 @@ import javax.annotation.Nonnull;
  */
 public interface ScheduledTask {
     /**
+     * Get unique identity of a scheduled task
+     *
+     * @return identity of a scheduled task
+     */
+    @Nonnull
+    ScheduledTaskIdentity getIdentity();
+
+    /**
      * Executes scheduled task
      *
      * @return execution result
