@@ -10,6 +10,11 @@ Project uses [Semantic Versioning](http://semver.org/).
 
 Library is available on [Maven Central](https://search.maven.org/).
 
+```
+implementation 'ru.yoomoney.tech:db-queue-scheduler-core:2.0.0',
+               'ru.yoomoney.tech:db-queue-scheduler-spring:2.0.0'
+```
+
 ## Features
 
 * Persisted periodic tasks;
@@ -56,7 +61,7 @@ Scheduler scheduler = new SpringSchedulerConfigurator()
 
          
 ScheduledTask task = SimpleScheduledTask.create(
-        "scheduled-task",
+        "scheduled-task-id",
         () -> {
             System.out.println("Hello World!");
             return ScheduledTaskExecutionResult.success();
@@ -71,6 +76,8 @@ scheduler.schedule(task, settings);
 
 scheduler.start();
 ```
+
+See also [runnable example]().
 
 ## How to contribute?
 

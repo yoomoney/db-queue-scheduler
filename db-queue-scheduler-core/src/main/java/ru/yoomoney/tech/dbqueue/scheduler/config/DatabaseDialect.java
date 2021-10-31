@@ -11,4 +11,8 @@ public enum DatabaseDialect {
      * PostgreSQL (version equals or higher than 9.5).
      */
     POSTGRESQL,
+    /**
+     * H2 in-memory database
+     */
+    H2
 }

@@ -1,5 +1,6 @@
 package ru.yoomoney.tech.dbqueue.scheduler;
 
+import org.h2.jdbcx.JdbcDataSource;
 import org.junit.jupiter.api.BeforeAll;
 import org.postgresql.ds.PGSimpleDataSource;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -8,8 +9,8 @@ import org.springframework.transaction.support.TransactionTemplate;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import ru.yoomoney.tech.dbqueue.scheduler.config.DatabaseDialect;
 
-import javax.sql.DataSource;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -36,24 +37,62 @@ public abstract class BaseTest {
     @Container
     private static final PostgreSQLContainer<?> postgresqlContainer = new PostgreSQLContainer<>("postgres:9.5");
 
-    protected static JdbcTemplate jdbcTemplate;
-    protected static TransactionTemplate transactionTemplate;
+    protected static DatabaseAccess postgres;
+    protected static DatabaseAccess h2;
     protected static AtomicLong uniqueCounter = new AtomicLong();
 
     @BeforeAll
-    public static void configurePostgres() {
-        DataSource dataSource = dataSource();
-        jdbcTemplate = new JdbcTemplate(dataSource);
-        transactionTemplate = new TransactionTemplate(new DataSourceTransactionManager(dataSource));
-
-        transactionTemplate.executeWithoutResult(status -> jdbcTemplate.update(SCHEDULED_TASKS_TABLE_DDL));
+    public static void configureDatabases() {
+        postgres = configurePostgres();
+        h2 = configureH2();
     }
 
-    private static DataSource dataSource() {
+    private static DatabaseAccess configurePostgres() {
         PGSimpleDataSource dataSource = new PGSimpleDataSource();
         dataSource.setUrl(postgresqlContainer.getJdbcUrl());
         dataSource.setPassword(postgresqlContainer.getPassword());
         dataSource.setUser(postgresqlContainer.getUsername());
-        return dataSource;
+
+
+        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
+        TransactionTemplate transactionTemplate = new TransactionTemplate(new DataSourceTransactionManager(dataSource));
+        transactionTemplate.executeWithoutResult(status -> jdbcTemplate.update(SCHEDULED_TASKS_TABLE_DDL));
+        return new DatabaseAccess(DatabaseDialect.POSTGRESQL, jdbcTemplate, transactionTemplate);
+    }
+
+    private static DatabaseAccess configureH2() {
+        JdbcDataSource dataSource = new JdbcDataSource();
+        dataSource.setURL("jdbc:h2:/tmp/test");
+        dataSource.setUser("sa");
+        dataSource.setPassword("sa");
+
+        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
+        TransactionTemplate transactionTemplate = new TransactionTemplate(new DataSourceTransactionManager(dataSource));
+        transactionTemplate.executeWithoutResult(status -> jdbcTemplate.update(SCHEDULED_TASKS_TABLE_DDL));
+        return new DatabaseAccess(DatabaseDialect.H2, jdbcTemplate, transactionTemplate);
+    }
+
+    protected static class DatabaseAccess {
+        private final DatabaseDialect databaseDialect;
+        private final JdbcTemplate jdbcTemplate;
+        private final TransactionTemplate transactionTemplate;
+
+        DatabaseAccess(DatabaseDialect databaseDialect, JdbcTemplate jdbcTemplate, TransactionTemplate transactionTemplate) {
+            this.databaseDialect = databaseDialect;
+            this.jdbcTemplate = jdbcTemplate;
+            this.transactionTemplate = transactionTemplate;
+        }
+
+        public DatabaseDialect getDatabaseDialect() {
+            return databaseDialect;
+        }
+
+        public JdbcTemplate getJdbcTemplate() {
+            return jdbcTemplate;
+        }
+
+        public TransactionTemplate getTransactionTemplate() {
+            return transactionTemplate;
+        }
     }
 }

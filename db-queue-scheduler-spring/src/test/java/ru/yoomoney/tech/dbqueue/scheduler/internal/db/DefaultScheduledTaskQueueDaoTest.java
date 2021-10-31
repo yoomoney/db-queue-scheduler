@@ -27,18 +27,19 @@ import static org.hamcrest.Matchers.notNullValue;
  * @author Petr Zinin pgzinin@yoomoney.ru
  * @since 01.11.2021
  */
-class SpringScheduledTaskQueuePostgresDaoTest extends BaseTest {
-    private final ScheduledTaskQueueDao scheduledTaskQueueDao = new SpringScheduledTaskQueuePostgresDao(
+class DefaultScheduledTaskQueueDaoTest extends BaseTest {
+    private final ScheduledTaskQueueDao scheduledTaskQueueDao = new DefaultScheduledTaskQueueDao(
             "scheduled_tasks",
-            jdbcTemplate,
-            transactionTemplate, QueueTableSchema.builder().build()
+            postgres.getJdbcTemplate(),
+            postgres.getTransactionTemplate(),
+            QueueTableSchema.builder().build()
     );
 
     private final DatabaseAccessLayer databaseAccessLayer = new SpringDatabaseAccessLayer(
             DatabaseDialect.POSTGRESQL,
             QueueTableSchema.builder().build(),
-            jdbcTemplate,
-            transactionTemplate
+            postgres.getJdbcTemplate(),
+            postgres.getTransactionTemplate()
     );
 
     @Test

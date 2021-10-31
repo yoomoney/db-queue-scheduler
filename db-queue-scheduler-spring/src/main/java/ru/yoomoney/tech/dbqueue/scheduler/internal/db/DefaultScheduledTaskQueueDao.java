@@ -23,17 +23,17 @@ import static java.util.Objects.requireNonNull;
  * @author Petr Zinin pgzinin@yoomoney.ru
  * @since 25.10.2021
  */
-public class SpringScheduledTaskQueuePostgresDao implements ScheduledTaskQueueDao {
+public class DefaultScheduledTaskQueueDao implements ScheduledTaskQueueDao {
 
     private final String tableName;
     private final QueueTableSchema queueTableSchema;
     private final TransactionOperations transactionOperations;
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
-    public SpringScheduledTaskQueuePostgresDao(@Nonnull String tableName,
-                                               @Nonnull JdbcOperations jdbcOperations,
-                                               @Nonnull TransactionOperations transactionOperations,
-                                               @Nonnull QueueTableSchema queueTableSchema) {
+    public DefaultScheduledTaskQueueDao(@Nonnull String tableName,
+                                        @Nonnull JdbcOperations jdbcOperations,
+                                        @Nonnull TransactionOperations transactionOperations,
+                                        @Nonnull QueueTableSchema queueTableSchema) {
         requireNonNull(tableName, "tableName");
         requireNonNull(jdbcOperations, "jdbcOperations");
         requireNonNull(transactionOperations, "transactionOperations");

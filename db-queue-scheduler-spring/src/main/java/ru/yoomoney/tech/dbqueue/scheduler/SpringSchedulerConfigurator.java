@@ -9,7 +9,7 @@ import ru.yoomoney.tech.dbqueue.scheduler.config.ScheduledTaskLifecycleListener;
 import ru.yoomoney.tech.dbqueue.scheduler.config.impl.NoopScheduledTaskLifecycleListener;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.ScheduledTaskManagerBuilder;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.db.ScheduledTaskQueueDao;
-import ru.yoomoney.tech.dbqueue.scheduler.internal.db.SpringScheduledTaskQueuePostgresDao;
+import ru.yoomoney.tech.dbqueue.scheduler.internal.db.DefaultScheduledTaskQueueDao;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.schedule.NextExecutionTimeProviderFactory;
 import ru.yoomoney.tech.dbqueue.spring.dao.SpringDatabaseAccessLayer;
 
@@ -131,17 +131,13 @@ public class SpringSchedulerConfigurator implements SchedulerConfigurator {
         requireNonNull(transactionOperations, "transactionOperations");
         requireNonNull(scheduledTaskLifecycleListener, "scheduledTaskLifecycleListener");
 
-        if (databaseDialect != DatabaseDialect.POSTGRESQL) {
-            throw new IllegalStateException("got unsupported databaseDialect: databaseDialect=" + databaseDialect);
-        }
-
         DatabaseAccessLayer databaseAccessLayer = new SpringDatabaseAccessLayer(
-                ru.yoomoney.tech.dbqueue.config.DatabaseDialect.POSTGRESQL,
+                mapDatabaseDialect(databaseDialect),
                 QueueTableSchema.builder().build(),
                 jdbcOperations,
                 transactionOperations
         );
-        ScheduledTaskQueueDao scheduledTaskQueueDao = new SpringScheduledTaskQueuePostgresDao(
+        ScheduledTaskQueueDao scheduledTaskQueueDao = new DefaultScheduledTaskQueueDao(
                 tableName,
                 jdbcOperations,
                 transactionOperations,
@@ -156,5 +152,16 @@ public class SpringSchedulerConfigurator implements SchedulerConfigurator {
                         .build(),
                 new NextExecutionTimeProviderFactory()
         );
+    }
+
+    private ru.yoomoney.tech.dbqueue.config.DatabaseDialect mapDatabaseDialect(DatabaseDialect databaseDialect) {
+        switch (databaseDialect) {
+            case POSTGRESQL:
+                return ru.yoomoney.tech.dbqueue.config.DatabaseDialect.POSTGRESQL;
+            case H2:
+                return ru.yoomoney.tech.dbqueue.config.DatabaseDialect.H2;
+            default:
+                throw new IllegalStateException("got unsupported databaseDialect: databaseDialect=" + databaseDialect);
+        }
     }
 }
