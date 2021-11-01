@@ -10,12 +10,16 @@ import ru.yoomoney.tech.dbqueue.settings.QueueId;
 import ru.yoomoney.tech.dbqueue.settings.QueueLocation;
 import ru.yoomoney.tech.dbqueue.spring.dao.SpringDatabaseAccessLayer;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 
 /**
@@ -46,7 +50,7 @@ class SpringScheduledTaskQueuePostgresDaoTest extends BaseTest {
         databaseAccessLayer.getQueueDao().enqueue(location2, EnqueueParams.create(""));
 
         // then
-        assertThat(scheduledTaskQueueDao.isQueueEmpty(location1), equalTo(true));
+        assertThat(scheduledTaskQueueDao.isQueueEmpty(location1.getQueueId()), equalTo(true));
     }
 
 
@@ -59,7 +63,32 @@ class SpringScheduledTaskQueuePostgresDaoTest extends BaseTest {
         databaseAccessLayer.getQueueDao().enqueue(location, EnqueueParams.create(""));
 
         // then
-        assertThat(scheduledTaskQueueDao.isQueueEmpty(location), equalTo(false));
+        assertThat(scheduledTaskQueueDao.isQueueEmpty(location.getQueueId()), equalTo(false));
+    }
+
+    @Test
+    void should_update_next_processing_date() {
+        // given
+        QueueLocation location1 = queueLocation("queue-" + uniqueCounter.incrementAndGet());
+        QueueLocation location2 = queueLocation("queue-" + uniqueCounter.incrementAndGet());
+        Instant nextProcessingDate = LocalDateTime.of(2010, 1, 1, 0, 0).toInstant(ZoneOffset.UTC);
+
+        // when
+        databaseAccessLayer.getQueueDao().enqueue(location1, EnqueueParams.create(""));
+        databaseAccessLayer.getQueueDao().enqueue(location2, EnqueueParams.create(""));
+        scheduledTaskQueueDao.updateNextProcessDate(location1.getQueueId(), nextProcessingDate);
+
+        // then
+        ScheduledTaskRecord location1Record = scheduledTaskQueueDao.findAll().stream()
+                .filter(it -> it.getQueueName().equals(location1.getQueueId().asString()))
+                .findFirst()
+                .orElseThrow();
+        ScheduledTaskRecord location2Record = scheduledTaskQueueDao.findAll().stream()
+                .filter(it -> it.getQueueName().equals(location2.getQueueId().asString()))
+                .findFirst()
+                .orElseThrow();
+        assertThat(location1Record.getNextProcessAt(), equalTo(nextProcessingDate));
+        assertThat(location2Record.getNextProcessAt(), not(equalTo(nextProcessingDate)));
     }
 
     @Test

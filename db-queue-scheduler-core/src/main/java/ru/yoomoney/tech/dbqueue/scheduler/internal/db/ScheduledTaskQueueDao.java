@@ -1,8 +1,9 @@
 package ru.yoomoney.tech.dbqueue.scheduler.internal.db;
 
-import ru.yoomoney.tech.dbqueue.settings.QueueLocation;
+import ru.yoomoney.tech.dbqueue.settings.QueueId;
 
 import javax.annotation.Nonnull;
+import java.time.Instant;
 import java.util.List;
 
 /**
@@ -15,10 +16,19 @@ public interface ScheduledTaskQueueDao {
     /**
      * Checks if a queue is empty
      *
-     * @param queueLocation checking queue location
+     * @param queueId identity of the checking queue
      * @return true if the queue is empty otherwise false
      */
-    boolean isQueueEmpty(@Nonnull QueueLocation queueLocation);
+    boolean isQueueEmpty(@Nonnull QueueId queueId);
+
+    /**
+     * Updates next process date column of a queue tasks
+     *
+     * @param queueId identity of the queue
+     * @param nextProcessDate new column value
+     * @return count of updated rows
+     */
+    int updateNextProcessDate(@Nonnull QueueId queueId, @Nonnull Instant nextProcessDate);
 
     /**
      * Finds all records.

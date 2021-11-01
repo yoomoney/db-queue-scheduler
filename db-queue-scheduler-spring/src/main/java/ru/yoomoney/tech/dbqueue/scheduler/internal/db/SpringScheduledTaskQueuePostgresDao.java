@@ -4,9 +4,11 @@ import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.transaction.support.TransactionOperations;
 import ru.yoomoney.tech.dbqueue.config.QueueTableSchema;
-import ru.yoomoney.tech.dbqueue.settings.QueueLocation;
+import ru.yoomoney.tech.dbqueue.settings.QueueId;
 
 import javax.annotation.Nonnull;
+import java.time.Instant;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -24,6 +26,7 @@ public class SpringScheduledTaskQueuePostgresDao implements ScheduledTaskQueueDa
 
     private final String tableName;
     private final QueueTableSchema queueTableSchema;
+    private final TransactionOperations transactionOperations;
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
     public SpringScheduledTaskQueuePostgresDao(@Nonnull String tableName,
@@ -37,25 +40,44 @@ public class SpringScheduledTaskQueuePostgresDao implements ScheduledTaskQueueDa
 
         this.queueTableSchema = queueTableSchema;
         this.namedParameterJdbcTemplate = new NamedParameterJdbcTemplate(jdbcOperations);
+        this.transactionOperations = transactionOperations;
         this.tableName = tableName;
     }
 
     @Override
-    public boolean isQueueEmpty(@Nonnull QueueLocation queueLocation) {
-        requireNonNull(queueLocation, "queueLocation");
+    public boolean isQueueEmpty(@Nonnull QueueId queueId) {
+        requireNonNull(queueId, "queueId");
 
         String isQueueEmptyQuery = String.format(
                 "select count(1) from %s where %s = :queueName",
-                queueLocation.getTableName(),
+                tableName,
                 queueTableSchema.getQueueNameField()
 
         );
         Long taskCount = namedParameterJdbcTemplate.queryForObject(
                 isQueueEmptyQuery,
-                Map.of("queueName", queueLocation.getQueueId().asString()),
+                Map.of("queueName", queueId.asString()),
                 Long.class
         );
         return taskCount == null || taskCount.equals(0L);
+    }
+
+    @Override
+    public int updateNextProcessDate(@Nonnull QueueId queueId, @Nonnull Instant nextProcessDate) {
+        requireNonNull(queueId, "queueId");
+        requireNonNull(nextProcessDate, "nextProcessDate");
+
+        String rescheduleQuery = String.format(
+                "update %s set %s = :nextProcessDate where %s = :queueName",
+                tableName,
+                queueTableSchema.getNextProcessAtField(),
+                queueTableSchema.getQueueNameField()
+        );
+        Integer updatedRows = transactionOperations.execute(status -> namedParameterJdbcTemplate.update(
+                rescheduleQuery,
+                Map.<String, Object>of("queueName", queueId.asString(), "nextProcessDate", Date.from(nextProcessDate))
+        ));
+        return updatedRows == null ? 0 : updatedRows;
     }
 
     @Override

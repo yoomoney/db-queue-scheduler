@@ -7,6 +7,7 @@ import ru.yoomoney.tech.dbqueue.scheduler.settings.ScheduledTaskSettings;
 
 import javax.annotation.Nonnull;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 
 /**
@@ -30,6 +31,14 @@ public interface Scheduler {
      */
     void schedule(@Nonnull ScheduledTask scheduledTask,
                   @Nonnull ScheduledTaskSettings scheduledTaskSettings);
+
+    /**
+     * Updates next execution time of a scheduled task
+     *
+     * @param taskIdentity identity of the task that should be rescheduled
+     * @param nextExecutionTime date time at which the task should be executed
+     */
+    void reschedule(@Nonnull ScheduledTaskIdentity taskIdentity, @Nonnull Instant nextExecutionTime);
 
     /**
      * Starts scheduler - makes scheduler available for executing scheduled tasks

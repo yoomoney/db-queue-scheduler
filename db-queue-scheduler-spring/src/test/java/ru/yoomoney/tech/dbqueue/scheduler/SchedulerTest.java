@@ -10,6 +10,7 @@ import ru.yoomoney.tech.dbqueue.scheduler.settings.ScheduleSettings;
 import ru.yoomoney.tech.dbqueue.scheduler.settings.ScheduledTaskSettings;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -163,5 +164,38 @@ public class SchedulerTest extends BaseTest {
         // then
         assertThat(scheduledTaskStatistic.getIdentity(), equalTo(scheduledTask.getIdentity()));
         assertThat(scheduledTaskStatistic.getNextExecutionTime(), notNullValue());
+    }
+
+    @Test
+    public void should_reschedule_task() {
+        // given
+        Scheduler scheduler = new SpringSchedulerConfigurator()
+                .withDatabaseDialect(DatabaseDialect.POSTGRESQL)
+                .withTableName("scheduled_tasks")
+                .withJdbcOperations(jdbcTemplate)
+                .withTransactionOperations(transactionTemplate)
+                .configure();
+        AtomicBoolean executed = new AtomicBoolean(false);
+        ScheduledTask scheduledTask = SimpleScheduledTask.create(
+                "scheduled-task" + uniqueCounter.incrementAndGet(),
+                () -> {
+                    executed.set(true);
+                    return ScheduledTaskExecutionResult.success();
+                }
+        );
+
+        // when
+        scheduler.start();
+        scheduler.schedule(
+                scheduledTask,
+                ScheduledTaskSettings.builder()
+                        .withMaxExecutionLockInterval(Duration.ofHours(1L))
+                        .withScheduleSettings(ScheduleSettings.fixedDelay(Duration.ofDays(1L)))
+                        .build()
+        );
+        scheduler.reschedule(scheduledTask.getIdentity(), Instant.now());
+
+        // then
+        await().atMost(Duration.ofSeconds(5L)).until(executed::get);
     }
 }

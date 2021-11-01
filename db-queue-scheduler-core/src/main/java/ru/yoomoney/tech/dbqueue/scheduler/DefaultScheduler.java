@@ -13,6 +13,7 @@ import ru.yoomoney.tech.dbqueue.scheduler.settings.ScheduledTaskSettings;
 
 import javax.annotation.Nonnull;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 
 import static java.util.Objects.requireNonNull;
@@ -54,6 +55,15 @@ class DefaultScheduler implements Scheduler {
         scheduledTaskManager.schedule(scheduledTaskDefinition);
 
         log.info("task scheduled: identity={}, settings={}", scheduledTask.getIdentity(), scheduledTaskSettings);
+    }
+
+    @Override
+    public void reschedule(@Nonnull ScheduledTaskIdentity taskIdentity, @Nonnull Instant nextExecutionTime) {
+        requireNonNull(taskIdentity, "taskIdentity");
+        requireNonNull(nextExecutionTime, "nextExecutionTime");
+
+        scheduledTaskManager.reschedule(taskIdentity, nextExecutionTime);
+        log.info("task rescheduled: identity={}, nextExecutionTime={}", taskIdentity, nextExecutionTime);
     }
 
     @Override
