@@ -1,9 +1,11 @@
 package ru.yoomoney.tech.dbqueue.scheduler.internal;
 
 import ru.yoomoney.tech.dbqueue.config.QueueService;
+import ru.yoomoney.tech.dbqueue.scheduler.internal.db.ScheduledTaskQueueDao;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.queue.ScheduledTaskQueue;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.queue.ScheduledTaskQueueFactory;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskIdentity;
+import ru.yoomoney.tech.dbqueue.scheduler.models.info.ScheduledTaskInfo;
 import ru.yoomoney.tech.dbqueue.settings.QueueId;
 
 import javax.annotation.Nonnull;
@@ -23,6 +25,7 @@ import static java.util.Objects.requireNonNull;
  */
 public class ScheduledTaskManager {
     private final QueueService queueService;
+    private final ScheduledTaskQueueDao scheduledTaskQueueDao;
     private final ScheduledTaskQueueFactory scheduledTaskQueueFactory;
     private final Map<ScheduledTaskIdentity, ScheduledTaskDefinition> registry = new ConcurrentHashMap<>();
     private final Map<QueueId, ScheduledTaskIdentity> queueToScheduledTaskMap = new ConcurrentHashMap<>();
@@ -30,8 +33,10 @@ public class ScheduledTaskManager {
     private volatile boolean started = false;
 
     ScheduledTaskManager(@Nonnull QueueService queueService,
+                         @Nonnull ScheduledTaskQueueDao scheduledTaskQueueDao,
                          @Nonnull ScheduledTaskQueueFactory scheduledTaskQueueFactory) {
         this.queueService = requireNonNull(queueService, "queueService");
+        this.scheduledTaskQueueDao = requireNonNull(scheduledTaskQueueDao, "scheduledTaskQueueDao");
         this.scheduledTaskQueueFactory = requireNonNull(scheduledTaskQueueFactory, "scheduledTaskQueueFactory");
     }
 
@@ -54,7 +59,7 @@ public class ScheduledTaskManager {
         }
 
         ScheduledTaskQueue scheduledTaskQueue = scheduledTaskQueueFactory.createScheduledTasksQueue(scheduledTaskDefinition);
-        scheduledTaskQueue.trySchedule(scheduledTaskDefinition);
+        scheduledTaskQueue.initTask();
 
         queueService.registerQueue(scheduledTaskQueue.getQueueConsumer());
 
@@ -114,6 +119,20 @@ public class ScheduledTaskManager {
         requireNonNull(timeout, "timeout");
         return queueService.awaitTermination(timeout).stream()
                 .map(queueToScheduledTaskMap::get)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Collects scheduler statistics
+     *
+     * @return collected statistics
+     */
+    public List<ScheduledTaskInfo> getScheduledTaskInfo() {
+        return scheduledTaskQueueDao.findAll().stream()
+                .map(record -> ScheduledTaskInfo.builder()
+                        .withIdentity(ScheduledTaskIdentity.of(record.getQueueName()))
+                        .withNextExecutionTime(record.getNextProcessAt())
+                        .build())
                 .collect(Collectors.toList());
     }
 }

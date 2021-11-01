@@ -2,6 +2,7 @@ package ru.yoomoney.tech.dbqueue.scheduler;
 
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTask;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskIdentity;
+import ru.yoomoney.tech.dbqueue.scheduler.models.info.ScheduledTaskInfo;
 import ru.yoomoney.tech.dbqueue.scheduler.settings.ScheduledTaskSettings;
 
 import javax.annotation.Nonnull;
@@ -59,4 +60,14 @@ public interface Scheduler {
      * @return list of scheduled task identities, which didn't stop their work (didn't terminate).
      */
     List<ScheduledTaskIdentity> awaitTermination(@Nonnull Duration timeout);
+
+    /**
+     * Collects scheduled task information.
+     *
+     * <p>Method returns all persisted tasks info which means even not registered tasks might be returned by the method. That
+     * approach gives the same result in spite of any application node.
+     *
+     * @return collected statistics
+     */
+    List<ScheduledTaskInfo> getScheduledTaskInfo();
 }

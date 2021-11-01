@@ -143,6 +143,7 @@ public class SpringSchedulerConfigurator implements SchedulerConfigurator {
                 transactionOperations
         );
         ScheduledTaskQueueDao scheduledTaskQueueDao = new SpringScheduledTaskQueuePostgresDao(
+                tableName,
                 jdbcOperations,
                 transactionOperations,
                 QueueTableSchema.builder().build()

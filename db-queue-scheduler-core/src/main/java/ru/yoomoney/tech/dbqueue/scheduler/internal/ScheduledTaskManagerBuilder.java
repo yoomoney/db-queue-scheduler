@@ -115,7 +115,7 @@ public class ScheduledTaskManagerBuilder {
                 scheduledTaskLifecycleListener
         );
 
-        return new ScheduledTaskManager(queueService, scheduledTaskQueueFactory);
+        return new ScheduledTaskManager(queueService, scheduledTaskQueueDao, scheduledTaskQueueFactory);
     }
 
     private QueueSettings buildDefaultQueueSettings() {

@@ -58,7 +58,7 @@ public class ScheduledTaskQueueFactory {
         QueueConsumer<String> queueConsumer = createQueueConsumer(queueConfig, scheduledTaskDefinition);
         QueueProducer<String> queueProducer = createQueueProducer(queueConfig);
 
-        return new ScheduledTaskQueue(queueConfig, queueConsumer, queueProducer, scheduledTaskQueueDao);
+        return new ScheduledTaskQueue(queueConfig, queueConsumer, queueProducer, scheduledTaskQueueDao, scheduledTaskDefinition);
     }
 
     private QueueConfig createQueueConfig(ScheduledTaskDefinition scheduledTaskDefinition) {

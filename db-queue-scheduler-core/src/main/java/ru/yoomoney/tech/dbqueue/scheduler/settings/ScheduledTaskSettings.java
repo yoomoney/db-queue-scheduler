@@ -16,6 +16,7 @@ public class ScheduledTaskSettings {
      * Flag that enables/disables scheduled task
      */
     private final boolean enabled;
+
     /**
      * Max interval during which task is not executed again unless task is rescheduled or the interval exceeded.
      *

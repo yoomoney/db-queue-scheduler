@@ -3,6 +3,7 @@ package ru.yoomoney.tech.dbqueue.scheduler.internal.db;
 import ru.yoomoney.tech.dbqueue.settings.QueueLocation;
 
 import javax.annotation.Nonnull;
+import java.util.List;
 
 /**
  * Direct access to db-queue tables
@@ -18,4 +19,13 @@ public interface ScheduledTaskQueueDao {
      * @return true if the queue is empty otherwise false
      */
     boolean isQueueEmpty(@Nonnull QueueLocation queueLocation);
+
+    /**
+     * Finds all records.
+     *
+     * <p>Table is not supposed to be big furthermore the method is used only for statistical purposes.
+     *
+     * @return list of all records
+     */
+    List<ScheduledTaskRecord> findAll();
 }

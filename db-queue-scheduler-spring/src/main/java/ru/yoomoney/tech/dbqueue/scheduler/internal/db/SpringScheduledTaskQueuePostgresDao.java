@@ -7,6 +7,7 @@ import ru.yoomoney.tech.dbqueue.config.QueueTableSchema;
 import ru.yoomoney.tech.dbqueue.settings.QueueLocation;
 
 import javax.annotation.Nonnull;
+import java.util.List;
 import java.util.Map;
 
 import static java.util.Objects.requireNonNull;
@@ -21,18 +22,22 @@ import static java.util.Objects.requireNonNull;
  */
 public class SpringScheduledTaskQueuePostgresDao implements ScheduledTaskQueueDao {
 
+    private final String tableName;
     private final QueueTableSchema queueTableSchema;
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
-    public SpringScheduledTaskQueuePostgresDao(@Nonnull JdbcOperations jdbcOperations,
+    public SpringScheduledTaskQueuePostgresDao(@Nonnull String tableName,
+                                               @Nonnull JdbcOperations jdbcOperations,
                                                @Nonnull TransactionOperations transactionOperations,
                                                @Nonnull QueueTableSchema queueTableSchema) {
+        requireNonNull(tableName, "tableName");
         requireNonNull(jdbcOperations, "jdbcOperations");
         requireNonNull(transactionOperations, "transactionOperations");
         requireNonNull(queueTableSchema, "queueTableSchema");
 
         this.queueTableSchema = queueTableSchema;
         this.namedParameterJdbcTemplate = new NamedParameterJdbcTemplate(jdbcOperations);
+        this.tableName = tableName;
     }
 
     @Override
@@ -51,5 +56,23 @@ public class SpringScheduledTaskQueuePostgresDao implements ScheduledTaskQueueDa
                 Long.class
         );
         return taskCount == null || taskCount.equals(0L);
+    }
+
+    @Override
+    public List<ScheduledTaskRecord> findAll() {
+        String findAllQuery = ' ' +
+                "select " + queueTableSchema.getIdField() + " as id" +
+                "     , " + queueTableSchema.getQueueNameField() + " as queue_name" +
+                "     , " + queueTableSchema.getNextProcessAtField() + " as next_process_at" +
+                "  from " + tableName;
+
+        return namedParameterJdbcTemplate.query(
+                findAllQuery,
+                (rs, index) -> ScheduledTaskRecord.builder()
+                        .withId(rs.getLong("id"))
+                        .withQueueName(rs.getString("queue_name"))
+                        .withNextProcessAt(rs.getTimestamp("next_process_at").toInstant())
+                        .build()
+        );
     }
 }

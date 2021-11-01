@@ -32,25 +32,24 @@ public class ScheduledTaskQueue {
     private final QueueConsumer<String> queueConsumer;
     private final QueueProducer<String> queueProducer;
     private final ScheduledTaskQueueDao scheduledQueueDao;
+    private final ScheduledTaskDefinition taskDefinition;
 
     public ScheduledTaskQueue(@Nonnull QueueConfig queueConfig,
                               @Nonnull QueueConsumer<String> queueConsumer,
                               @Nonnull QueueProducer<String> queueProducer,
-                              @Nonnull ScheduledTaskQueueDao scheduledQueueDao) {
+                              @Nonnull ScheduledTaskQueueDao scheduledQueueDao,
+                              @Nonnull ScheduledTaskDefinition taskDefinition) {
         this.queueConfig = requireNonNull(queueConfig, "queueConfig");
         this.queueConsumer = requireNonNull(queueConsumer, "queueConsumer");
         this.queueProducer = requireNonNull(queueProducer, "queueProducer");
         this.scheduledQueueDao = requireNonNull(scheduledQueueDao, "scheduledQueueDao");
+        this.taskDefinition = requireNonNull(taskDefinition, "taskDefinition");
     }
 
     /**
-     * Schedules a task if it has not benn scheduled yet
-     *
-     * @param taskDefinition scheduled task definition
+     * Initialises periodic tasks
      */
-    public void trySchedule(@Nonnull ScheduledTaskDefinition taskDefinition) {
-        requireNonNull(taskDefinition, "taskDefinition");
-
+    public void initTask() {
         if (!scheduledQueueDao.isQueueEmpty(queueConfig.getLocation())) {
             log.debug("scheduled task already enqueued: taskDefinition={}", taskDefinition);
             return;
