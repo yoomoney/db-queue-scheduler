@@ -59,7 +59,7 @@ public class ScheduledTaskManager {
         }
 
         ScheduledTaskQueue scheduledTaskQueue = scheduledTaskQueueFactory.createScheduledTasksQueue(scheduledTaskDefinition);
-        scheduledTaskQueue.initTask();
+        scheduledTaskQueue.initTasks();
 
         if (!scheduledTaskDefinition.isEnabled()) {
             return;
@@ -135,9 +135,9 @@ public class ScheduledTaskManager {
     }
 
     /**
-     * Collects scheduler statistics
+     * Collects scheduled task information
      *
-     * @return collected statistics
+     * @return collected task information
      */
     public List<ScheduledTaskInfo> getScheduledTaskInfo() {
         return scheduledTaskQueueDao.findAll().stream()

@@ -76,7 +76,7 @@ public interface Scheduler {
      * <p>Method returns all persisted tasks info which means even not registered tasks might be returned by the method. That
      * approach gives the same result in spite of any application node.
      *
-     * @return collected statistics
+     * @return collected task information
      */
     List<ScheduledTaskInfo> getScheduledTaskInfo();
 }

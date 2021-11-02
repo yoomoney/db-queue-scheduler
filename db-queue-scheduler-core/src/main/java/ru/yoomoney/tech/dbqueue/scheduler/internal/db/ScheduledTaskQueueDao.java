@@ -14,12 +14,19 @@ import java.util.List;
  */
 public interface ScheduledTaskQueueDao {
     /**
-     * Checks if a queue is empty
+     * Finds queue tasks
      *
-     * @param queueId identity of the checking queue
-     * @return true if the queue is empty otherwise false
+     * @param queueId identity of the queue where task should be found
+     * @return list of found tasks
      */
-    boolean isQueueEmpty(@Nonnull QueueId queueId);
+    List<ScheduledTaskRecord> findQueueTasks(@Nonnull QueueId queueId);
+
+    /**
+     * Delete tasks from the queue
+     * @param queueId identity of the queue where task should be deleted
+     * @param taskIds identity of the tasks that should be deleted
+     */
+    void deleteQueueTasks(@Nonnull QueueId queueId, List<Long> taskIds);
 
     /**
      * Updates next process date column of a queue tasks

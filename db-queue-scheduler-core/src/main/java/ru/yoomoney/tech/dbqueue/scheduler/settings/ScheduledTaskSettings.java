@@ -18,6 +18,15 @@ public class ScheduledTaskSettings {
     private final boolean enabled;
 
     /**
+     * Scheduled tasks count.
+     *
+     * <p>Count greater than one allows to run the task's job via different application nodes concurrently.
+     *
+     * <p>Normally, and by default taskCount equal to one.
+     */
+    private final int taskCount;
+
+    /**
      * Max interval during which task is not executed again unless task is rescheduled or the interval exceeded.
      *
      * <p>Normally, the second condition happens - tasks rescheduled according to its execution result. The interval
@@ -35,9 +44,11 @@ public class ScheduledTaskSettings {
     private final ScheduleSettings scheduleSettings;
 
     private ScheduledTaskSettings(boolean enabled,
+                                  int taskCount,
                                   @Nonnull Duration executionLock,
                                   @Nonnull ScheduleSettings scheduleSettings) {
         this.enabled = enabled;
+        this.taskCount = taskCount;
         this.maxExecutionLockInterval = requireNonNull(executionLock, "executionLock");
         this.scheduleSettings = requireNonNull(scheduleSettings, "scheduleSettings");
     }
@@ -56,6 +67,10 @@ public class ScheduledTaskSettings {
         return enabled;
     }
 
+    public int getTaskCount() {
+        return taskCount;
+    }
+
     @Nonnull
     public Duration getMaxExecutionLockInterval() {
         return maxExecutionLockInterval;
@@ -70,6 +85,7 @@ public class ScheduledTaskSettings {
     public String toString() {
         return "ScheduledTaskSettings{" +
                 "enabled=" + enabled +
+                ", taskCount=" + taskCount +
                 ", maxExecutionLockInterval=" + maxExecutionLockInterval +
                 ", scheduleSettings=" + scheduleSettings +
                 '}';
@@ -80,6 +96,7 @@ public class ScheduledTaskSettings {
      */
     public static final class Builder {
         private boolean enabled = true;
+        private int taskCount = 1;
         private Duration maxExecutionLockInterval;
         private ScheduleSettings scheduleSettings;
 
@@ -88,6 +105,11 @@ public class ScheduledTaskSettings {
 
         public Builder withEnabled(boolean enabled) {
             this.enabled = enabled;
+            return this;
+        }
+
+        public Builder withTaskCount(int taskCount) {
+            this.taskCount = taskCount;
             return this;
         }
 
@@ -108,7 +130,7 @@ public class ScheduledTaskSettings {
          */
         @Nonnull
         public ScheduledTaskSettings build() {
-            return new ScheduledTaskSettings(enabled, maxExecutionLockInterval, scheduleSettings);
+            return new ScheduledTaskSettings(enabled, taskCount, maxExecutionLockInterval, scheduleSettings);
         }
     }
 }

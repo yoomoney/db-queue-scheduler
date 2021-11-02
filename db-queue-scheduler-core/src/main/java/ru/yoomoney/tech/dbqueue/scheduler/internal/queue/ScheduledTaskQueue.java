@@ -7,12 +7,16 @@ import ru.yoomoney.tech.dbqueue.api.QueueConsumer;
 import ru.yoomoney.tech.dbqueue.api.QueueProducer;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.ScheduledTaskDefinition;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.db.ScheduledTaskQueueDao;
+import ru.yoomoney.tech.dbqueue.scheduler.internal.db.ScheduledTaskRecord;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.schedule.ScheduledTaskExecutionContext;
 import ru.yoomoney.tech.dbqueue.settings.QueueConfig;
 
 import javax.annotation.Nonnull;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
 
@@ -49,16 +53,37 @@ public class ScheduledTaskQueue {
     /**
      * Initialises periodic tasks
      */
-    public void initTask() {
-        if (!scheduledQueueDao.isQueueEmpty(queueConfig.getLocation().getQueueId())) {
+    public void initTasks() {
+        List<ScheduledTaskRecord> existedTasks = scheduledQueueDao.findQueueTasks(queueConfig.getLocation().getQueueId());
+        log.debug("initTasks(): currentTaskCount={}, actualTaskCount={}", existedTasks.size(), taskDefinition.getTaskCount());
+        if (existedTasks.size() > taskDefinition.getTaskCount()) {
+            pruneTasks(existedTasks.stream()
+                    .map(ScheduledTaskRecord::getId)
+                    .sorted(Comparator.reverseOrder())
+                    .limit((long) (existedTasks.size() - taskDefinition.getTaskCount()))
+                    .collect(Collectors.toList())
+            );
+        } else if (existedTasks.size() < taskDefinition.getTaskCount()) {
+            enqueueTasks(taskDefinition.getTaskCount() - existedTasks.size());
+        } else {
             log.debug("scheduled task already enqueued: taskDefinition={}", taskDefinition);
-            return;
         }
+    }
 
+    private void pruneTasks(List<Long> taskIds) {
+        scheduledQueueDao.deleteQueueTasks(queueConfig.getLocation().getQueueId(), taskIds);
+        log.debug("scheduled tasks pruned: taskDefinition={}, taskIds={}", taskDefinition, taskIds);
+    }
+
+    private void enqueueTasks(int taskCount) {
         ScheduledTaskExecutionContext taskExecutionContext = new ScheduledTaskExecutionContext();
         Instant nextExecutionTime = taskDefinition.getNextExecutionTimeProvider().getNextExecutionTime(taskExecutionContext);
-        queueProducer.enqueue(EnqueueParams.create("").withExecutionDelay(Duration.between(Instant.now(), nextExecutionTime)));
-        log.debug("scheduled task enqueued: taskDefinition={}, nextExecutionTime={}", taskDefinition, nextExecutionTime);
+        for (int i = 0; i < taskCount; i++) {
+            queueProducer.enqueue(EnqueueParams.create("")
+                    .withExecutionDelay(Duration.between(Instant.now(), nextExecutionTime)));
+        }
+        log.debug("scheduled task enqueued: taskDefinition={}, nextExecutionTime={}, taskCount={}", taskDefinition,
+                nextExecutionTime, taskCount);
     }
 
     /**

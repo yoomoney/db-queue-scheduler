@@ -13,11 +13,14 @@ import ru.yoomoney.tech.dbqueue.spring.dao.SpringDatabaseAccessLayer;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
@@ -41,29 +44,53 @@ class SpringScheduledTaskQueuePostgresDaoTest extends BaseTest {
     );
 
     @Test
-    void isQueueEmpty_should_return_true_when_no_queue_tasks() {
+    void should_find_all_queue_tasks() {
+        // given
+        QueueLocation location1 = queueLocation("queue-" + uniqueCounter.incrementAndGet());
+        QueueLocation location2 = queueLocation("queue-" + uniqueCounter.incrementAndGet());
+        QueueLocation location3 = queueLocation("queue-" + uniqueCounter.incrementAndGet());
+
+        // when
+        long task1 = databaseAccessLayer.getQueueDao().enqueue(location1, EnqueueParams.create(""));
+        long task2 = databaseAccessLayer.getQueueDao().enqueue(location1, EnqueueParams.create(""));
+        databaseAccessLayer.getQueueDao().enqueue(location2, EnqueueParams.create(""));
+
+        // then
+        assertThat(
+                scheduledTaskQueueDao.findQueueTasks(location1.getQueueId()).stream()
+                        .map(ScheduledTaskRecord::getId)
+                        .collect(Collectors.toList()),
+                containsInAnyOrder(task1, task2)
+        );
+        assertThat(scheduledTaskQueueDao.findQueueTasks(location3.getQueueId()), equalTo(Collections.emptyList()));
+    }
+
+    @Test
+    void should_delete_queue_tasks() {
         // given
         QueueLocation location1 = queueLocation("queue-" + uniqueCounter.incrementAndGet());
         QueueLocation location2 = queueLocation("queue-" + uniqueCounter.incrementAndGet());
 
         // when
-        databaseAccessLayer.getQueueDao().enqueue(location2, EnqueueParams.create(""));
+        long task1 = databaseAccessLayer.getQueueDao().enqueue(location1, EnqueueParams.create(""));
+        long task2 = databaseAccessLayer.getQueueDao().enqueue(location1, EnqueueParams.create(""));
+        long task3 = databaseAccessLayer.getQueueDao().enqueue(location2, EnqueueParams.create(""));
+        scheduledTaskQueueDao.deleteQueueTasks(location1.getQueueId(), List.of(task1, task3));
 
         // then
-        assertThat(scheduledTaskQueueDao.isQueueEmpty(location1.getQueueId()), equalTo(true));
-    }
+        assertThat(
+                scheduledTaskQueueDao.findQueueTasks(location1.getQueueId()).stream()
+                        .map(ScheduledTaskRecord::getId)
+                        .collect(Collectors.toList()),
+                containsInAnyOrder(task2)
+        );
 
-
-    @Test
-    void isQueueEmpty_should_return_false_when_queue_tasks_exist() {
-        // given
-        QueueLocation location = queueLocation("queue-" + uniqueCounter.incrementAndGet());
-
-        // when
-        databaseAccessLayer.getQueueDao().enqueue(location, EnqueueParams.create(""));
-
-        // then
-        assertThat(scheduledTaskQueueDao.isQueueEmpty(location.getQueueId()), equalTo(false));
+        assertThat(
+                scheduledTaskQueueDao.findQueueTasks(location2.getQueueId()).stream()
+                        .map(ScheduledTaskRecord::getId)
+                        .collect(Collectors.toList()),
+                containsInAnyOrder(task3)
+        );
     }
 
     @Test

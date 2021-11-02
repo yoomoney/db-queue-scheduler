@@ -47,6 +47,7 @@ class DefaultScheduler implements Scheduler {
 
         ScheduledTaskDefinition scheduledTaskDefinition = ScheduledTaskDefinition.builder()
                 .withEnabled(scheduledTaskSettings.isEnabled())
+                .withTaskCount(scheduledTaskSettings.getTaskCount())
                 .withMaxExecutionLockInterval(scheduledTaskSettings.getMaxExecutionLockInterval())
                 .withScheduledTask(scheduledTask)
                 .withNextExecutionTimeProvider(executionTimeProvider)

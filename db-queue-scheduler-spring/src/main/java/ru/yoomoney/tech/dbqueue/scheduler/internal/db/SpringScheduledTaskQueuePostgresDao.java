@@ -45,21 +45,36 @@ public class SpringScheduledTaskQueuePostgresDao implements ScheduledTaskQueueDa
     }
 
     @Override
-    public boolean isQueueEmpty(@Nonnull QueueId queueId) {
-        requireNonNull(queueId, "queueId");
+    public List<ScheduledTaskRecord> findQueueTasks(@Nonnull QueueId queueId) {
+        String findQueueTasksQuery = ' ' +
+                "select " + queueTableSchema.getIdField() + " as id" +
+                "     , " + queueTableSchema.getQueueNameField() + " as queue_name" +
+                "     , " + queueTableSchema.getNextProcessAtField() + " as next_process_at" +
+                "  from " + tableName +
+                " where " + queueTableSchema.getQueueNameField() + " = :queue_name";
 
-        String isQueueEmptyQuery = String.format(
-                "select count(1) from %s where %s = :queueName",
-                tableName,
-                queueTableSchema.getQueueNameField()
+        return namedParameterJdbcTemplate.query(
+                findQueueTasksQuery,
+                Map.of("queue_name", queueId.asString()),
+                (rs, index) -> ScheduledTaskRecord.builder()
+                        .withId(rs.getLong("id"))
+                        .withQueueName(rs.getString("queue_name"))
+                        .withNextProcessAt(rs.getTimestamp("next_process_at").toInstant())
+                        .build()
+        );
+    }
 
-        );
-        Long taskCount = namedParameterJdbcTemplate.queryForObject(
-                isQueueEmptyQuery,
-                Map.of("queueName", queueId.asString()),
-                Long.class
-        );
-        return taskCount == null || taskCount.equals(0L);
+    @Override
+    public void deleteQueueTasks(@Nonnull QueueId queueId, List<Long> taskIds) {
+        String deleteTasksQuery = ' ' +
+                "delete from " + tableName +
+                " where " + queueTableSchema.getQueueNameField() + " = :queue_name" +
+                "   and " + queueTableSchema.getIdField() + " in (:task_ids)";
+
+        transactionOperations.executeWithoutResult(status -> namedParameterJdbcTemplate.update(
+                deleteTasksQuery,
+                Map.of("queue_name", queueId.asString(), "task_ids", taskIds)
+        ));
     }
 
     @Override

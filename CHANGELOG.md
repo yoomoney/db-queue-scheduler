@@ -2,6 +2,8 @@
 ### NEXT_VERSION_DESCRIPTION_BEGIN
 * Scheduled tasks info feature implemented that allows listing all scheduled tasks details;
 * Rescheduling tasks feature implemented that allows forcing task execution manually;
+* Multiple scheduled task feature implemented that allows executing task's 
+  job concurrently by several application nodes; 
 ### NEXT_VERSION_DESCRIPTION_END
 ## [1.0.0](https://github.com/yoomoney/db-queue-scheduler/pull/5) (29-10-2021)
 

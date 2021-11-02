@@ -20,6 +20,12 @@ public class ScheduledTaskDefinition {
      * Flag that enables/disables scheduled task
      */
     private final boolean enabled;
+
+    /**
+     * Scheduled task count
+     */
+    private final int taskCount;
+
     /**
      * Unique identity of a scheduled task
      */
@@ -44,10 +50,12 @@ public class ScheduledTaskDefinition {
     private final ScheduledTask scheduledTask;
 
     private ScheduledTaskDefinition(boolean enabled,
+                                    int taskCount,
                                     @Nonnull Duration maxExecutionLockInterval,
                                     @Nonnull NextExecutionTimeProvider nextExecutionTimeProvider,
                                     @Nonnull ScheduledTask scheduledTask) {
         this.enabled = enabled;
+        this.taskCount = taskCount;
         this.maxExecutionLockInterval = requireNonNull(maxExecutionLockInterval, "maxExecutionLockInterval");
         this.nextExecutionTimeProvider = requireNonNull(nextExecutionTimeProvider, "nextExecutionTimeProvider");
         this.scheduledTask = requireNonNull(scheduledTask, "scheduledTask");
@@ -66,6 +74,10 @@ public class ScheduledTaskDefinition {
 
     public boolean isEnabled() {
         return enabled;
+    }
+
+    public int getTaskCount() {
+        return taskCount;
     }
 
     @Nonnull
@@ -91,6 +103,7 @@ public class ScheduledTaskDefinition {
     public String toString() {
         return "ScheduledTaskDefinition{" +
                 "enabled=" + enabled +
+                ", taskCount=" + taskCount +
                 ", identity=" + identity +
                 ", maxExecutionLockInterval=" + maxExecutionLockInterval +
                 ", nextExecutionTimeProvider=" + nextExecutionTimeProvider +
@@ -103,6 +116,7 @@ public class ScheduledTaskDefinition {
      */
     public static final class Builder {
         private boolean enabled;
+        private int taskCount;
         private Duration maxExecutionLockInterval;
         private NextExecutionTimeProvider nextExecutionTimeProvider;
         private ScheduledTask scheduledTask;
@@ -112,6 +126,11 @@ public class ScheduledTaskDefinition {
 
         public Builder withEnabled(boolean enabled) {
             this.enabled = enabled;
+            return this;
+        }
+
+        public Builder withTaskCount(int taskCount) {
+            this.taskCount = taskCount;
             return this;
         }
 
@@ -137,7 +156,8 @@ public class ScheduledTaskDefinition {
          */
         @Nonnull
         public ScheduledTaskDefinition build() {
-            return new ScheduledTaskDefinition(enabled, maxExecutionLockInterval, nextExecutionTimeProvider, scheduledTask);
+            return new ScheduledTaskDefinition(enabled, taskCount, maxExecutionLockInterval, nextExecutionTimeProvider,
+                    scheduledTask);
         }
     }
 }
