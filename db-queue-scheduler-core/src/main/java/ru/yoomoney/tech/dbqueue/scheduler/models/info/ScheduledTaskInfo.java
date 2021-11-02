@@ -55,7 +55,7 @@ public class ScheduledTaskInfo {
 
     @Override
     public String toString() {
-        return "ScheduledTaskStatistic{" +
+        return "ScheduledTaskInfo{" +
                 "identity=" + identity +
                 ", nextExecutionTime=" + nextExecutionTime +
                 '}';
