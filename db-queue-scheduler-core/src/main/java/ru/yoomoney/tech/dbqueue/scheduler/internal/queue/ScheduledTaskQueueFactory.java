@@ -12,7 +12,6 @@ import ru.yoomoney.tech.dbqueue.scheduler.internal.db.ScheduledTaskQueueDao;
 import ru.yoomoney.tech.dbqueue.settings.FailRetryType;
 import ru.yoomoney.tech.dbqueue.settings.FailureSettings;
 import ru.yoomoney.tech.dbqueue.settings.QueueConfig;
-import ru.yoomoney.tech.dbqueue.settings.QueueId;
 import ru.yoomoney.tech.dbqueue.settings.QueueLocation;
 import ru.yoomoney.tech.dbqueue.settings.QueueSettings;
 
@@ -28,17 +27,20 @@ import static java.util.Objects.requireNonNull;
  */
 public class ScheduledTaskQueueFactory {
     private final String queueTableName;
+    private final QueueIdMapper queueIdMapper;
     private final QueueSettings defaultQueueSettings;
     private final ScheduledTaskQueueDao scheduledTaskQueueDao;
     private final QueueShardRouter<String, ? extends DatabaseAccessLayer> queueShardRouter;
     private final ScheduledTaskLifecycleListener scheduledTaskLifecycleListener;
 
     public ScheduledTaskQueueFactory(@Nonnull String queueTableName,
+                                     @Nonnull QueueIdMapper queueIdMapper,
                                      @Nonnull QueueSettings defaultQueueSettings,
                                      @Nonnull ScheduledTaskQueueDao scheduledTaskQueueDao,
                                      @Nonnull QueueShardRouter<String, ? extends DatabaseAccessLayer> queueShardRouter,
                                      @Nonnull ScheduledTaskLifecycleListener scheduledTaskLifecycleListener) {
         this.queueTableName = requireNonNull(queueTableName, "queueTableName");
+        this.queueIdMapper = requireNonNull(queueIdMapper, "queueIdMapper");
         this.defaultQueueSettings = requireNonNull(defaultQueueSettings, "defaultQueueSettings");
         this.scheduledTaskQueueDao = requireNonNull(scheduledTaskQueueDao, "scheduledTaskQueueDao");
         this.queueShardRouter = requireNonNull(queueShardRouter, "queueShardRouter");
@@ -58,13 +60,13 @@ public class ScheduledTaskQueueFactory {
         QueueConsumer<String> queueConsumer = createQueueConsumer(queueConfig, scheduledTaskDefinition);
         QueueProducer<String> queueProducer = createQueueProducer(queueConfig);
 
-        return new ScheduledTaskQueue(queueConfig, queueConsumer, queueProducer, scheduledTaskQueueDao);
+        return new ScheduledTaskQueue(queueConfig, queueConsumer, queueProducer, scheduledTaskQueueDao, scheduledTaskDefinition);
     }
 
     private QueueConfig createQueueConfig(ScheduledTaskDefinition scheduledTaskDefinition) {
         return new QueueConfig(
                 QueueLocation.builder()
-                        .withQueueId(new QueueId(scheduledTaskDefinition.getIdentity().asString()))
+                        .withQueueId(queueIdMapper.toQueueId(scheduledTaskDefinition.getIdentity()))
                         .withTableName(queueTableName)
                         .build(),
                 QueueSettings.builder()

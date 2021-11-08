@@ -8,10 +8,12 @@ import ru.yoomoney.tech.dbqueue.scheduler.internal.schedule.NextExecutionTimePro
 import ru.yoomoney.tech.dbqueue.scheduler.internal.schedule.NextExecutionTimeProviderFactory;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTask;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskIdentity;
+import ru.yoomoney.tech.dbqueue.scheduler.models.info.ScheduledTaskInfo;
 import ru.yoomoney.tech.dbqueue.scheduler.settings.ScheduledTaskSettings;
 
 import javax.annotation.Nonnull;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 
 import static java.util.Objects.requireNonNull;
@@ -30,7 +32,7 @@ class DefaultScheduler implements Scheduler {
 
     DefaultScheduler(@Nonnull ScheduledTaskManager scheduledTaskManager,
                      @Nonnull NextExecutionTimeProviderFactory nextExecutionTimeProviderFactory) {
-        this.scheduledTaskManager = requireNonNull(scheduledTaskManager, "scheduledTaskRegistry");
+        this.scheduledTaskManager = requireNonNull(scheduledTaskManager, "scheduledTaskManager");
         this.nextExecutionTimeProviderFactory = requireNonNull(nextExecutionTimeProviderFactory, "nextExecutionTimeProviderFactory");
     }
 
@@ -53,6 +55,15 @@ class DefaultScheduler implements Scheduler {
         scheduledTaskManager.schedule(scheduledTaskDefinition);
 
         log.info("task scheduled: identity={}, settings={}", scheduledTask.getIdentity(), scheduledTaskSettings);
+    }
+
+    @Override
+    public void reschedule(@Nonnull ScheduledTaskIdentity taskIdentity, @Nonnull Instant nextExecutionTime) {
+        requireNonNull(taskIdentity, "taskIdentity");
+        requireNonNull(nextExecutionTime, "nextExecutionTime");
+
+        scheduledTaskManager.reschedule(taskIdentity, nextExecutionTime);
+        log.info("task rescheduled: identity={}, nextExecutionTime={}", taskIdentity, nextExecutionTime);
     }
 
     @Override
@@ -82,5 +93,10 @@ class DefaultScheduler implements Scheduler {
     @Override
     public List<ScheduledTaskIdentity> awaitTermination(@Nonnull Duration timeout) {
         return scheduledTaskManager.awaitTermination(timeout);
+    }
+
+    @Override
+    public List<ScheduledTaskInfo> getScheduledTaskInfo() {
+        return scheduledTaskManager.getScheduledTaskInfo();
     }
 }

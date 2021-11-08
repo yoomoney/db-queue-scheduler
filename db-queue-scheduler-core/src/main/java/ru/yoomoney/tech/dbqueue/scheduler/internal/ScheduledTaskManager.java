@@ -1,13 +1,17 @@
 package ru.yoomoney.tech.dbqueue.scheduler.internal;
 
 import ru.yoomoney.tech.dbqueue.config.QueueService;
+import ru.yoomoney.tech.dbqueue.scheduler.internal.db.ScheduledTaskQueueDao;
+import ru.yoomoney.tech.dbqueue.scheduler.internal.queue.QueueIdMapper;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.queue.ScheduledTaskQueue;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.queue.ScheduledTaskQueueFactory;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskIdentity;
+import ru.yoomoney.tech.dbqueue.scheduler.models.info.ScheduledTaskInfo;
 import ru.yoomoney.tech.dbqueue.settings.QueueId;
 
 import javax.annotation.Nonnull;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -23,15 +27,20 @@ import static java.util.Objects.requireNonNull;
  */
 public class ScheduledTaskManager {
     private final QueueService queueService;
+    private final QueueIdMapper queueIdMapper;
+    private final ScheduledTaskQueueDao scheduledTaskQueueDao;
     private final ScheduledTaskQueueFactory scheduledTaskQueueFactory;
     private final Map<ScheduledTaskIdentity, ScheduledTaskDefinition> registry = new ConcurrentHashMap<>();
-    private final Map<QueueId, ScheduledTaskIdentity> queueToScheduledTaskMap = new ConcurrentHashMap<>();
     private final Object mutex = new Object();
     private volatile boolean started = false;
 
     ScheduledTaskManager(@Nonnull QueueService queueService,
+                         @Nonnull QueueIdMapper queueIdMapper,
+                         @Nonnull ScheduledTaskQueueDao scheduledTaskQueueDao,
                          @Nonnull ScheduledTaskQueueFactory scheduledTaskQueueFactory) {
         this.queueService = requireNonNull(queueService, "queueService");
+        this.queueIdMapper = requireNonNull(queueIdMapper, "queueIdMapper");
+        this.scheduledTaskQueueDao = requireNonNull(scheduledTaskQueueDao, "scheduledTaskQueueDao");
         this.scheduledTaskQueueFactory = requireNonNull(scheduledTaskQueueFactory, "scheduledTaskQueueFactory");
     }
 
@@ -49,25 +58,33 @@ public class ScheduledTaskManager {
                     scheduledTaskDefinition.getIdentity()));
         }
 
+        ScheduledTaskQueue scheduledTaskQueue = scheduledTaskQueueFactory.createScheduledTasksQueue(scheduledTaskDefinition);
+        scheduledTaskQueue.initTask();
+
         if (!scheduledTaskDefinition.isEnabled()) {
             return;
         }
 
-        ScheduledTaskQueue scheduledTaskQueue = scheduledTaskQueueFactory.createScheduledTasksQueue(scheduledTaskDefinition);
-        scheduledTaskQueue.trySchedule(scheduledTaskDefinition);
-
         queueService.registerQueue(scheduledTaskQueue.getQueueConsumer());
-
-        queueToScheduledTaskMap.put(
-                scheduledTaskQueue.getQueueConsumer().getQueueConfig().getLocation().getQueueId(),
-                scheduledTaskDefinition.getIdentity()
-        );
 
         synchronized (mutex) {
             if (started) {
                 queueService.start(scheduledTaskQueue.getQueueConsumer().getQueueConfig().getLocation().getQueueId());
             }
         }
+    }
+
+    /**
+     * Updates next execution time of a scheduled task
+     *
+     * @param taskIdentity identity of the task that should be rescheduled
+     * @param nextExecutionTime date time at which the task should be executed
+     */
+    public void reschedule(@Nonnull ScheduledTaskIdentity taskIdentity, @Nonnull Instant nextExecutionTime) {
+        requireNonNull(taskIdentity, "taskIdentity");
+        requireNonNull(nextExecutionTime, "nextExecutionTime");
+
+        scheduledTaskQueueDao.updateNextProcessDate(queueIdMapper.toQueueId(taskIdentity), nextExecutionTime);
     }
 
     /**
@@ -113,7 +130,21 @@ public class ScheduledTaskManager {
     public List<ScheduledTaskIdentity> awaitTermination(@Nonnull Duration timeout) {
         requireNonNull(timeout, "timeout");
         return queueService.awaitTermination(timeout).stream()
-                .map(queueToScheduledTaskMap::get)
+                .map(queueIdMapper::toScheduledTaskIdentity)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Collects scheduler statistics
+     *
+     * @return collected statistics
+     */
+    public List<ScheduledTaskInfo> getScheduledTaskInfo() {
+        return scheduledTaskQueueDao.findAll().stream()
+                .map(record -> ScheduledTaskInfo.builder()
+                        .withIdentity(queueIdMapper.toScheduledTaskIdentity(new QueueId(record.getQueueName())))
+                        .withNextExecutionTime(record.getNextProcessAt())
+                        .build())
                 .collect(Collectors.toList());
     }
 }

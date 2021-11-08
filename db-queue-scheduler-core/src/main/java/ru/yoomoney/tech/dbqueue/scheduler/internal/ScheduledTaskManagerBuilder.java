@@ -9,6 +9,7 @@ import ru.yoomoney.tech.dbqueue.config.impl.NoopTaskLifecycleListener;
 import ru.yoomoney.tech.dbqueue.config.impl.NoopThreadLifecycleListener;
 import ru.yoomoney.tech.dbqueue.scheduler.config.ScheduledTaskLifecycleListener;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.db.ScheduledTaskQueueDao;
+import ru.yoomoney.tech.dbqueue.scheduler.internal.queue.QueueIdMapper;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.queue.ScheduledTaskQueueFactory;
 import ru.yoomoney.tech.dbqueue.settings.ExtSettings;
 import ru.yoomoney.tech.dbqueue.settings.FailRetryType;
@@ -102,6 +103,7 @@ public class ScheduledTaskManagerBuilder {
         QueueShard<?> singleQueueShard = new QueueShard<>(DEFAULT_DB_QUEUE_SHARD_ID, databaseAccessLayer);
         QueueSettings defaultQueueSettings = buildDefaultQueueSettings();
 
+        QueueIdMapper queueIdMapper = new QueueIdMapper();
         QueueService queueService = new QueueService(
                 Collections.singletonList(singleQueueShard),
                 NoopThreadLifecycleListener.getInstance(),
@@ -109,13 +111,14 @@ public class ScheduledTaskManagerBuilder {
         );
         ScheduledTaskQueueFactory scheduledTaskQueueFactory = new ScheduledTaskQueueFactory(
                 tableName,
+                queueIdMapper,
                 defaultQueueSettings,
                 scheduledTaskQueueDao,
                 new SingleQueueShardRouter<>(singleQueueShard),
                 scheduledTaskLifecycleListener
         );
 
-        return new ScheduledTaskManager(queueService, scheduledTaskQueueFactory);
+        return new ScheduledTaskManager(queueService, queueIdMapper, scheduledTaskQueueDao, scheduledTaskQueueFactory);
     }
 
     private QueueSettings buildDefaultQueueSettings() {
