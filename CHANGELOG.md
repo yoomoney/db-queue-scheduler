@@ -1,3 +1,6 @@
+### NEXT_VERSION_TYPE=MAJOR|MINOR|PATCH
+### NEXT_VERSION_DESCRIPTION_BEGIN
+### NEXT_VERSION_DESCRIPTION_END
 ## [1.1.0](https://github.com/yoomoney/db-queue-scheduler/pull/6) (08-11-2021)
 
 * Scheduled tasks info feature implemented that allows listing all scheduled tasks details;
