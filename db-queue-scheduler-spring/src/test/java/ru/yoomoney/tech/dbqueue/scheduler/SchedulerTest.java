@@ -11,8 +11,13 @@ import ru.yoomoney.tech.dbqueue.scheduler.settings.ScheduledTaskSettings;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -59,7 +64,7 @@ public class SchedulerTest extends BaseTest {
     }
 
     @Test
-    public void should_schedule_task_once() {
+    public void should_schedule_task_once() throws InterruptedException {
         // given
         Scheduler scheduler1 = new SpringSchedulerConfigurator()
                 .withDatabaseDialect(DatabaseDialect.POSTGRESQL)
@@ -93,6 +98,10 @@ public class SchedulerTest extends BaseTest {
                         .withScheduleSettings(ScheduleSettings.fixedDelay(Duration.ofSeconds(1L)))
                         .build()
         );
+        runConcurrently(
+                () -> scheduler1.start(),
+                () -> scheduler2.start()
+        );
 
         // then
         assertThat(
@@ -100,6 +109,26 @@ public class SchedulerTest extends BaseTest {
                         scheduledTask.getIdentity().asString()),
                 equalTo(1L)
         );
+    }
+
+    private void runConcurrently(Runnable... bodies) throws InterruptedException {
+        CyclicBarrier barrier = new CyclicBarrier(bodies.length);
+
+        List<Thread> threads = Arrays.stream(bodies)
+                .map(body -> new Thread(() -> {
+                    try {
+                        barrier.await(1L, TimeUnit.SECONDS);
+                    } catch (Exception ex) {
+                        throw new RuntimeException(ex);
+                    }
+                    body.run();
+                }))
+                .peek(Thread::start)
+                .collect(Collectors.toList());
+
+        for (Thread thread : threads) {
+            thread.join();
+        }
     }
 
     @Test
@@ -149,6 +178,7 @@ public class SchedulerTest extends BaseTest {
         );
 
         // when
+        scheduler.start();
         scheduler.schedule(
                 scheduledTask,
                 ScheduledTaskSettings.builder()

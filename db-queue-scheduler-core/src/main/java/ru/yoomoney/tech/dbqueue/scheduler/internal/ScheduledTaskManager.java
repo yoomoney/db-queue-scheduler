@@ -30,7 +30,7 @@ public class ScheduledTaskManager {
     private final QueueIdMapper queueIdMapper;
     private final ScheduledTaskQueueDao scheduledTaskQueueDao;
     private final ScheduledTaskQueueFactory scheduledTaskQueueFactory;
-    private final Map<ScheduledTaskIdentity, ScheduledTaskDefinition> registry = new ConcurrentHashMap<>();
+    private final Map<ScheduledTaskIdentity, ScheduledTaskQueue> registry = new ConcurrentHashMap<>();
     private final Object mutex = new Object();
     private volatile boolean started = false;
 
@@ -52,23 +52,23 @@ public class ScheduledTaskManager {
      */
     public void schedule(@Nonnull ScheduledTaskDefinition scheduledTaskDefinition) {
         requireNonNull(scheduledTaskDefinition, "scheduledTaskDefinition");
-
-        if (registry.putIfAbsent(scheduledTaskDefinition.getIdentity(), scheduledTaskDefinition) != null) {
-            throw new RuntimeException(String.format("scheduled task already registered: identity=%s",
-                    scheduledTaskDefinition.getIdentity()));
-        }
-
-        ScheduledTaskQueue scheduledTaskQueue = scheduledTaskQueueFactory.createScheduledTasksQueue(scheduledTaskDefinition);
-        scheduledTaskQueue.initTask();
-
-        if (!scheduledTaskDefinition.isEnabled()) {
-            return;
-        }
-
-        queueService.registerQueue(scheduledTaskQueue.getQueueConsumer());
-
         synchronized (mutex) {
+            if (registry.containsKey(scheduledTaskDefinition.getIdentity())) {
+                throw new RuntimeException(String.format("scheduled task already registered: identity=%s",
+                        scheduledTaskDefinition.getIdentity()));
+            }
+
+            ScheduledTaskQueue scheduledTaskQueue = scheduledTaskQueueFactory.createScheduledTasksQueue(scheduledTaskDefinition);
+            registry.put(scheduledTaskDefinition.getIdentity(), scheduledTaskQueue);
+
+            if (!scheduledTaskDefinition.isEnabled()) {
+                return;
+            }
+
+            queueService.registerQueue(scheduledTaskQueue.getQueueConsumer());
+
             if (started) {
+                scheduledTaskQueue.initTask();
                 queueService.start(scheduledTaskQueue.getQueueConsumer().getQueueConfig().getLocation().getQueueId());
             }
         }
@@ -95,6 +95,7 @@ public class ScheduledTaskManager {
             if (started) {
                 return;
             }
+            registry.values().forEach(ScheduledTaskQueue::initTask);
             queueService.start();
             started = true;
         }

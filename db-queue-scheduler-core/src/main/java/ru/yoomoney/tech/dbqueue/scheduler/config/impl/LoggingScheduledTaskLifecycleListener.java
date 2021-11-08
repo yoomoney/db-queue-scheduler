@@ -17,7 +17,7 @@ import java.time.Instant;
  * @since 27.10.2021
  */
 public class LoggingScheduledTaskLifecycleListener implements ScheduledTaskLifecycleListener {
-    private final Logger log = LoggerFactory.getLogger(LoggingScheduledTaskLifecycleListener.class);
+    private static final Logger log = LoggerFactory.getLogger(LoggingScheduledTaskLifecycleListener.class);
 
     @Override
     public void started(@Nonnull ScheduledTaskIdentity taskIdentity) {
