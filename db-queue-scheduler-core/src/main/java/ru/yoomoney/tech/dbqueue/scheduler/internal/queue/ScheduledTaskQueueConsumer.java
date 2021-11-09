@@ -9,6 +9,8 @@ import ru.yoomoney.tech.dbqueue.api.TaskPayloadTransformer;
 import ru.yoomoney.tech.dbqueue.api.impl.NoopPayloadTransformer;
 import ru.yoomoney.tech.dbqueue.scheduler.config.ScheduledTaskLifecycleListener;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.ScheduledTaskDefinition;
+import ru.yoomoney.tech.dbqueue.scheduler.internal.db.ScheduledTaskQueueDao;
+import ru.yoomoney.tech.dbqueue.scheduler.internal.db.ScheduledTaskRecord;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.schedule.ScheduledTaskExecutionContext;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTask;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskExecutionResult;
@@ -36,21 +38,26 @@ class ScheduledTaskQueueConsumer implements QueueConsumer<String> {
     private final QueueConfig queueConfig;
     private final ScheduledTaskDefinition scheduledTaskDefinition;
     private final ScheduledTaskLifecycleListener scheduledTaskLifecycleListener;
+    private final ScheduledTaskQueueDao scheduledTaskQueueDao;
     private final Clock clock;
 
     ScheduledTaskQueueConsumer(@Nonnull QueueConfig queueConfig,
                                @Nonnull ScheduledTaskDefinition scheduledTaskDefinition,
-                               @Nonnull ScheduledTaskLifecycleListener scheduledTaskLifecycleListener) {
-        this(queueConfig, scheduledTaskDefinition, scheduledTaskLifecycleListener, Clock.systemDefaultZone());
+                               @Nonnull ScheduledTaskLifecycleListener scheduledTaskLifecycleListener,
+                               @Nonnull ScheduledTaskQueueDao scheduledTaskQueueDao) {
+        this(queueConfig, scheduledTaskDefinition, scheduledTaskLifecycleListener, scheduledTaskQueueDao,
+                Clock.systemDefaultZone());
     }
 
     ScheduledTaskQueueConsumer(@Nonnull QueueConfig queueConfig,
                                @Nonnull ScheduledTaskDefinition scheduledTaskDefinition,
                                @Nonnull ScheduledTaskLifecycleListener scheduledTaskLifecycleListener,
+                               @Nonnull ScheduledTaskQueueDao scheduledTaskQueueDao,
                                @Nonnull Clock clock) {
         this.queueConfig = requireNonNull(queueConfig, "queueConfig");
         this.scheduledTaskDefinition = requireNonNull(scheduledTaskDefinition, "scheduledTaskDefinition");
         this.scheduledTaskLifecycleListener = requireNonNull(scheduledTaskLifecycleListener, "scheduledTaskLifecycleListener");
+        this.scheduledTaskQueueDao = requireNonNull(scheduledTaskQueueDao, "scheduledTaskQueueDao");
         this.clock = requireNonNull(clock, "clock");
     }
 
@@ -60,10 +67,20 @@ class ScheduledTaskQueueConsumer implements QueueConsumer<String> {
         scheduledTaskLifecycleListener.started(scheduledTaskDefinition.getIdentity());
         log.debug("execute(): scheduledTaskIdentity={}, task={}", scheduledTaskDefinition.getIdentity(), task);
 
+        ScheduledTaskRecord queueTask = scheduledTaskQueueDao.findQueueTask(queueConfig.getLocation().getQueueId()).orElseThrow();
+
         long start = clock.millis();
         ScheduledTaskExecutionContext context = new ScheduledTaskExecutionContext();
         ScheduledTaskExecutionResult executionResult = executeTask(context);
         long processingTaskTime = clock.millis() - start;
+
+        if (executionResult.getType() == ScheduledTaskExecutionResult.Type.ERROR
+                && executionResult.getNextExecutionTime().isEmpty()) {
+            log.debug("task executed: executionResult={}, nextExecutionTime={}", executionResult, queueTask.getNextProcessAt());
+            scheduledTaskLifecycleListener.finished(scheduledTaskDefinition.getIdentity(), executionResult,
+                    queueTask.getNextProcessAt(), processingTaskTime);
+            return TaskExecutionResult.fail();
+        }
 
         Instant nextExecutionTime = executionResult.getNextExecutionTime().orElseGet(() ->
                         scheduledTaskDefinition.getNextExecutionTimeProvider().getNextExecutionTime(context));

@@ -5,6 +5,7 @@ import ru.yoomoney.tech.dbqueue.settings.QueueId;
 import javax.annotation.Nonnull;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Direct access to db-queue tables
@@ -19,7 +20,7 @@ public interface ScheduledTaskQueueDao {
      * @param queueId identity of the checking queue
      * @return true if the queue is empty otherwise false
      */
-    boolean isQueueEmpty(@Nonnull QueueId queueId);
+    Optional<ScheduledTaskRecord> findQueueTask(@Nonnull QueueId queueId);
 
     /**
      * Updates next process date column of a queue tasks

@@ -1,7 +1,7 @@
 package ru.yoomoney.tech.dbqueue.scheduler.settings;
 
 import javax.annotation.Nonnull;
-import java.time.Duration;
+import javax.annotation.Nullable;
 
 import static java.util.Objects.requireNonNull;
 
@@ -18,15 +18,10 @@ public class ScheduledTaskSettings {
     private final boolean enabled;
 
     /**
-     * Max interval during which task is not executed again unless task is rescheduled or the interval exceeded.
-     *
-     * <p>Normally, the second condition happens - tasks rescheduled according to its execution result. The interval
-     * prevents unexpected conditions - an application crashed, some dead-lock happened, etc.
-     *
-     * <p>Pay attention, small interval may lead to a simultaneous execution of the same task by different nodes.
+     * Settings of retrying scheduled tasks in case of failure or freezing.
      */
     @Nonnull
-    private final Duration maxExecutionLockInterval;
+    private final RetrySettings failureSettings;
 
     /**
      * Scheduled settings
@@ -35,11 +30,11 @@ public class ScheduledTaskSettings {
     private final ScheduleSettings scheduleSettings;
 
     private ScheduledTaskSettings(boolean enabled,
-                                  @Nonnull Duration executionLock,
-                                  @Nonnull ScheduleSettings scheduleSettings) {
+                                  @Nonnull ScheduleSettings scheduleSettings,
+                                  @Nonnull RetrySettings failureSettings) {
         this.enabled = enabled;
-        this.maxExecutionLockInterval = requireNonNull(executionLock, "executionLock");
         this.scheduleSettings = requireNonNull(scheduleSettings, "scheduleSettings");
+        this.failureSettings = requireNonNull(failureSettings, "failureSettings");
     }
 
     /**
@@ -57,20 +52,20 @@ public class ScheduledTaskSettings {
     }
 
     @Nonnull
-    public Duration getMaxExecutionLockInterval() {
-        return maxExecutionLockInterval;
+    public ScheduleSettings getScheduleSettings() {
+        return scheduleSettings;
     }
 
     @Nonnull
-    public ScheduleSettings getScheduleSettings() {
-        return scheduleSettings;
+    public RetrySettings getFailureSettings() {
+        return failureSettings;
     }
 
     @Override
     public String toString() {
         return "ScheduledTaskSettings{" +
                 "enabled=" + enabled +
-                ", maxExecutionLockInterval=" + maxExecutionLockInterval +
+                ", failureSettings=" + failureSettings +
                 ", scheduleSettings=" + scheduleSettings +
                 '}';
     }
@@ -80,8 +75,8 @@ public class ScheduledTaskSettings {
      */
     public static final class Builder {
         private boolean enabled = true;
-        private Duration maxExecutionLockInterval;
         private ScheduleSettings scheduleSettings;
+        private RetrySettings failureSettings;
 
         private Builder() {
         }
@@ -91,13 +86,13 @@ public class ScheduledTaskSettings {
             return this;
         }
 
-        public Builder withMaxExecutionLockInterval(@Nonnull Duration maxExecutionLockInterval) {
-            this.maxExecutionLockInterval = maxExecutionLockInterval;
+        public Builder withScheduleSettings(@Nonnull ScheduleSettings scheduleSettings) {
+            this.scheduleSettings = scheduleSettings;
             return this;
         }
 
-        public Builder withScheduleSettings(@Nonnull ScheduleSettings scheduleSettings) {
-            this.scheduleSettings = scheduleSettings;
+        public Builder withFailureSettings(@Nullable RetrySettings failureSettings) {
+            this.failureSettings = failureSettings;
             return this;
         }
 
@@ -108,7 +103,7 @@ public class ScheduledTaskSettings {
          */
         @Nonnull
         public ScheduledTaskSettings build() {
-            return new ScheduledTaskSettings(enabled, maxExecutionLockInterval, scheduleSettings);
+            return new ScheduledTaskSettings(enabled, scheduleSettings, failureSettings);
         }
     }
 }
