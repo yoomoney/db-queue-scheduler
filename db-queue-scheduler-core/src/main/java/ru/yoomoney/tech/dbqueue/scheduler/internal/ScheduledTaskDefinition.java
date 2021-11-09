@@ -3,7 +3,7 @@ package ru.yoomoney.tech.dbqueue.scheduler.internal;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.schedule.NextExecutionTimeProvider;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTask;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskIdentity;
-import ru.yoomoney.tech.dbqueue.scheduler.settings.RetrySettings;
+import ru.yoomoney.tech.dbqueue.scheduler.settings.FailureSettings;
 
 import javax.annotation.Nonnull;
 
@@ -29,7 +29,7 @@ public class ScheduledTaskDefinition {
     /**
      * Scheduled task retry settings
      */
-    private final RetrySettings failureSettings;
+    private final FailureSettings failureSettings;
 
     /**
      * Next execution time provider
@@ -44,7 +44,7 @@ public class ScheduledTaskDefinition {
     private final ScheduledTask scheduledTask;
 
     private ScheduledTaskDefinition(boolean enabled,
-                                    @Nonnull RetrySettings failureSettings,
+                                    @Nonnull FailureSettings failureSettings,
                                     @Nonnull NextExecutionTimeProvider nextExecutionTimeProvider,
                                     @Nonnull ScheduledTask scheduledTask) {
         this.enabled = enabled;
@@ -74,7 +74,7 @@ public class ScheduledTaskDefinition {
     }
 
     @Nonnull
-    public RetrySettings getFailureSettings() {
+    public FailureSettings getFailureSettings() {
         return failureSettings;
     }
 
@@ -104,7 +104,7 @@ public class ScheduledTaskDefinition {
      */
     public static final class Builder {
         private boolean enabled;
-        private RetrySettings failureSettings;
+        private FailureSettings failureSettings;
         private NextExecutionTimeProvider nextExecutionTimeProvider;
         private ScheduledTask scheduledTask;
 
@@ -116,7 +116,7 @@ public class ScheduledTaskDefinition {
             return this;
         }
 
-        public Builder withFailureSettings(@Nonnull RetrySettings failureSettings) {
+        public Builder withFailureSettings(@Nonnull FailureSettings failureSettings) {
             this.failureSettings = failureSettings;
             return this;
         }

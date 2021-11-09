@@ -10,11 +10,9 @@ import ru.yoomoney.tech.dbqueue.scheduler.internal.schedule.impl.FixedRateNextEx
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTask;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskExecutionResult;
 import ru.yoomoney.tech.dbqueue.scheduler.models.SimpleScheduledTask;
-import ru.yoomoney.tech.dbqueue.scheduler.settings.RetrySettings;
-import ru.yoomoney.tech.dbqueue.scheduler.settings.RetryType;
+import ru.yoomoney.tech.dbqueue.scheduler.settings.FailureSettings;
+import ru.yoomoney.tech.dbqueue.scheduler.settings.FailRetryType;
 import ru.yoomoney.tech.dbqueue.settings.ExtSettings;
-import ru.yoomoney.tech.dbqueue.settings.FailRetryType;
-import ru.yoomoney.tech.dbqueue.settings.FailureSettings;
 import ru.yoomoney.tech.dbqueue.settings.PollSettings;
 import ru.yoomoney.tech.dbqueue.settings.ProcessingMode;
 import ru.yoomoney.tech.dbqueue.settings.ProcessingSettings;
@@ -45,8 +43,8 @@ class ScheduledTaskQueueFactoryTest {
     );
 
     @ParameterizedTest
-    @EnumSource(RetryType.class)
-    void should_create_scheduled_tasks_queue(RetryType type) {
+    @EnumSource(FailRetryType.class)
+    void should_create_scheduled_tasks_queue(FailRetryType type) {
         // given
         ScheduledTask scheduledTask = SimpleScheduledTask.create(
                 "scheduled-task-id",
@@ -54,7 +52,7 @@ class ScheduledTaskQueueFactoryTest {
         );
         ScheduledTaskDefinition scheduledTaskDefinition = ScheduledTaskDefinition.builder()
                 .withScheduledTask(scheduledTask)
-                .withFailureSettings(RetrySettings.builder()
+                .withFailureSettings(FailureSettings.builder()
                         .withRetryType(type)
                         .withRetryInterval(Duration.ofHours(1L))
                         .build()
@@ -88,8 +86,8 @@ class ScheduledTaskQueueFactoryTest {
                         .withFatalCrashTimeout(Duration.ZERO)
                         .build()
                 )
-                .withFailureSettings(FailureSettings.builder()
-                        .withRetryType(FailRetryType.GEOMETRIC_BACKOFF)
+                .withFailureSettings(ru.yoomoney.tech.dbqueue.settings.FailureSettings.builder()
+                        .withRetryType(ru.yoomoney.tech.dbqueue.settings.FailRetryType.GEOMETRIC_BACKOFF)
                         .withRetryInterval(Duration.ZERO)
                         .build()
                 )

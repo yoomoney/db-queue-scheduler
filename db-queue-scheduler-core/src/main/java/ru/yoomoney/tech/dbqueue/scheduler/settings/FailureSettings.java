@@ -6,19 +6,19 @@ import java.time.Duration;
 import static java.util.Objects.requireNonNull;
 
 /**
- * Settings for task retry in case of failure
+ * Settings for task execution strategy in case of failure
  *
  * <p>Origin - {@link ru.yoomoney.tech.dbqueue.settings.FailureSettings}
  *
  * @author Petr Zinin pgzinin@yoomoney.ru
  * @since 08.11.2021
  */
-public class RetrySettings {
+public class FailureSettings {
     /**
      * Task execution retry strategy in case of failure.
      */
     @Nonnull
-    private final RetryType retryType;
+    private final FailRetryType failRetryType;
 
     /**
      * Retry interval for task execution in case of failure or freezing.
@@ -30,8 +30,8 @@ public class RetrySettings {
     @Nonnull
     private final Duration retryInterval;
 
-    private RetrySettings(@Nonnull RetryType retryType, @Nonnull Duration retryInterval) {
-        this.retryType = requireNonNull(retryType, "retryType");
+    private FailureSettings(@Nonnull FailRetryType failRetryType, @Nonnull Duration retryInterval) {
+        this.failRetryType = requireNonNull(failRetryType, "retryType");
         this.retryInterval = requireNonNull(retryInterval, "retryInterval");
     }
 
@@ -49,35 +49,35 @@ public class RetrySettings {
      * Creates linear retries strategy settings
      *
      * @param retryInterval interval between executions in case of failure
-     * @return new instance of {@link RetrySettings}
+     * @return new instance of {@link FailureSettings}
      */
-    public static RetrySettings linear(@Nonnull Duration retryInterval) {
-        return new RetrySettings(RetryType.LINEAR_BACKOFF, retryInterval);
+    public static FailureSettings linear(@Nonnull Duration retryInterval) {
+        return new FailureSettings(FailRetryType.LINEAR_BACKOFF, retryInterval);
     }
 
     /**
      * Creates arithmetic retries strategy settings
      *
      * @param initialInterval interval between executions in case of failure
-     * @return new instance of {@link RetrySettings}
+     * @return new instance of {@link FailureSettings}
      */
-    public static RetrySettings arithmetic(@Nonnull Duration initialInterval) {
-        return new RetrySettings(RetryType.ARITHMETIC_BACKOFF, initialInterval);
+    public static FailureSettings arithmetic(@Nonnull Duration initialInterval) {
+        return new FailureSettings(FailRetryType.ARITHMETIC_BACKOFF, initialInterval);
     }
 
     /**
      * Creates geometric retries strategy settings
      *
      * @param initialInterval interval between executions in case of failure
-     * @return new instance of {@link RetrySettings}
+     * @return new instance of {@link FailureSettings}
      */
-    public static RetrySettings geometric(@Nonnull Duration initialInterval) {
-        return new RetrySettings(RetryType.GEOMETRIC_BACKOFF, initialInterval);
+    public static FailureSettings geometric(@Nonnull Duration initialInterval) {
+        return new FailureSettings(FailRetryType.GEOMETRIC_BACKOFF, initialInterval);
     }
 
     @Nonnull
-    public RetryType getRetryType() {
-        return retryType;
+    public FailRetryType getRetryType() {
+        return failRetryType;
     }
 
     @Nonnull
@@ -88,23 +88,23 @@ public class RetrySettings {
     @Override
     public String toString() {
         return "FailureSettings{" +
-                "retryType=" + retryType +
+                "failRetryType=" + failRetryType +
                 ", retryInterval=" + retryInterval +
                 '}';
     }
 
     /**
-     * Builder for {@link RetrySettings}
+     * Builder for {@link FailureSettings}
      */
     public static final class Builder {
-        private RetryType retryType;
+        private FailRetryType failRetryType;
         private Duration retryInterval;
 
         private Builder() {
         }
 
-        public Builder withRetryType(@Nonnull RetryType retryType) {
-            this.retryType = retryType;
+        public Builder withRetryType(@Nonnull FailRetryType failRetryType) {
+            this.failRetryType = failRetryType;
             return this;
         }
 
@@ -116,11 +116,11 @@ public class RetrySettings {
         /**
          * Creates an object
          *
-         * @return configured instance of {@link RetrySettings}
+         * @return configured instance of {@link FailureSettings}
          */
         @Nonnull
-        public RetrySettings build() {
-            return new RetrySettings(retryType, retryInterval);
+        public FailureSettings build() {
+            return new FailureSettings(failRetryType, retryInterval);
         }
     }
 }

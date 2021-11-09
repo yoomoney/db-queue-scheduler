@@ -9,9 +9,8 @@ import ru.yoomoney.tech.dbqueue.config.DatabaseAccessLayer;
 import ru.yoomoney.tech.dbqueue.scheduler.config.ScheduledTaskLifecycleListener;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.ScheduledTaskDefinition;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.db.ScheduledTaskQueueDao;
-import ru.yoomoney.tech.dbqueue.scheduler.settings.RetrySettings;
+import ru.yoomoney.tech.dbqueue.scheduler.settings.FailureSettings;
 import ru.yoomoney.tech.dbqueue.settings.FailRetryType;
-import ru.yoomoney.tech.dbqueue.settings.FailureSettings;
 import ru.yoomoney.tech.dbqueue.settings.QueueConfig;
 import ru.yoomoney.tech.dbqueue.settings.QueueLocation;
 import ru.yoomoney.tech.dbqueue.settings.QueueSettings;
@@ -80,7 +79,7 @@ public class ScheduledTaskQueueFactory {
         );
     }
 
-    private FailureSettings createFailureSettings(RetrySettings failureSettings) {
+    private ru.yoomoney.tech.dbqueue.settings.FailureSettings createFailureSettings(FailureSettings failureSettings) {
         FailRetryType failRetryType;
         switch (failureSettings.getRetryType()) {
             case GEOMETRIC_BACKOFF:
@@ -95,7 +94,7 @@ public class ScheduledTaskQueueFactory {
             default:
                 throw new RuntimeException("received unexpected retryType: retryType=" + failureSettings.getRetryType());
         }
-        return FailureSettings.builder()
+        return ru.yoomoney.tech.dbqueue.settings.FailureSettings.builder()
                 .withRetryType(failRetryType)
                 .withRetryInterval(failureSettings.getRetryInterval())
                 .build();

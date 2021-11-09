@@ -1,7 +1,5 @@
 package ru.yoomoney.tech.dbqueue.scheduler.settings;
 
-import ru.yoomoney.tech.dbqueue.settings.FailureSettings;
-
 /**
  * Strategy type for the task deferring in case of retry.
  *
@@ -10,10 +8,10 @@ import ru.yoomoney.tech.dbqueue.settings.FailureSettings;
  * @author Petr Zinin pgzinin@yoomoney.ru
  * @since 08.11.2021
  */
-public enum RetryType {
+public enum FailRetryType {
     /**
      * The task is deferred exponentially relative to the interval
-     * {@link RetrySettings#getRetryInterval()}
+     * {@link FailureSettings#getRetryInterval()}
      *
      * <p>The denominator of the progression equals 2.
      *
@@ -23,7 +21,7 @@ public enum RetryType {
 
     /**
      * The task is deferred by an arithmetic progression relative to the interval
-     * {@link RetrySettings#getRetryInterval()}.
+     * {@link FailureSettings#getRetryInterval()}.
      *
      * <p>The difference of progression equals 2.
      *

@@ -6,7 +6,7 @@ import javax.annotation.Nullable;
 import static java.util.Objects.requireNonNull;
 
 /**
- * Scheduled task settings
+ * Settings for task execution strategy in case of failure
  *
  * @author Petr Zinin pgzinin@yoomoney.ru
  * @since 20.10.2021
@@ -21,7 +21,7 @@ public class ScheduledTaskSettings {
      * Settings of retrying scheduled tasks in case of failure or freezing.
      */
     @Nonnull
-    private final RetrySettings failureSettings;
+    private final FailureSettings failureSettings;
 
     /**
      * Scheduled settings
@@ -31,7 +31,7 @@ public class ScheduledTaskSettings {
 
     private ScheduledTaskSettings(boolean enabled,
                                   @Nonnull ScheduleSettings scheduleSettings,
-                                  @Nonnull RetrySettings failureSettings) {
+                                  @Nonnull FailureSettings failureSettings) {
         this.enabled = enabled;
         this.scheduleSettings = requireNonNull(scheduleSettings, "scheduleSettings");
         this.failureSettings = requireNonNull(failureSettings, "failureSettings");
@@ -57,7 +57,7 @@ public class ScheduledTaskSettings {
     }
 
     @Nonnull
-    public RetrySettings getFailureSettings() {
+    public FailureSettings getFailureSettings() {
         return failureSettings;
     }
 
@@ -76,7 +76,7 @@ public class ScheduledTaskSettings {
     public static final class Builder {
         private boolean enabled = true;
         private ScheduleSettings scheduleSettings;
-        private RetrySettings failureSettings;
+        private FailureSettings failureSettings;
 
         private Builder() {
         }
@@ -91,7 +91,7 @@ public class ScheduledTaskSettings {
             return this;
         }
 
-        public Builder withFailureSettings(@Nullable RetrySettings failureSettings) {
+        public Builder withFailureSettings(@Nullable FailureSettings failureSettings) {
             this.failureSettings = failureSettings;
             return this;
         }

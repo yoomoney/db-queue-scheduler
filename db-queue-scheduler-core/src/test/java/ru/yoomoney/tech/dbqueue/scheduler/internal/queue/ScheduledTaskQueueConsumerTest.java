@@ -14,10 +14,9 @@ import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTask;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskExecutionResult;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskIdentity;
 import ru.yoomoney.tech.dbqueue.scheduler.models.SimpleScheduledTask;
-import ru.yoomoney.tech.dbqueue.scheduler.settings.RetrySettings;
+import ru.yoomoney.tech.dbqueue.scheduler.settings.FailureSettings;
 import ru.yoomoney.tech.dbqueue.settings.ExtSettings;
 import ru.yoomoney.tech.dbqueue.settings.FailRetryType;
-import ru.yoomoney.tech.dbqueue.settings.FailureSettings;
 import ru.yoomoney.tech.dbqueue.settings.PollSettings;
 import ru.yoomoney.tech.dbqueue.settings.ProcessingMode;
 import ru.yoomoney.tech.dbqueue.settings.ProcessingSettings;
@@ -61,7 +60,7 @@ class ScheduledTaskQueueConsumerTest {
         );
         ScheduledTaskDefinition scheduledTaskDefinition = ScheduledTaskDefinition.builder()
                 .withScheduledTask(scheduledTask)
-                .withFailureSettings(RetrySettings.linear(Duration.ofHours(1L)))
+                .withFailureSettings(FailureSettings.linear(Duration.ofHours(1L)))
                 .withNextExecutionTimeProvider(new FixedRateNextExecutionTimeProvider(Duration.ZERO))
                 .build();
         ScheduledTaskQueueConsumer scheduledTaskQueueConsumer = new ScheduledTaskQueueConsumer(
@@ -89,7 +88,7 @@ class ScheduledTaskQueueConsumerTest {
         );
         ScheduledTaskDefinition scheduledTaskDefinition = ScheduledTaskDefinition.builder()
                 .withScheduledTask(scheduledTask)
-                .withFailureSettings(RetrySettings.linear(Duration.ofHours(1L)))
+                .withFailureSettings(FailureSettings.linear(Duration.ofHours(1L)))
                 .withNextExecutionTimeProvider(new FixedRateNextExecutionTimeProvider(Duration.ZERO))
                 .build();
         ScheduledTaskQueueConsumer scheduledTaskQueueConsumer = new ScheduledTaskQueueConsumer(
@@ -113,7 +112,7 @@ class ScheduledTaskQueueConsumerTest {
         ScheduledTask scheduledTask = SimpleScheduledTask.create("scheduled-task", ScheduledTaskExecutionResult::success);
         ScheduledTaskDefinition scheduledTaskDefinition = ScheduledTaskDefinition.builder()
                 .withScheduledTask(scheduledTask)
-                .withFailureSettings(RetrySettings.linear(Duration.ofHours(1L)))
+                .withFailureSettings(FailureSettings.linear(Duration.ofHours(1L)))
                 .withNextExecutionTimeProvider(new FixedRateNextExecutionTimeProvider(Duration.ofDays(1L), clock))
                 .build();
         ScheduledTaskQueueConsumer scheduledTaskQueueConsumer = new ScheduledTaskQueueConsumer(
@@ -142,7 +141,7 @@ class ScheduledTaskQueueConsumerTest {
         );
         ScheduledTaskDefinition scheduledTaskDefinition = ScheduledTaskDefinition.builder()
                 .withScheduledTask(scheduledTask)
-                .withFailureSettings(RetrySettings.linear(Duration.ofHours(1L)))
+                .withFailureSettings(FailureSettings.linear(Duration.ofHours(1L)))
                 .withNextExecutionTimeProvider(new FixedRateNextExecutionTimeProvider(Duration.ofDays(1L), clock))
                 .build();
         ScheduledTaskQueueConsumer scheduledTaskQueueConsumer = new ScheduledTaskQueueConsumer(
@@ -175,7 +174,7 @@ class ScheduledTaskQueueConsumerTest {
         );
         ScheduledTaskDefinition scheduledTaskDefinition = ScheduledTaskDefinition.builder()
                 .withScheduledTask(scheduledTask)
-                .withFailureSettings(RetrySettings.linear(Duration.ofHours(1L)))
+                .withFailureSettings(FailureSettings.linear(Duration.ofHours(1L)))
                 .withNextExecutionTimeProvider(new FixedRateNextExecutionTimeProvider(Duration.ofDays(1L), clock))
                 .build();
         DummyScheduledTaskLifecycleListener listener = new DummyScheduledTaskLifecycleListener();
@@ -224,7 +223,7 @@ class ScheduledTaskQueueConsumerTest {
                                 .withFatalCrashTimeout(Duration.ZERO)
                                 .build()
                         )
-                        .withFailureSettings(FailureSettings.builder()
+                        .withFailureSettings(ru.yoomoney.tech.dbqueue.settings.FailureSettings.builder()
                                 .withRetryType(FailRetryType.GEOMETRIC_BACKOFF)
                                 .withRetryInterval(Duration.ZERO)
                                 .build()
