@@ -60,8 +60,7 @@ public class SpringSchedulerConfigurator implements SchedulerConfigurator {
      *     reenqueue_attempt INTEGER                  DEFAULT 0,
      *     total_attempt     INTEGER                  DEFAULT 0
      *  );
-     *  CREATE INDEX scheduled_tasks_name_time_desc_idx
-     *  ON scheduled_tasks USING btree (queue_name, next_process_at, id DESC);
+     *  CREATE UNIQUE INDEX scheduled_tasks_name_queue_name_uq ON scheduled_tasks (queue_name);
      *  }</pre>
      *
      * @param tableName table name that stores scheduled tasks

@@ -26,7 +26,7 @@ import static java.util.Objects.requireNonNull;
  * @since 21.10.2021
  */
 public class ScheduledTaskQueue {
-    private final Logger log = LoggerFactory.getLogger(ScheduledTaskQueue.class);
+    private static final Logger log = LoggerFactory.getLogger(ScheduledTaskQueue.class);
 
     private final QueueConfig queueConfig;
     private final QueueConsumer<String> queueConsumer;
@@ -50,6 +50,15 @@ public class ScheduledTaskQueue {
      * Initialises periodic tasks
      */
     public void initTask() {
+        try {
+            doInitTask();
+        } catch (RuntimeException ex) {
+            log.warn("failed to init task: taskDefinition={}", taskDefinition, ex);
+            doInitTask();
+        }
+    }
+
+    private void doInitTask() {
         if (!scheduledQueueDao.isQueueEmpty(queueConfig.getLocation().getQueueId())) {
             log.debug("scheduled task already enqueued: taskDefinition={}", taskDefinition);
             return;
