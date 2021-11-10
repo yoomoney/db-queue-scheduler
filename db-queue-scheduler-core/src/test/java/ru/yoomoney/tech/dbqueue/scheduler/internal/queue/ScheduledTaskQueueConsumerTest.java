@@ -60,7 +60,7 @@ class ScheduledTaskQueueConsumerTest {
         );
         ScheduledTaskDefinition scheduledTaskDefinition = ScheduledTaskDefinition.builder()
                 .withScheduledTask(scheduledTask)
-                .withFailureSettings(FailureSettings.linear(Duration.ofHours(1L)))
+                .withFailureSettings(FailureSettings.linearBackoff(Duration.ofHours(1L)))
                 .withNextExecutionTimeProvider(new FixedRateNextExecutionTimeProvider(Duration.ZERO))
                 .build();
         ScheduledTaskQueueConsumer scheduledTaskQueueConsumer = new ScheduledTaskQueueConsumer(
@@ -88,7 +88,7 @@ class ScheduledTaskQueueConsumerTest {
         );
         ScheduledTaskDefinition scheduledTaskDefinition = ScheduledTaskDefinition.builder()
                 .withScheduledTask(scheduledTask)
-                .withFailureSettings(FailureSettings.linear(Duration.ofHours(1L)))
+                .withFailureSettings(FailureSettings.linearBackoff(Duration.ofHours(1L)))
                 .withNextExecutionTimeProvider(new FixedRateNextExecutionTimeProvider(Duration.ZERO))
                 .build();
         ScheduledTaskQueueConsumer scheduledTaskQueueConsumer = new ScheduledTaskQueueConsumer(
@@ -112,7 +112,7 @@ class ScheduledTaskQueueConsumerTest {
         ScheduledTask scheduledTask = SimpleScheduledTask.create("scheduled-task", ScheduledTaskExecutionResult::success);
         ScheduledTaskDefinition scheduledTaskDefinition = ScheduledTaskDefinition.builder()
                 .withScheduledTask(scheduledTask)
-                .withFailureSettings(FailureSettings.linear(Duration.ofHours(1L)))
+                .withFailureSettings(FailureSettings.linearBackoff(Duration.ofHours(1L)))
                 .withNextExecutionTimeProvider(new FixedRateNextExecutionTimeProvider(Duration.ofDays(1L), clock))
                 .build();
         ScheduledTaskQueueConsumer scheduledTaskQueueConsumer = new ScheduledTaskQueueConsumer(
@@ -141,7 +141,7 @@ class ScheduledTaskQueueConsumerTest {
         );
         ScheduledTaskDefinition scheduledTaskDefinition = ScheduledTaskDefinition.builder()
                 .withScheduledTask(scheduledTask)
-                .withFailureSettings(FailureSettings.linear(Duration.ofHours(1L)))
+                .withFailureSettings(FailureSettings.linearBackoff(Duration.ofHours(1L)))
                 .withNextExecutionTimeProvider(new FixedRateNextExecutionTimeProvider(Duration.ofDays(1L), clock))
                 .build();
         ScheduledTaskQueueConsumer scheduledTaskQueueConsumer = new ScheduledTaskQueueConsumer(
@@ -174,7 +174,7 @@ class ScheduledTaskQueueConsumerTest {
         );
         ScheduledTaskDefinition scheduledTaskDefinition = ScheduledTaskDefinition.builder()
                 .withScheduledTask(scheduledTask)
-                .withFailureSettings(FailureSettings.linear(Duration.ofHours(1L)))
+                .withFailureSettings(FailureSettings.linearBackoff(Duration.ofHours(1L)))
                 .withNextExecutionTimeProvider(new FixedRateNextExecutionTimeProvider(Duration.ofDays(1L), clock))
                 .build();
         DummyScheduledTaskLifecycleListener listener = new DummyScheduledTaskLifecycleListener();

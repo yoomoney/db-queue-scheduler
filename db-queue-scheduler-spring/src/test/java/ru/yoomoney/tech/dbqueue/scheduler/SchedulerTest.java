@@ -58,7 +58,7 @@ public class SchedulerTest extends BaseTest {
                 scheduledTask,
                 ScheduledTaskSettings.builder()
                         .withScheduleSettings(ScheduleSettings.fixedDelay(Duration.ofSeconds(0L)))
-                        .withFailureSettings(FailureSettings.linear(Duration.ofHours(1L)))
+                        .withFailureSettings(FailureSettings.linearBackoff(Duration.ofHours(1L)))
                         .build()
         );
 
@@ -90,14 +90,14 @@ public class SchedulerTest extends BaseTest {
         scheduler1.schedule(
                 scheduledTask,
                 ScheduledTaskSettings.builder()
-                        .withFailureSettings(FailureSettings.linear(Duration.ofHours(1L)))
+                        .withFailureSettings(FailureSettings.linearBackoff(Duration.ofHours(1L)))
                         .withScheduleSettings(ScheduleSettings.fixedDelay(Duration.ofSeconds(1L)))
                         .build()
         );
         scheduler2.schedule(
                 scheduledTask,
                 ScheduledTaskSettings.builder()
-                        .withFailureSettings(FailureSettings.linear(Duration.ofHours(1L)))
+                        .withFailureSettings(FailureSettings.linearBackoff(Duration.ofHours(1L)))
                         .withScheduleSettings(ScheduleSettings.fixedDelay(Duration.ofSeconds(1L)))
                         .build()
         );
@@ -152,7 +152,7 @@ public class SchedulerTest extends BaseTest {
         scheduler.schedule(
                 scheduledTask,
                 ScheduledTaskSettings.builder()
-                        .withFailureSettings(FailureSettings.linear(Duration.ofHours(1L)))
+                        .withFailureSettings(FailureSettings.linearBackoff(Duration.ofHours(1L)))
                         .withScheduleSettings(ScheduleSettings.fixedDelay(Duration.ofSeconds(1L)))
                         .build()
         );
@@ -161,7 +161,7 @@ public class SchedulerTest extends BaseTest {
         assertThrows(RuntimeException.class, () -> scheduler.schedule(
                 scheduledTask,
                 ScheduledTaskSettings.builder()
-                        .withFailureSettings(FailureSettings.linear(Duration.ofHours(1L)))
+                        .withFailureSettings(FailureSettings.linearBackoff(Duration.ofHours(1L)))
                         .withScheduleSettings(ScheduleSettings.fixedDelay(Duration.ofSeconds(1L)))
                         .build()));
     }
@@ -185,7 +185,7 @@ public class SchedulerTest extends BaseTest {
         scheduler.schedule(
                 scheduledTask,
                 ScheduledTaskSettings.builder()
-                        .withFailureSettings(FailureSettings.linear(Duration.ofHours(1L)))
+                        .withFailureSettings(FailureSettings.linearBackoff(Duration.ofHours(1L)))
                         .withScheduleSettings(ScheduleSettings.fixedDelay(Duration.ofSeconds(1L)))
                         .build()
         );
@@ -222,7 +222,7 @@ public class SchedulerTest extends BaseTest {
         scheduler.schedule(
                 scheduledTask,
                 ScheduledTaskSettings.builder()
-                        .withFailureSettings(FailureSettings.linear(Duration.ofHours(1L)))
+                        .withFailureSettings(FailureSettings.linearBackoff(Duration.ofHours(1L)))
                         .withScheduleSettings(ScheduleSettings.fixedDelay(Duration.ofDays(1L)))
                         .build()
         );
@@ -255,7 +255,7 @@ public class SchedulerTest extends BaseTest {
         scheduler.schedule(
                 scheduledTask,
                 ScheduledTaskSettings.builder()
-                        .withFailureSettings(FailureSettings.linear(Duration.ofMinutes(1L)))
+                        .withFailureSettings(FailureSettings.linearBackoff(Duration.ofMinutes(1L)))
                         .withScheduleSettings(ScheduleSettings.fixedDelay(Duration.ofHours(1L)))
                         .build()
         );

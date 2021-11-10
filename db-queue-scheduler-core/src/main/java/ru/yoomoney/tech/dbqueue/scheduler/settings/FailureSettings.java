@@ -46,32 +46,32 @@ public class FailureSettings {
     }
 
     /**
-     * Creates linear retries strategy settings
+     * Creates linear backoff failure strategy settings
      *
      * @param retryInterval interval between executions in case of failure
      * @return new instance of {@link FailureSettings}
      */
-    public static FailureSettings linear(@Nonnull Duration retryInterval) {
+    public static FailureSettings linearBackoff(@Nonnull Duration retryInterval) {
         return new FailureSettings(FailRetryType.LINEAR_BACKOFF, retryInterval);
     }
 
     /**
-     * Creates arithmetic retries strategy settings
+     * Creates arithmetic backoff failure strategy settings
      *
      * @param initialInterval interval between executions in case of failure
      * @return new instance of {@link FailureSettings}
      */
-    public static FailureSettings arithmetic(@Nonnull Duration initialInterval) {
+    public static FailureSettings arithmeticBackoff(@Nonnull Duration initialInterval) {
         return new FailureSettings(FailRetryType.ARITHMETIC_BACKOFF, initialInterval);
     }
 
     /**
-     * Creates geometric retries strategy settings
+     * Creates geometric backoff failure strategy settings
      *
      * @param initialInterval interval between executions in case of failure
      * @return new instance of {@link FailureSettings}
      */
-    public static FailureSettings geometric(@Nonnull Duration initialInterval) {
+    public static FailureSettings geometricBackoff(@Nonnull Duration initialInterval) {
         return new FailureSettings(FailRetryType.GEOMETRIC_BACKOFF, initialInterval);
     }
 
