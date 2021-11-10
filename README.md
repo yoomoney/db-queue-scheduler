@@ -22,13 +22,13 @@ implementation 'ru.yoomoney.tech:db-queue-scheduler-core:2.0.0',
 * Different schedule configuration: cron expressions, fixed rates, fixed delays, dynamic calculations;
 * Tracing support;
 * Task event listeners to build up monitoring;
-* Many other features...
+* Many other features.
 
 ## Database configuration
 
-Library uses [dn-queue](https://github.com/yoomoney/db-queue) to work with a database. 
+The project uses [db-queue](https://github.com/yoomoney/db-queue) to work with a database. 
 
-Library requires a single database table where periodic tasks are stored.
+The library requires a single database table where periodic tasks are stored.
 
 ### PostgreSQL DDL
 
@@ -37,6 +37,21 @@ CREATE TABLE scheduled_tasks (
   id                BIGSERIAL PRIMARY KEY,
   queue_name        TEXT NOT NULL,
   payload           TEXT,
+  created_at        TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  next_process_at   TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  attempt           INTEGER                  DEFAULT 0,
+  reenqueue_attempt INTEGER                  DEFAULT 0,
+  total_attempt     INTEGER                  DEFAULT 0
+);
+CREATE UNIQUE INDEX scheduled_tasks_name_queue_name_uq ON scheduled_tasks (queue_name);
+```
+
+### H2 Database DDL
+```sql
+CREATE TABLE scheduled_tasks (
+  id                BIGSERIAL PRIMARY KEY,
+  queue_name        VARCHAR(100) NOT NULL,
+  payload           VARCHAR(100),
   created_at        TIMESTAMP WITH TIME ZONE DEFAULT now(),
   next_process_at   TIMESTAMP WITH TIME ZONE DEFAULT now(),
   attempt           INTEGER                  DEFAULT 0,
@@ -68,7 +83,7 @@ ScheduledTask task = SimpleScheduledTask.create(
         });
 
 ScheduledTaskSettings settings = ScheduledTaskSettings.builder()
-        .withFailureSettings(RetrySettings.linear(Duration.ofHours(1L)))
+        .withFailureSettings(FailureSettings.linear(Duration.ofHours(1L)))
         .withScheduleSettings(ScheduleSettings.fixedDelay(Duration.ofSeconds(0L)))
         .build()
 
@@ -77,7 +92,7 @@ scheduler.schedule(task, settings);
 scheduler.start();
 ```
 
-See also [runnable example]().
+See also our [runnable example](/examples/spring/src/main/java/ru/yoomoney/tech/dbqueue/scheduler/example/ExampleApplication.java).
 
 ## How to contribute?
 

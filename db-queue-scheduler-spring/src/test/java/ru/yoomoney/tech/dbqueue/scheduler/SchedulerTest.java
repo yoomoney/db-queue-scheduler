@@ -1,6 +1,7 @@
 package ru.yoomoney.tech.dbqueue.scheduler;
 
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTask;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskExecutionResult;
 import ru.yoomoney.tech.dbqueue.scheduler.models.SimpleScheduledTask;
@@ -33,8 +34,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 public class SchedulerTest extends BaseTest {
 
-    @Test
-    public void should_schedule_new_task(DatabaseAccess databaseAccess) {
+    @ParameterizedTest
+    @MethodSource("databaseAccessStream")
+    void should_schedule_new_task(DatabaseAccess databaseAccess) {
         // given
         Scheduler scheduler = new SpringSchedulerConfigurator()
                 .withDatabaseDialect(databaseAccess.getDatabaseDialect())
@@ -65,8 +67,9 @@ public class SchedulerTest extends BaseTest {
         await().atMost(Duration.ofSeconds(5L)).until(executed::get);
     }
 
-    @Test
-    public void should_schedule_task_once(DatabaseAccess databaseAccess) throws InterruptedException {
+    @ParameterizedTest
+    @MethodSource("databaseAccessStream")
+    void should_schedule_task_once(DatabaseAccess databaseAccess) throws InterruptedException {
         // given
         Scheduler scheduler1 = new SpringSchedulerConfigurator()
                 .withDatabaseDialect(databaseAccess.getDatabaseDialect())
@@ -133,8 +136,9 @@ public class SchedulerTest extends BaseTest {
         }
     }
 
-    @Test
-    public void should_throw_exception_when_task_with_the_same_name_already_scheduled(DatabaseAccess databaseAccess) {
+    @ParameterizedTest
+    @MethodSource("databaseAccessStream")
+    void should_throw_exception_when_task_with_the_same_name_already_scheduled(DatabaseAccess databaseAccess) {
         // given
         Scheduler scheduler = new SpringSchedulerConfigurator()
                 .withDatabaseDialect(databaseAccess.getDatabaseDialect())
@@ -165,8 +169,9 @@ public class SchedulerTest extends BaseTest {
                         .build()));
     }
 
-    @Test
-    public void should_get_tasks_info(DatabaseAccess databaseAccess) {
+    @ParameterizedTest
+    @MethodSource("databaseAccessStream")
+    void should_get_tasks_info(DatabaseAccess databaseAccess) {
         // given
         Scheduler scheduler = new SpringSchedulerConfigurator()
                 .withDatabaseDialect(databaseAccess.getDatabaseDialect())
@@ -198,8 +203,9 @@ public class SchedulerTest extends BaseTest {
         assertThat(scheduledTaskStatistic.getNextExecutionTime(), notNullValue());
     }
 
-    @Test
-    public void should_reschedule_task(DatabaseAccess databaseAccess) {
+    @ParameterizedTest
+    @MethodSource("databaseAccessStream")
+    void should_reschedule_task(DatabaseAccess databaseAccess) {
         // given
         Scheduler scheduler = new SpringSchedulerConfigurator()
                 .withDatabaseDialect(databaseAccess.getDatabaseDialect())
@@ -231,8 +237,9 @@ public class SchedulerTest extends BaseTest {
         await().atMost(Duration.ofSeconds(5L)).until(executed::get);
     }
 
-    @Test
-    public void should_retry_failed_task(DatabaseAccess databaseAccess) {
+    @ParameterizedTest
+    @MethodSource("databaseAccessStream")
+    void should_retry_failed_task(DatabaseAccess databaseAccess) {
         // given
         Scheduler scheduler = new SpringSchedulerConfigurator()
                 .withDatabaseDialect(databaseAccess.getDatabaseDialect())

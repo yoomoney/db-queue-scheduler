@@ -4,7 +4,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcOperations;
@@ -16,7 +15,7 @@ import ru.yoomoney.tech.dbqueue.scheduler.config.impl.LoggingScheduledTaskLifecy
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTask;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskExecutionResult;
 import ru.yoomoney.tech.dbqueue.scheduler.models.SimpleScheduledTask;
-import ru.yoomoney.tech.dbqueue.scheduler.settings.RetrySettings;
+import ru.yoomoney.tech.dbqueue.scheduler.settings.FailureSettings;
 import ru.yoomoney.tech.dbqueue.scheduler.settings.ScheduleSettings;
 import ru.yoomoney.tech.dbqueue.scheduler.settings.ScheduledTaskSettings;
 
@@ -24,14 +23,13 @@ import java.time.Duration;
 import java.time.ZoneId;
 
 /**
- * Simple example of the library configuration via {@code spring framework}.
+ * A simple example of the library configuration via {@code spring framework}.
  *
  * <p>NOTE: the library has not had a preconfigured spring boot configuration yet. That's why the example shows a pure
  * library configuration.
  */
 @Configuration
 @SpringBootApplication
-@EnableConfigurationProperties
 public class ExampleApplication {
     private static final Logger log = LoggerFactory.getLogger(ExampleApplication.class);
 
@@ -50,13 +48,13 @@ public class ExampleApplication {
                 .withScheduledTaskLifecycleListener(new LoggingScheduledTaskLifecycleListener())
                 .configure();
 
-        // Scheduled tasks might be spring beans. To make the example short, the tasks are created here.
+        // Scheduled tasks might be spring beans. The tasks are declared here to make a short example.
 
         // cron example
         scheduler.schedule(
                 createScheduledTaskExample("cron-example"),
                 ScheduledTaskSettings.builder()
-                        .withFailureSettings(RetrySettings.linear(Duration.ofHours(1L)))
+                        .withFailureSettings(FailureSettings.linear(Duration.ofHours(1L)))
                         .withScheduleSettings(ScheduleSettings.cron("*/30 * * * * *", ZoneId.systemDefault()))
                         .build()
         );
@@ -65,7 +63,7 @@ public class ExampleApplication {
         scheduler.schedule(
                 createScheduledTaskExample("fixed-delay-example"),
                 ScheduledTaskSettings.builder()
-                        .withFailureSettings(RetrySettings.linear(Duration.ofHours(1L)))
+                        .withFailureSettings(FailureSettings.linear(Duration.ofHours(1L)))
                         .withScheduleSettings(ScheduleSettings.fixedRate(Duration.ofMinutes(1L)))
                         .build()
         );
@@ -74,7 +72,7 @@ public class ExampleApplication {
         scheduler.schedule(
                 createScheduledTaskExample("fixed-rate-example"),
                 ScheduledTaskSettings.builder()
-                        .withFailureSettings(RetrySettings.linear(Duration.ofHours(1L)))
+                        .withFailureSettings(FailureSettings.linear(Duration.ofHours(1L)))
                         .withScheduleSettings(ScheduleSettings.fixedRate(Duration.ofMinutes(1L)))
                         .build()
         );
