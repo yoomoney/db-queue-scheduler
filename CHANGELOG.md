@@ -1,9 +1,9 @@
-### NEXT_VERSION_TYPE=PATCH
-### NEXT_VERSION_DESCRIPTION_BEGIN
+## [2.0.1](https://github.com/yoomoney/db-queue-scheduler/pull/10) (11-11-2021)
+
 * H2, MSSQL, Oracle databases support added;
 * Library example written;
 * Project description written in the `README.md` file
-### NEXT_VERSION_DESCRIPTION_END
+
 ## [2.0.0](https://github.com/yoomoney/db-queue-scheduler/pull/9) (11-11-2021)
 
 * Failure settings added that allows configuring scheduled task retry policies in case of failures;
