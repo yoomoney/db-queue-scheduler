@@ -1,3 +1,6 @@
+### NEXT_VERSION_TYPE=MAJOR|MINOR|PATCH
+### NEXT_VERSION_DESCRIPTION_BEGIN
+### NEXT_VERSION_DESCRIPTION_END
 ## [2.0.0](https://github.com/yoomoney/db-queue-scheduler/pull/9) (11-11-2021)
 
 * Failure settings added that allows configuring scheduled task retry policies in case of failures;
