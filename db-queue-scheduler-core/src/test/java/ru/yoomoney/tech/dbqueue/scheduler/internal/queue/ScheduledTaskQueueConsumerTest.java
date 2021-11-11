@@ -7,14 +7,16 @@ import ru.yoomoney.tech.dbqueue.config.QueueShardId;
 import ru.yoomoney.tech.dbqueue.scheduler.config.ScheduledTaskLifecycleListener;
 import ru.yoomoney.tech.dbqueue.scheduler.config.impl.NoopScheduledTaskLifecycleListener;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.ScheduledTaskDefinition;
+import ru.yoomoney.tech.dbqueue.scheduler.internal.db.ScheduledTaskQueueDao;
+import ru.yoomoney.tech.dbqueue.scheduler.internal.db.ScheduledTaskRecord;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.schedule.impl.FixedRateNextExecutionTimeProvider;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTask;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskExecutionResult;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskIdentity;
 import ru.yoomoney.tech.dbqueue.scheduler.models.SimpleScheduledTask;
+import ru.yoomoney.tech.dbqueue.scheduler.settings.FailureSettings;
 import ru.yoomoney.tech.dbqueue.settings.ExtSettings;
 import ru.yoomoney.tech.dbqueue.settings.FailRetryType;
-import ru.yoomoney.tech.dbqueue.settings.FailureSettings;
 import ru.yoomoney.tech.dbqueue.settings.PollSettings;
 import ru.yoomoney.tech.dbqueue.settings.ProcessingMode;
 import ru.yoomoney.tech.dbqueue.settings.ProcessingSettings;
@@ -32,8 +34,11 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
@@ -55,13 +60,14 @@ class ScheduledTaskQueueConsumerTest {
         );
         ScheduledTaskDefinition scheduledTaskDefinition = ScheduledTaskDefinition.builder()
                 .withScheduledTask(scheduledTask)
-                .withMaxExecutionLockInterval(Duration.ofHours(1L))
+                .withFailureSettings(FailureSettings.linearBackoff(Duration.ofHours(1L)))
                 .withNextExecutionTimeProvider(new FixedRateNextExecutionTimeProvider(Duration.ZERO))
                 .build();
         ScheduledTaskQueueConsumer scheduledTaskQueueConsumer = new ScheduledTaskQueueConsumer(
                 dummyQueueConfig(),
                 scheduledTaskDefinition,
-                NoopScheduledTaskLifecycleListener.getInstance()
+                NoopScheduledTaskLifecycleListener.getInstance(),
+                new DummyScheduledTaskQueueDao()
         );
 
         // when
@@ -82,20 +88,21 @@ class ScheduledTaskQueueConsumerTest {
         );
         ScheduledTaskDefinition scheduledTaskDefinition = ScheduledTaskDefinition.builder()
                 .withScheduledTask(scheduledTask)
-                .withMaxExecutionLockInterval(Duration.ofHours(1L))
+                .withFailureSettings(FailureSettings.linearBackoff(Duration.ofHours(1L)))
                 .withNextExecutionTimeProvider(new FixedRateNextExecutionTimeProvider(Duration.ZERO))
                 .build();
         ScheduledTaskQueueConsumer scheduledTaskQueueConsumer = new ScheduledTaskQueueConsumer(
                 dummyQueueConfig(),
                 scheduledTaskDefinition,
-                NoopScheduledTaskLifecycleListener.getInstance()
+                NoopScheduledTaskLifecycleListener.getInstance(),
+                new DummyScheduledTaskQueueDao()
         );
 
         // when
         TaskExecutionResult taskExecutionResult = scheduledTaskQueueConsumer.execute(dummyTask());
 
         // then
-        assertThat(taskExecutionResult.getActionType(), equalTo(TaskExecutionResult.Type.REENQUEUE));
+        assertThat(taskExecutionResult.getActionType(), equalTo(TaskExecutionResult.Type.FAIL));
     }
 
     @Test
@@ -105,13 +112,14 @@ class ScheduledTaskQueueConsumerTest {
         ScheduledTask scheduledTask = SimpleScheduledTask.create("scheduled-task", ScheduledTaskExecutionResult::success);
         ScheduledTaskDefinition scheduledTaskDefinition = ScheduledTaskDefinition.builder()
                 .withScheduledTask(scheduledTask)
-                .withMaxExecutionLockInterval(Duration.ofHours(1L))
+                .withFailureSettings(FailureSettings.linearBackoff(Duration.ofHours(1L)))
                 .withNextExecutionTimeProvider(new FixedRateNextExecutionTimeProvider(Duration.ofDays(1L), clock))
                 .build();
         ScheduledTaskQueueConsumer scheduledTaskQueueConsumer = new ScheduledTaskQueueConsumer(
                 dummyQueueConfig(),
                 scheduledTaskDefinition,
                 NoopScheduledTaskLifecycleListener.getInstance(),
+                new DummyScheduledTaskQueueDao(),
                 clock
         );
 
@@ -133,13 +141,14 @@ class ScheduledTaskQueueConsumerTest {
         );
         ScheduledTaskDefinition scheduledTaskDefinition = ScheduledTaskDefinition.builder()
                 .withScheduledTask(scheduledTask)
-                .withMaxExecutionLockInterval(Duration.ofHours(1L))
+                .withFailureSettings(FailureSettings.linearBackoff(Duration.ofHours(1L)))
                 .withNextExecutionTimeProvider(new FixedRateNextExecutionTimeProvider(Duration.ofDays(1L), clock))
                 .build();
         ScheduledTaskQueueConsumer scheduledTaskQueueConsumer = new ScheduledTaskQueueConsumer(
                 dummyQueueConfig(),
                 scheduledTaskDefinition,
                 NoopScheduledTaskLifecycleListener.getInstance(),
+                new DummyScheduledTaskQueueDao(),
                 clock
         );
 
@@ -165,7 +174,7 @@ class ScheduledTaskQueueConsumerTest {
         );
         ScheduledTaskDefinition scheduledTaskDefinition = ScheduledTaskDefinition.builder()
                 .withScheduledTask(scheduledTask)
-                .withMaxExecutionLockInterval(Duration.ofHours(1L))
+                .withFailureSettings(FailureSettings.linearBackoff(Duration.ofHours(1L)))
                 .withNextExecutionTimeProvider(new FixedRateNextExecutionTimeProvider(Duration.ofDays(1L), clock))
                 .build();
         DummyScheduledTaskLifecycleListener listener = new DummyScheduledTaskLifecycleListener();
@@ -173,6 +182,7 @@ class ScheduledTaskQueueConsumerTest {
                 dummyQueueConfig(),
                 scheduledTaskDefinition,
                 listener,
+                new DummyScheduledTaskQueueDao(),
                 clock
         );
 
@@ -185,7 +195,7 @@ class ScheduledTaskQueueConsumerTest {
         assertThat(listener.crashedTaskIdentity, equalTo(ScheduledTaskIdentity.of("scheduled-task")));
         assertThat(listener.executionResult, equalTo(ScheduledTaskExecutionResult.error()));
         assertThat(listener.processTaskTimeInMills, equalTo(0L));
-        assertThat(listener.nextExecutionTime, equalTo(clock.instant().plus(Duration.ofDays(1L))));
+        assertThat(listener.nextExecutionTime, notNullValue());
         assertThat(listener.throwable, equalTo(exception));
     }
 
@@ -213,7 +223,7 @@ class ScheduledTaskQueueConsumerTest {
                                 .withFatalCrashTimeout(Duration.ZERO)
                                 .build()
                         )
-                        .withFailureSettings(FailureSettings.builder()
+                        .withFailureSettings(ru.yoomoney.tech.dbqueue.settings.FailureSettings.builder()
                                 .withRetryType(FailRetryType.GEOMETRIC_BACKOFF)
                                 .withRetryInterval(Duration.ZERO)
                                 .build()
@@ -225,6 +235,27 @@ class ScheduledTaskQueueConsumerTest {
                         .withExtSettings(ExtSettings.builder().withSettings(Collections.emptyMap()).build())
                         .build()
         );
+    }
+
+    private static class DummyScheduledTaskQueueDao implements ScheduledTaskQueueDao {
+        @Override
+        public Optional<ScheduledTaskRecord> findQueueTask(@Nonnull QueueId queueId) {
+            return Optional.of(ScheduledTaskRecord.builder()
+                    .withId(1L)
+                    .withQueueName(queueId.asString())
+                    .withNextProcessAt(Instant.now())
+                    .build());
+        }
+
+        @Override
+        public int updateNextProcessDate(@Nonnull QueueId queueId, @Nonnull Instant nextProcessDate) {
+            return 0;
+        }
+
+        @Override
+        public List<ScheduledTaskRecord> findAll() {
+            return Collections.emptyList();
+        }
     }
 
     private static class DummyScheduledTaskLifecycleListener implements ScheduledTaskLifecycleListener {

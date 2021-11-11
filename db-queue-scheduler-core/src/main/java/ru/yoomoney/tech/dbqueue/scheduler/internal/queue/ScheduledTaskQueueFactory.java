@@ -9,8 +9,8 @@ import ru.yoomoney.tech.dbqueue.config.DatabaseAccessLayer;
 import ru.yoomoney.tech.dbqueue.scheduler.config.ScheduledTaskLifecycleListener;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.ScheduledTaskDefinition;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.db.ScheduledTaskQueueDao;
+import ru.yoomoney.tech.dbqueue.scheduler.settings.FailureSettings;
 import ru.yoomoney.tech.dbqueue.settings.FailRetryType;
-import ru.yoomoney.tech.dbqueue.settings.FailureSettings;
 import ru.yoomoney.tech.dbqueue.settings.QueueConfig;
 import ru.yoomoney.tech.dbqueue.settings.QueueLocation;
 import ru.yoomoney.tech.dbqueue.settings.QueueSettings;
@@ -72,19 +72,37 @@ public class ScheduledTaskQueueFactory {
                 QueueSettings.builder()
                         .withProcessingSettings(defaultQueueSettings.getProcessingSettings())
                         .withPollSettings(defaultQueueSettings.getPollSettings())
-                        .withFailureSettings(FailureSettings.builder()
-                                .withRetryType(FailRetryType.LINEAR_BACKOFF)
-                                .withRetryInterval(scheduledTaskDefinition.getMaxExecutionLockInterval())
-                                .build()
-                        )
+                        .withFailureSettings(createFailureSettings(scheduledTaskDefinition.getFailureSettings()))
                         .withReenqueueSettings(defaultQueueSettings.getReenqueueSettings())
                         .withExtSettings(defaultQueueSettings.getExtSettings())
                         .build()
         );
     }
 
+    private ru.yoomoney.tech.dbqueue.settings.FailureSettings createFailureSettings(FailureSettings failureSettings) {
+        FailRetryType failRetryType;
+        switch (failureSettings.getRetryType()) {
+            case GEOMETRIC_BACKOFF:
+                failRetryType = FailRetryType.GEOMETRIC_BACKOFF;
+                break;
+            case ARITHMETIC_BACKOFF:
+                failRetryType = FailRetryType.ARITHMETIC_BACKOFF;
+                break;
+            case LINEAR_BACKOFF:
+                failRetryType = FailRetryType.LINEAR_BACKOFF;
+                break;
+            default:
+                throw new RuntimeException("received unexpected retryType: retryType=" + failureSettings.getRetryType());
+        }
+        return ru.yoomoney.tech.dbqueue.settings.FailureSettings.builder()
+                .withRetryType(failRetryType)
+                .withRetryInterval(failureSettings.getRetryInterval())
+                .build();
+    }
+
     private QueueConsumer<String> createQueueConsumer(QueueConfig queueConfig, ScheduledTaskDefinition scheduledTaskDefinition) {
-        return new ScheduledTaskQueueConsumer(queueConfig, scheduledTaskDefinition, scheduledTaskLifecycleListener);
+        return new ScheduledTaskQueueConsumer(queueConfig, scheduledTaskDefinition, scheduledTaskLifecycleListener,
+                scheduledTaskQueueDao);
     }
 
     private QueueProducer<String> createQueueProducer(QueueConfig queueConfig) {

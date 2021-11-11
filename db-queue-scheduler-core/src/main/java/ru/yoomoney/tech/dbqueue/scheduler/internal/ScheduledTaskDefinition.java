@@ -3,9 +3,9 @@ package ru.yoomoney.tech.dbqueue.scheduler.internal;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.schedule.NextExecutionTimeProvider;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTask;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskIdentity;
+import ru.yoomoney.tech.dbqueue.scheduler.settings.FailureSettings;
 
 import javax.annotation.Nonnull;
-import java.time.Duration;
 
 import static java.util.Objects.requireNonNull;
 
@@ -27,9 +27,9 @@ public class ScheduledTaskDefinition {
     private final ScheduledTaskIdentity identity;
 
     /**
-     * Max interval during which task is not executed again unless task is rescheduled or the interval exceeded.
+     * Scheduled task retry settings
      */
-    private final Duration maxExecutionLockInterval;
+    private final FailureSettings failureSettings;
 
     /**
      * Next execution time provider
@@ -44,11 +44,11 @@ public class ScheduledTaskDefinition {
     private final ScheduledTask scheduledTask;
 
     private ScheduledTaskDefinition(boolean enabled,
-                                    @Nonnull Duration maxExecutionLockInterval,
+                                    @Nonnull FailureSettings failureSettings,
                                     @Nonnull NextExecutionTimeProvider nextExecutionTimeProvider,
                                     @Nonnull ScheduledTask scheduledTask) {
         this.enabled = enabled;
-        this.maxExecutionLockInterval = requireNonNull(maxExecutionLockInterval, "maxExecutionLockInterval");
+        this.failureSettings = requireNonNull(failureSettings, "failureSettings");
         this.nextExecutionTimeProvider = requireNonNull(nextExecutionTimeProvider, "nextExecutionTimeProvider");
         this.scheduledTask = requireNonNull(scheduledTask, "scheduledTask");
         this.identity = scheduledTask.getIdentity();
@@ -73,8 +73,9 @@ public class ScheduledTaskDefinition {
         return identity;
     }
 
-    public Duration getMaxExecutionLockInterval() {
-        return maxExecutionLockInterval;
+    @Nonnull
+    public FailureSettings getFailureSettings() {
+        return failureSettings;
     }
 
     @Nonnull
@@ -92,7 +93,7 @@ public class ScheduledTaskDefinition {
         return "ScheduledTaskDefinition{" +
                 "enabled=" + enabled +
                 ", identity=" + identity +
-                ", maxExecutionLockInterval=" + maxExecutionLockInterval +
+                ", failureSettings=" + failureSettings +
                 ", nextExecutionTimeProvider=" + nextExecutionTimeProvider +
                 ", scheduledTask=" + scheduledTask +
                 '}';
@@ -103,7 +104,7 @@ public class ScheduledTaskDefinition {
      */
     public static final class Builder {
         private boolean enabled;
-        private Duration maxExecutionLockInterval;
+        private FailureSettings failureSettings;
         private NextExecutionTimeProvider nextExecutionTimeProvider;
         private ScheduledTask scheduledTask;
 
@@ -115,8 +116,8 @@ public class ScheduledTaskDefinition {
             return this;
         }
 
-        public Builder withMaxExecutionLockInterval(@Nonnull Duration maxExecutionLockInterval) {
-            this.maxExecutionLockInterval = maxExecutionLockInterval;
+        public Builder withFailureSettings(@Nonnull FailureSettings failureSettings) {
+            this.failureSettings = failureSettings;
             return this;
         }
 
@@ -137,7 +138,7 @@ public class ScheduledTaskDefinition {
          */
         @Nonnull
         public ScheduledTaskDefinition build() {
-            return new ScheduledTaskDefinition(enabled, maxExecutionLockInterval, nextExecutionTimeProvider, scheduledTask);
+            return new ScheduledTaskDefinition(enabled, failureSettings, nextExecutionTimeProvider, scheduledTask);
         }
     }
 }

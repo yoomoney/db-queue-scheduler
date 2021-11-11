@@ -1,5 +1,8 @@
-### NEXT_VERSION_TYPE=MAJOR|MINOR|PATCH
+### NEXT_VERSION_TYPE=MAJOR
 ### NEXT_VERSION_DESCRIPTION_BEGIN
+* Failure settings added that allows configuring scheduled task retry policies in case of failures;
+* **breaking changes**
+* `maxExecutionLockInterval` field pruned from `ScheduleSettings`. Use `ScheduleSettings.failureSettings` instead.
 ### NEXT_VERSION_DESCRIPTION_END
 ## [1.1.1](https://github.com/yoomoney/db-queue-scheduler/pull/8) (09-11-2021)
 

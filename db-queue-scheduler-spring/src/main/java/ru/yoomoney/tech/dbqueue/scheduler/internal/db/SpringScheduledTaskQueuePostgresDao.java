@@ -7,10 +7,11 @@ import ru.yoomoney.tech.dbqueue.config.QueueTableSchema;
 import ru.yoomoney.tech.dbqueue.settings.QueueId;
 
 import javax.annotation.Nonnull;
+import java.sql.Timestamp;
 import java.time.Instant;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static java.util.Objects.requireNonNull;
 
@@ -45,21 +46,25 @@ public class SpringScheduledTaskQueuePostgresDao implements ScheduledTaskQueueDa
     }
 
     @Override
-    public boolean isQueueEmpty(@Nonnull QueueId queueId) {
+    public Optional<ScheduledTaskRecord> findQueueTask(@Nonnull QueueId queueId) {
         requireNonNull(queueId, "queueId");
 
-        String isQueueEmptyQuery = String.format(
-                "select count(1) from %s where %s = :queueName",
-                tableName,
-                queueTableSchema.getQueueNameField()
+        String findQueueTaskQuery = ' ' +
+                "select " + queueTableSchema.getIdField() + " as id" +
+                "     , " + queueTableSchema.getQueueNameField() + " as queue_name" +
+                "     , " + queueTableSchema.getNextProcessAtField() + " as next_process_at" +
+                "  from " + tableName +
+                " where " + queueTableSchema.getQueueNameField() + " = :queueName";
 
-        );
-        Long taskCount = namedParameterJdbcTemplate.queryForObject(
-                isQueueEmptyQuery,
+        return namedParameterJdbcTemplate.query(
+                findQueueTaskQuery,
                 Map.of("queueName", queueId.asString()),
-                Long.class
-        );
-        return taskCount == null || taskCount.equals(0L);
+                (rs, index) -> ScheduledTaskRecord.builder()
+                        .withId(rs.getLong("id"))
+                        .withQueueName(rs.getString("queue_name"))
+                        .withNextProcessAt(rs.getTimestamp("next_process_at").toInstant())
+                        .build()
+        ).stream().findFirst();
     }
 
     @Override
@@ -75,7 +80,7 @@ public class SpringScheduledTaskQueuePostgresDao implements ScheduledTaskQueueDa
         );
         Integer updatedRows = transactionOperations.execute(status -> namedParameterJdbcTemplate.update(
                 rescheduleQuery,
-                Map.<String, Object>of("queueName", queueId.asString(), "nextProcessDate", Date.from(nextProcessDate))
+                Map.<String, Object>of("queueName", queueId.asString(), "nextProcessDate", Timestamp.from(nextProcessDate))
         ));
         return updatedRows == null ? 0 : updatedRows;
     }

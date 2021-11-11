@@ -59,7 +59,7 @@ public class ScheduledTaskQueue {
     }
 
     private void doInitTask() {
-        if (!scheduledQueueDao.isQueueEmpty(queueConfig.getLocation().getQueueId())) {
+        if (scheduledQueueDao.findQueueTask(queueConfig.getLocation().getQueueId()).isPresent()) {
             log.debug("scheduled task already enqueued: taskDefinition={}", taskDefinition);
             return;
         }

@@ -14,6 +14,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -41,7 +42,7 @@ class SpringScheduledTaskQueuePostgresDaoTest extends BaseTest {
     );
 
     @Test
-    void isQueueEmpty_should_return_true_when_no_queue_tasks() {
+    void findQueueTask_should_return_empty_when_no_queue_tasks() {
         // given
         QueueLocation location1 = queueLocation("queue-" + uniqueCounter.incrementAndGet());
         QueueLocation location2 = queueLocation("queue-" + uniqueCounter.incrementAndGet());
@@ -50,20 +51,24 @@ class SpringScheduledTaskQueuePostgresDaoTest extends BaseTest {
         databaseAccessLayer.getQueueDao().enqueue(location2, EnqueueParams.create(""));
 
         // then
-        assertThat(scheduledTaskQueueDao.isQueueEmpty(location1.getQueueId()), equalTo(true));
+        assertThat(scheduledTaskQueueDao.findQueueTask(location1.getQueueId()).isEmpty(), equalTo(true));
     }
 
 
     @Test
-    void isQueueEmpty_should_return_false_when_queue_tasks_exist() {
+    void findQueueTask_should_return_task_when_queue_tasks_exist() {
         // given
         QueueLocation location = queueLocation("queue-" + uniqueCounter.incrementAndGet());
 
         // when
-        databaseAccessLayer.getQueueDao().enqueue(location, EnqueueParams.create(""));
+        long taskId = databaseAccessLayer.getQueueDao().enqueue(location, EnqueueParams.create(""));
 
         // then
-        assertThat(scheduledTaskQueueDao.isQueueEmpty(location.getQueueId()), equalTo(false));
+        Optional<ScheduledTaskRecord> queueTask = scheduledTaskQueueDao.findQueueTask(location.getQueueId());
+        assertThat(queueTask.isPresent(), equalTo(true));
+        assertThat(queueTask.orElseThrow().getId(), equalTo(taskId));
+        assertThat(queueTask.orElseThrow().getQueueName(), equalTo(location.getQueueId().asString()));
+        assertThat(queueTask.orElseThrow().getNextProcessAt(), notNullValue());
     }
 
     @Test
