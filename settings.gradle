@@ -1,3 +1,4 @@
 include 'db-queue-scheduler-core',
         'db-queue-scheduler-spring',
-        'db-queue-scheduler-brave'
+        'db-queue-scheduler-brave',
+        'examples:spring'

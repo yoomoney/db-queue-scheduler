@@ -9,11 +9,12 @@ import ru.yoomoney.tech.dbqueue.scheduler.config.ScheduledTaskLifecycleListener;
 import ru.yoomoney.tech.dbqueue.scheduler.config.impl.NoopScheduledTaskLifecycleListener;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.ScheduledTaskManagerBuilder;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.db.ScheduledTaskQueueDao;
-import ru.yoomoney.tech.dbqueue.scheduler.internal.db.SpringScheduledTaskQueuePostgresDao;
+import ru.yoomoney.tech.dbqueue.scheduler.internal.db.DefaultScheduledTaskQueueDao;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.schedule.NextExecutionTimeProviderFactory;
 import ru.yoomoney.tech.dbqueue.spring.dao.SpringDatabaseAccessLayer;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import static java.util.Objects.requireNonNull;
 
@@ -40,6 +41,7 @@ import static java.util.Objects.requireNonNull;
  */
 public class SpringSchedulerConfigurator implements SchedulerConfigurator {
     private String tableName;
+    private String idSequenceName;
     private DatabaseDialect databaseDialect;
     private JdbcOperations jdbcOperations;
     private TransactionOperations transactionOperations;
@@ -60,7 +62,7 @@ public class SpringSchedulerConfigurator implements SchedulerConfigurator {
      *     reenqueue_attempt INTEGER                  DEFAULT 0,
      *     total_attempt     INTEGER                  DEFAULT 0
      *  );
-     *  CREATE UNIQUE INDEX scheduled_tasks_name_queue_name_uq ON scheduled_tasks (queue_name);
+     *  CREATE UNIQUE INDEX scheduled_tasks_uq ON scheduled_tasks (queue_name);
      *  }</pre>
      *
      * @param tableName table name that stores scheduled tasks
@@ -69,6 +71,17 @@ public class SpringSchedulerConfigurator implements SchedulerConfigurator {
     public SpringSchedulerConfigurator withTableName(@Nonnull String tableName) {
         requireNonNull(tableName, "tableName");
         this.tableName = tableName;
+        return this;
+    }
+
+    /**
+     * Sets sequence name for generating primary key of tasks table.
+     *
+     * @param idSequenceName sequence name for generating primary key of tasks table.
+     * @return the same instance of {@link SpringSchedulerConfigurator}
+     */
+    public SpringSchedulerConfigurator withIdSequenceName(@Nullable String idSequenceName) {
+        this.idSequenceName = idSequenceName;
         return this;
     }
 
@@ -131,18 +144,15 @@ public class SpringSchedulerConfigurator implements SchedulerConfigurator {
         requireNonNull(transactionOperations, "transactionOperations");
         requireNonNull(scheduledTaskLifecycleListener, "scheduledTaskLifecycleListener");
 
-        if (databaseDialect != DatabaseDialect.POSTGRESQL) {
-            throw new IllegalStateException("got unsupported databaseDialect: databaseDialect=" + databaseDialect);
-        }
-
         DatabaseAccessLayer databaseAccessLayer = new SpringDatabaseAccessLayer(
-                ru.yoomoney.tech.dbqueue.config.DatabaseDialect.POSTGRESQL,
+                mapDatabaseDialect(databaseDialect),
                 QueueTableSchema.builder().build(),
                 jdbcOperations,
                 transactionOperations
         );
-        ScheduledTaskQueueDao scheduledTaskQueueDao = new SpringScheduledTaskQueuePostgresDao(
+        ScheduledTaskQueueDao scheduledTaskQueueDao = new DefaultScheduledTaskQueueDao(
                 tableName,
+                databaseDialect,
                 jdbcOperations,
                 transactionOperations,
                 QueueTableSchema.builder().build()
@@ -150,11 +160,27 @@ public class SpringSchedulerConfigurator implements SchedulerConfigurator {
         return new DefaultScheduler(
                 new ScheduledTaskManagerBuilder()
                         .withTableName(tableName)
+                        .withIdSequenceName(idSequenceName)
                         .withScheduledTaskQueueDao(scheduledTaskQueueDao)
                         .withDatabaseAccessLayer(databaseAccessLayer)
                         .withScheduledTaskLifecycleListener(scheduledTaskLifecycleListener)
                         .build(),
                 new NextExecutionTimeProviderFactory()
         );
+    }
+
+    private ru.yoomoney.tech.dbqueue.config.DatabaseDialect mapDatabaseDialect(DatabaseDialect databaseDialect) {
+        switch (databaseDialect) {
+            case POSTGRESQL:
+                return ru.yoomoney.tech.dbqueue.config.DatabaseDialect.POSTGRESQL;
+            case H2:
+                return ru.yoomoney.tech.dbqueue.config.DatabaseDialect.H2;
+            case ORACLE_11G:
+                return ru.yoomoney.tech.dbqueue.config.DatabaseDialect.ORACLE_11G;
+            case MSSQL:
+                return ru.yoomoney.tech.dbqueue.config.DatabaseDialect.MSSQL;
+            default:
+                throw new IllegalStateException("got unsupported databaseDialect: databaseDialect=" + databaseDialect);
+        }
     }
 }

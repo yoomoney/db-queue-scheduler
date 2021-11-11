@@ -1,5 +1,8 @@
-### NEXT_VERSION_TYPE=MAJOR|MINOR|PATCH
+### NEXT_VERSION_TYPE=PATCH
 ### NEXT_VERSION_DESCRIPTION_BEGIN
+* H2, MSSQL, Oracle databases support added;
+* Library example written;
+* Project description written in the `README.md` file
 ### NEXT_VERSION_DESCRIPTION_END
 ## [2.0.0](https://github.com/yoomoney/db-queue-scheduler/pull/9) (11-11-2021)
 

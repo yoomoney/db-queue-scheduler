@@ -1,0 +1,7 @@
+buildscript {
+    apply from: "$rootProject.projectDir/project.gradle", to: buildscript
+}
+
+javaArtifactPublishSettings.artifactId = 'db-queue-scheduler-example-spring'
+
+apply from: 'dependencies.gradle'

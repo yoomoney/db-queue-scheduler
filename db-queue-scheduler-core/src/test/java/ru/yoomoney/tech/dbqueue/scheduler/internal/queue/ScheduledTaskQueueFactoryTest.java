@@ -35,6 +35,7 @@ import static org.mockito.Mockito.mock;
 class ScheduledTaskQueueFactoryTest {
     private ScheduledTaskQueueFactory scheduledTaskQueueFactory = new ScheduledTaskQueueFactory(
             "scheduled_tasks_table",
+            null,
             new QueueIdMapper(),
             dummyQueueSettings(),
             mock(ScheduledTaskQueueDao.class),

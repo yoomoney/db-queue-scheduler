@@ -1,7 +1,9 @@
 package ru.yoomoney.tech.dbqueue.scheduler;
 
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import ru.yoomoney.tech.dbqueue.scheduler.config.DatabaseDialect;
+import ru.yoomoney.tech.dbqueue.scheduler.db.DatabaseAccess;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTask;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskExecutionResult;
 import ru.yoomoney.tech.dbqueue.scheduler.models.SimpleScheduledTask;
@@ -34,15 +36,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 public class SchedulerTest extends BaseTest {
 
-    @Test
-    public void should_schedule_new_task() {
+    @ParameterizedTest
+    @MethodSource("databaseAccessStream")
+    void should_schedule_new_task(DatabaseAccess databaseAccess) {
         // given
-        Scheduler scheduler = new SpringSchedulerConfigurator()
-                .withDatabaseDialect(DatabaseDialect.POSTGRESQL)
-                .withTableName("scheduled_tasks")
-                .withJdbcOperations(jdbcTemplate)
-                .withTransactionOperations(transactionTemplate)
-                .configure();
+        Scheduler scheduler = createScheduler(databaseAccess);
         AtomicBoolean executed = new AtomicBoolean(false);
         ScheduledTask scheduledTask = SimpleScheduledTask.create(
                 "scheduled-task" + uniqueCounter.incrementAndGet(),
@@ -66,21 +64,12 @@ public class SchedulerTest extends BaseTest {
         await().atMost(Duration.ofSeconds(5L)).until(executed::get);
     }
 
-    @Test
-    public void should_schedule_task_once() throws InterruptedException {
+    @ParameterizedTest
+    @MethodSource("databaseAccessStream")
+    void should_schedule_task_once(DatabaseAccess databaseAccess) throws InterruptedException {
         // given
-        Scheduler scheduler1 = new SpringSchedulerConfigurator()
-                .withDatabaseDialect(DatabaseDialect.POSTGRESQL)
-                .withTableName("scheduled_tasks")
-                .withJdbcOperations(jdbcTemplate)
-                .withTransactionOperations(transactionTemplate)
-                .configure();
-        Scheduler scheduler2 = new SpringSchedulerConfigurator()
-                .withDatabaseDialect(DatabaseDialect.POSTGRESQL)
-                .withTableName("scheduled_tasks")
-                .withJdbcOperations(jdbcTemplate)
-                .withTransactionOperations(transactionTemplate)
-                .configure();
+        Scheduler scheduler1 = createScheduler(databaseAccess);
+        Scheduler scheduler2 = createScheduler(databaseAccess);
         ScheduledTask scheduledTask = SimpleScheduledTask.create(
                 "scheduled-task" + uniqueCounter.incrementAndGet(),
                 ScheduledTaskExecutionResult::success
@@ -108,8 +97,8 @@ public class SchedulerTest extends BaseTest {
 
         // then
         assertThat(
-                jdbcTemplate.queryForObject("select count(1) from scheduled_tasks where queue_name = ?", Long.class,
-                        scheduledTask.getIdentity().asString()),
+                databaseAccess.getJdbcTemplate().queryForObject("select count(1) from scheduled_tasks where queue_name = ?",
+                        Long.class, scheduledTask.getIdentity().asString()),
                 equalTo(1L)
         );
     }
@@ -134,15 +123,11 @@ public class SchedulerTest extends BaseTest {
         }
     }
 
-    @Test
-    public void should_throw_exception_when_task_with_the_same_name_already_scheduled() {
+    @ParameterizedTest
+    @MethodSource("databaseAccessStream")
+    void should_throw_exception_when_task_with_the_same_name_already_scheduled(DatabaseAccess databaseAccess) {
         // given
-        Scheduler scheduler = new SpringSchedulerConfigurator()
-                .withDatabaseDialect(DatabaseDialect.POSTGRESQL)
-                .withTableName("scheduled_tasks")
-                .withJdbcOperations(jdbcTemplate)
-                .withTransactionOperations(transactionTemplate)
-                .configure();
+        Scheduler scheduler = createScheduler(databaseAccess);
         ScheduledTask scheduledTask = SimpleScheduledTask.create(
                 "scheduled-task" + uniqueCounter.incrementAndGet(),
                 ScheduledTaskExecutionResult::success
@@ -166,15 +151,11 @@ public class SchedulerTest extends BaseTest {
                         .build()));
     }
 
-    @Test
-    public void should_get_tasks_info() {
+    @ParameterizedTest
+    @MethodSource("databaseAccessStream")
+    void should_get_tasks_info(DatabaseAccess databaseAccess) {
         // given
-        Scheduler scheduler = new SpringSchedulerConfigurator()
-                .withDatabaseDialect(DatabaseDialect.POSTGRESQL)
-                .withTableName("scheduled_tasks")
-                .withJdbcOperations(jdbcTemplate)
-                .withTransactionOperations(transactionTemplate)
-                .configure();
+        Scheduler scheduler = createScheduler(databaseAccess);
         ScheduledTask scheduledTask = SimpleScheduledTask.create(
                 "scheduled-task" + uniqueCounter.incrementAndGet(),
                 ScheduledTaskExecutionResult::success
@@ -199,15 +180,11 @@ public class SchedulerTest extends BaseTest {
         assertThat(scheduledTaskStatistic.getNextExecutionTime(), notNullValue());
     }
 
-    @Test
-    public void should_reschedule_task() {
+    @ParameterizedTest
+    @MethodSource("databaseAccessStream")
+    void should_reschedule_task(DatabaseAccess databaseAccess) {
         // given
-        Scheduler scheduler = new SpringSchedulerConfigurator()
-                .withDatabaseDialect(DatabaseDialect.POSTGRESQL)
-                .withTableName("scheduled_tasks")
-                .withJdbcOperations(jdbcTemplate)
-                .withTransactionOperations(transactionTemplate)
-                .configure();
+        Scheduler scheduler = createScheduler(databaseAccess);
         AtomicBoolean executed = new AtomicBoolean(false);
         ScheduledTask scheduledTask = SimpleScheduledTask.create(
                 "scheduled-task" + uniqueCounter.incrementAndGet(),
@@ -232,15 +209,11 @@ public class SchedulerTest extends BaseTest {
         await().atMost(Duration.ofSeconds(5L)).until(executed::get);
     }
 
-    @Test
-    public void should_retry_failed_task() {
+    @ParameterizedTest
+    @MethodSource("databaseAccessStream")
+    void should_retry_failed_task(DatabaseAccess databaseAccess) {
         // given
-        Scheduler scheduler = new SpringSchedulerConfigurator()
-                .withDatabaseDialect(DatabaseDialect.POSTGRESQL)
-                .withTableName("scheduled_tasks")
-                .withJdbcOperations(jdbcTemplate)
-                .withTransactionOperations(transactionTemplate)
-                .configure();
+        Scheduler scheduler = createScheduler(databaseAccess);
         AtomicBoolean executed = new AtomicBoolean(false);
         ScheduledTask scheduledTask = SimpleScheduledTask.create(
                 "scheduled-task" + uniqueCounter.incrementAndGet(),
@@ -264,9 +237,24 @@ public class SchedulerTest extends BaseTest {
         // then
         await().atMost(Duration.ofSeconds(5L)).until(executed::get);
 
-        Instant nextExecutionDate = jdbcTemplate.queryForObject("select next_process_at from scheduled_tasks where queue_name = ?",
-                Timestamp.class, scheduledTask.getIdentity().asString()).toInstant();
+        Instant nextExecutionDate = databaseAccess.getJdbcTemplate().queryForObject(
+                "select next_process_at from scheduled_tasks where queue_name = ?",
+                Timestamp.class,
+                scheduledTask.getIdentity().asString()
+        ).toInstant();
         assertTrue(nextExecutionDate.minus(Duration.ofMinutes(1L)).isBefore(Instant.now().plus(Duration.ofMinutes(1L))));
         assertTrue(nextExecutionDate.plus(Duration.ofMinutes(1L)).isAfter(Instant.now().plus(Duration.ofMinutes(1L))));
+    }
+
+    private Scheduler createScheduler(DatabaseAccess databaseAccess) {
+        return new SpringSchedulerConfigurator()
+                .withDatabaseDialect(databaseAccess.getDatabaseDialect())
+                .withTableName("scheduled_tasks")
+                .withIdSequenceName(databaseAccess.getDatabaseDialect() == DatabaseDialect.ORACLE_11G
+                        ? "scheduled_tasks_seq"
+                        : null)
+                .withJdbcOperations(databaseAccess.getJdbcTemplate())
+                .withTransactionOperations(databaseAccess.getTransactionTemplate())
+                .configure();
     }
 }
