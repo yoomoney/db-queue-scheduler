@@ -7,6 +7,7 @@ import ru.yoomoney.tech.dbqueue.config.DatabaseAccessLayer;
 import ru.yoomoney.tech.dbqueue.config.DatabaseDialect;
 import ru.yoomoney.tech.dbqueue.config.QueueTableSchema;
 import ru.yoomoney.tech.dbqueue.scheduler.BaseTest;
+import ru.yoomoney.tech.dbqueue.scheduler.db.DatabaseAccess;
 import ru.yoomoney.tech.dbqueue.settings.QueueId;
 import ru.yoomoney.tech.dbqueue.settings.QueueLocation;
 import ru.yoomoney.tech.dbqueue.spring.dao.SpringDatabaseAccessLayer;
@@ -35,8 +36,8 @@ class DefaultScheduledTaskQueueDaoTest extends BaseTest {
         // given
         ScheduledTaskQueueDao scheduledTaskQueueDao = scheduledTaskQueueDao(databaseAccess);
         DatabaseAccessLayer databaseAccessLayer = databaseAccessLayer(databaseAccess);
-        QueueLocation location1 = queueLocation("queue-" + uniqueCounter.incrementAndGet());
-        QueueLocation location2 = queueLocation("queue-" + uniqueCounter.incrementAndGet());
+        QueueLocation location1 = queueLocation(databaseAccess, "queue-" + uniqueCounter.incrementAndGet());
+        QueueLocation location2 = queueLocation(databaseAccess, "queue-" + uniqueCounter.incrementAndGet());
 
         // when
         databaseAccessLayer.getQueueDao().enqueue(location2, EnqueueParams.create(""));
@@ -52,7 +53,7 @@ class DefaultScheduledTaskQueueDaoTest extends BaseTest {
         // given
         ScheduledTaskQueueDao scheduledTaskQueueDao = scheduledTaskQueueDao(databaseAccess);
         DatabaseAccessLayer databaseAccessLayer = databaseAccessLayer(databaseAccess);
-        QueueLocation location = queueLocation("queue-" + uniqueCounter.incrementAndGet());
+        QueueLocation location = queueLocation(databaseAccess, "queue-" + uniqueCounter.incrementAndGet());
 
         // when
         long taskId = databaseAccessLayer.getQueueDao().enqueue(location, EnqueueParams.create(""));
@@ -71,8 +72,8 @@ class DefaultScheduledTaskQueueDaoTest extends BaseTest {
         // given
         ScheduledTaskQueueDao scheduledTaskQueueDao = scheduledTaskQueueDao(databaseAccess);
         DatabaseAccessLayer databaseAccessLayer = databaseAccessLayer(databaseAccess);
-        QueueLocation location1 = queueLocation("queue-" + uniqueCounter.incrementAndGet());
-        QueueLocation location2 = queueLocation("queue-" + uniqueCounter.incrementAndGet());
+        QueueLocation location1 = queueLocation(databaseAccess, "queue-" + uniqueCounter.incrementAndGet());
+        QueueLocation location2 = queueLocation(databaseAccess, "queue-" + uniqueCounter.incrementAndGet());
         Instant nextProcessingDate = LocalDateTime.of(2010, 1, 1, 0, 0).toInstant(ZoneOffset.UTC);
 
         // when
@@ -99,8 +100,8 @@ class DefaultScheduledTaskQueueDaoTest extends BaseTest {
         // given
         ScheduledTaskQueueDao scheduledTaskQueueDao = scheduledTaskQueueDao(databaseAccess);
         DatabaseAccessLayer databaseAccessLayer = databaseAccessLayer(databaseAccess);
-        QueueLocation location1 = queueLocation("queue-" + uniqueCounter.incrementAndGet());
-        QueueLocation location2 = queueLocation("queue-" + uniqueCounter.incrementAndGet());
+        QueueLocation location1 = queueLocation(databaseAccess, "queue-" + uniqueCounter.incrementAndGet());
+        QueueLocation location2 = queueLocation(databaseAccess, "queue-" + uniqueCounter.incrementAndGet());
 
         // when
         long taskId1 = databaseAccessLayer.getQueueDao().enqueue(location1, EnqueueParams.create(""));
@@ -117,9 +118,13 @@ class DefaultScheduledTaskQueueDaoTest extends BaseTest {
         assertThat(scheduledTasks.get(taskId2).getQueueName(), equalTo(location2.getQueueId().asString()));
     }
 
-    private QueueLocation queueLocation(String queueName) {
+    private QueueLocation queueLocation(DatabaseAccess databaseAccess, String queueName) {
         return QueueLocation.builder()
                 .withTableName("scheduled_tasks")
+                .withIdSequence(databaseAccess.getDatabaseDialect() == ru.yoomoney.tech.dbqueue.scheduler.config.DatabaseDialect.ORACLE_11G
+                        ? "scheduled_tasks_seq"
+                        : null
+                )
                 .withQueueId(new QueueId(queueName))
                 .build();
     }
@@ -127,6 +132,7 @@ class DefaultScheduledTaskQueueDaoTest extends BaseTest {
     private ScheduledTaskQueueDao scheduledTaskQueueDao(DatabaseAccess databaseAccess) {
         return new DefaultScheduledTaskQueueDao(
                 "scheduled_tasks",
+                databaseAccess.getDatabaseDialect(),
                 databaseAccess.getJdbcTemplate(),
                 databaseAccess.getTransactionTemplate(),
                 QueueTableSchema.builder().build()
@@ -141,6 +147,12 @@ class DefaultScheduledTaskQueueDaoTest extends BaseTest {
                 break;
             case H2:
                 databaseDialect = DatabaseDialect.H2;
+                break;
+            case MSSQL:
+                databaseDialect = DatabaseDialect.MSSQL;
+                break;
+            case ORACLE_11G:
+                databaseDialect = DatabaseDialect.ORACLE_11G;
                 break;
             default:
                 throw new RuntimeException("got unexpected databaseDialect: databaseDialect="

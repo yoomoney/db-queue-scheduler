@@ -22,6 +22,7 @@ import ru.yoomoney.tech.dbqueue.settings.ReenqueueRetryType;
 import ru.yoomoney.tech.dbqueue.settings.ReenqueueSettings;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.time.Duration;
 import java.util.Collections;
 
@@ -39,6 +40,7 @@ public class ScheduledTaskManagerBuilder {
     private static final Duration DEFAULT_DB_QUEUE_TIMEOUT_AFTER_FAILURE = Duration.ofSeconds(1L);
 
     private String tableName;
+    private String idSequenceName;
     private DatabaseAccessLayer databaseAccessLayer;
     private ScheduledTaskQueueDao scheduledTaskQueueDao;
     private ScheduledTaskLifecycleListener scheduledTaskLifecycleListener;
@@ -51,6 +53,17 @@ public class ScheduledTaskManagerBuilder {
      */
     public ScheduledTaskManagerBuilder withTableName(@Nonnull String tableName) {
         this.tableName = requireNonNull(tableName, "tableName");
+        return this;
+    }
+
+    /**
+     * Sets sequence name for generating primary key of tasks table.
+     *
+     * @param idSequenceName sequence name for generating primary key of tasks table.
+     * @return the same instance of {@link ScheduledTaskManagerBuilder}
+     */
+    public ScheduledTaskManagerBuilder withIdSequenceName(@Nullable String idSequenceName) {
+        this.idSequenceName = idSequenceName;
         return this;
     }
 
@@ -111,6 +124,7 @@ public class ScheduledTaskManagerBuilder {
         );
         ScheduledTaskQueueFactory scheduledTaskQueueFactory = new ScheduledTaskQueueFactory(
                 tableName,
+                idSequenceName,
                 queueIdMapper,
                 defaultQueueSettings,
                 scheduledTaskQueueDao,

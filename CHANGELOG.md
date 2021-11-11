@@ -1,6 +1,6 @@
 ### NEXT_VERSION_TYPE=PATCH
 ### NEXT_VERSION_DESCRIPTION_BEGIN
-* H2 database support added;
+* H2, MSSQL, Oracle databases support added;
 * Library example written;
 * Project description written in the `README.md` file
 ### NEXT_VERSION_DESCRIPTION_END

@@ -16,6 +16,7 @@ import ru.yoomoney.tech.dbqueue.settings.QueueLocation;
 import ru.yoomoney.tech.dbqueue.settings.QueueSettings;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import static java.util.Objects.requireNonNull;
 
@@ -27,6 +28,7 @@ import static java.util.Objects.requireNonNull;
  */
 public class ScheduledTaskQueueFactory {
     private final String queueTableName;
+    private final String idSequenceName;
     private final QueueIdMapper queueIdMapper;
     private final QueueSettings defaultQueueSettings;
     private final ScheduledTaskQueueDao scheduledTaskQueueDao;
@@ -34,12 +36,14 @@ public class ScheduledTaskQueueFactory {
     private final ScheduledTaskLifecycleListener scheduledTaskLifecycleListener;
 
     public ScheduledTaskQueueFactory(@Nonnull String queueTableName,
+                                     @Nullable String idSequenceName,
                                      @Nonnull QueueIdMapper queueIdMapper,
                                      @Nonnull QueueSettings defaultQueueSettings,
                                      @Nonnull ScheduledTaskQueueDao scheduledTaskQueueDao,
                                      @Nonnull QueueShardRouter<String, ? extends DatabaseAccessLayer> queueShardRouter,
                                      @Nonnull ScheduledTaskLifecycleListener scheduledTaskLifecycleListener) {
         this.queueTableName = requireNonNull(queueTableName, "queueTableName");
+        this.idSequenceName = idSequenceName;
         this.queueIdMapper = requireNonNull(queueIdMapper, "queueIdMapper");
         this.defaultQueueSettings = requireNonNull(defaultQueueSettings, "defaultQueueSettings");
         this.scheduledTaskQueueDao = requireNonNull(scheduledTaskQueueDao, "scheduledTaskQueueDao");
@@ -68,6 +72,7 @@ public class ScheduledTaskQueueFactory {
                 QueueLocation.builder()
                         .withQueueId(queueIdMapper.toQueueId(scheduledTaskDefinition.getIdentity()))
                         .withTableName(queueTableName)
+                        .withIdSequence(idSequenceName)
                         .build(),
                 QueueSettings.builder()
                         .withProcessingSettings(defaultQueueSettings.getProcessingSettings())

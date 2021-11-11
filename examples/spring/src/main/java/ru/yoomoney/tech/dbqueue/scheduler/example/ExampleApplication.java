@@ -54,7 +54,7 @@ public class ExampleApplication {
         scheduler.schedule(
                 createScheduledTaskExample("cron-example"),
                 ScheduledTaskSettings.builder()
-                        .withFailureSettings(FailureSettings.linear(Duration.ofHours(1L)))
+                        .withFailureSettings(FailureSettings.linearBackoff(Duration.ofHours(1L)))
                         .withScheduleSettings(ScheduleSettings.cron("*/30 * * * * *", ZoneId.systemDefault()))
                         .build()
         );
@@ -63,7 +63,7 @@ public class ExampleApplication {
         scheduler.schedule(
                 createScheduledTaskExample("fixed-delay-example"),
                 ScheduledTaskSettings.builder()
-                        .withFailureSettings(FailureSettings.linear(Duration.ofHours(1L)))
+                        .withFailureSettings(FailureSettings.linearBackoff(Duration.ofHours(1L)))
                         .withScheduleSettings(ScheduleSettings.fixedRate(Duration.ofMinutes(1L)))
                         .build()
         );
@@ -72,7 +72,7 @@ public class ExampleApplication {
         scheduler.schedule(
                 createScheduledTaskExample("fixed-rate-example"),
                 ScheduledTaskSettings.builder()
-                        .withFailureSettings(FailureSettings.linear(Duration.ofHours(1L)))
+                        .withFailureSettings(FailureSettings.linearBackoff(Duration.ofHours(1L)))
                         .withScheduleSettings(ScheduleSettings.fixedRate(Duration.ofMinutes(1L)))
                         .build()
         );

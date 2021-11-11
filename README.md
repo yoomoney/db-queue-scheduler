@@ -24,6 +24,10 @@ implementation 'ru.yoomoney.tech:db-queue-scheduler-core:2.0.0',
 * Task event listeners to build up monitoring;
 * Many other features.
 
+The library provides only (recurring tasks)/(periodic tasks)/(scheduled tasks) functionality -
+that allows executing tasks periodically. If you need one-time tasks - tasks that are executed once, please, 
+look at [db-queue](https://github.com/yoomoney/db-queue) library.
+
 ## Database configuration
 
 The project uses [db-queue](https://github.com/yoomoney/db-queue) to work with a database. 
@@ -43,7 +47,43 @@ CREATE TABLE scheduled_tasks (
   reenqueue_attempt INTEGER                  DEFAULT 0,
   total_attempt     INTEGER                  DEFAULT 0
 );
-CREATE UNIQUE INDEX scheduled_tasks_name_queue_name_uq ON scheduled_tasks (queue_name);
+CREATE UNIQUE INDEX scheduled_tasks_uq ON scheduled_tasks (queue_name);
+```
+
+### MSSQL DDL
+
+```sql
+CREATE TABLE scheduled_tasks (
+  id                INT IDENTITY(1,1) NOT NULL,
+  queue_name        VARCHAR(100) NOT NULL,
+  payload           TEXT,
+  created_at        DATETIMEOFFSET NOT NULL  DEFAULT SYSDATETIMEOFFSET(),
+  next_process_at   DATETIMEOFFSET NOT NULL  DEFAULT SYSDATETIMEOFFSET(),
+  attempt           INTEGER NOT NULL         DEFAULT 0,
+  reenqueue_attempt INTEGER NOT NULL         DEFAULT 0,
+  total_attempt     INTEGER NOT NULL         DEFAULT 0,
+  PRIMARY KEY (id)
+);
+CREATE UNIQUE INDEX scheduled_tasks_uq ON scheduled_tasks (queue_name);
+```
+
+### Oracle DDL
+
+```sql
+CREATE TABLE scheduled_tasks (
+  id                NUMBER(38) NOT NULL PRIMARY KEY,
+  queue_name        VARCHAR2(128) NOT NULL,
+  payload           CLOB,
+  created_at        TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  next_process_at   TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  attempt           NUMBER(38)                  DEFAULT 0,
+  reenqueue_attempt NUMBER(38)                  DEFAULT 0,
+  total_attempt     NUMBER(38)                  DEFAULT 0
+);
+CREATE UNIQUE INDEX scheduled_tasks_uq ON scheduled_tasks (queue_name);
+
+-- Create sequence and specify its name through scheduler configurator.
+CREATE SEQUENCE scheduled_tasks_seq;
 ```
 
 ### H2 Database DDL
@@ -58,11 +98,8 @@ CREATE TABLE scheduled_tasks (
   reenqueue_attempt INTEGER                  DEFAULT 0,
   total_attempt     INTEGER                  DEFAULT 0
 );
-CREATE UNIQUE INDEX scheduled_tasks_name_queue_name_uq ON scheduled_tasks (queue_name);
+CREATE UNIQUE INDEX scheduled_tasks_uq ON scheduled_tasks (queue_name);
 ```
-
-Look at [db-queue documentation](https://github.com/yoomoney/db-queue#database-configuration) to learn more about 
-database configuration.
 
 ## Example
 
@@ -83,7 +120,7 @@ ScheduledTask task = SimpleScheduledTask.create(
         });
 
 ScheduledTaskSettings settings = ScheduledTaskSettings.builder()
-        .withFailureSettings(FailureSettings.linear(Duration.ofHours(1L)))
+        .withFailureSettings(FailureSettings.linearBackoff(Duration.ofHours(1L)))
         .withScheduleSettings(ScheduleSettings.fixedDelay(Duration.ofSeconds(0L)))
         .build()
 
