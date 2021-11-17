@@ -8,6 +8,7 @@ import ru.yoomoney.tech.dbqueue.scheduler.internal.schedule.NextExecutionTimePro
 import ru.yoomoney.tech.dbqueue.scheduler.internal.schedule.NextExecutionTimeProviderFactory;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTask;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskIdentity;
+import ru.yoomoney.tech.dbqueue.scheduler.models.StatefulScheduledTask;
 import ru.yoomoney.tech.dbqueue.scheduler.models.info.ScheduledTaskInfo;
 import ru.yoomoney.tech.dbqueue.scheduler.settings.ScheduledTaskSettings;
 
@@ -55,6 +56,27 @@ class DefaultScheduler implements Scheduler {
         scheduledTaskManager.schedule(scheduledTaskDefinition);
 
         log.info("task scheduled: identity={}, settings={}", scheduledTask.getIdentity(), scheduledTaskSettings);
+    }
+
+    @Override
+    public <StateT> void schedule(@Nonnull StatefulScheduledTask<StateT> statefulScheduledTask,
+                                  @Nonnull ScheduledTaskSettings scheduledTaskSettings) {
+        requireNonNull(scheduledTaskSettings, "scheduledTaskSettings");
+        requireNonNull(statefulScheduledTask, "statefulScheduledTask");
+
+        NextExecutionTimeProvider executionTimeProvider = nextExecutionTimeProviderFactory
+                .createExecutionTimeProvider(scheduledTaskSettings.getScheduleSettings());
+
+        ScheduledTaskDefinition scheduledTaskDefinition = ScheduledTaskDefinition.builder()
+                .withEnabled(scheduledTaskSettings.isEnabled())
+                .withFailureSettings(scheduledTaskSettings.getFailureSettings())
+                .withStatefulScheduledTask(statefulScheduledTask)
+                .withNextExecutionTimeProvider(executionTimeProvider)
+                .build();
+
+        scheduledTaskManager.schedule(scheduledTaskDefinition);
+
+        log.info("task scheduled: identity={}, settings={}", statefulScheduledTask.getIdentity(), scheduledTaskSettings);
     }
 
     @Override

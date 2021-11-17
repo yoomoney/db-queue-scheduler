@@ -17,7 +17,7 @@ implementation 'ru.yoomoney.tech:db-queue-scheduler-core:2.0.0',
 
 ## Features
 
-* Persisted periodic tasks;
+* Persisted periodic stateful and stateless tasks;
 * **At most once task execution at the same time**;
 * Different schedule configuration: cron expressions, fixed rates, fixed delays, dynamic calculations;
 * Tracing support;

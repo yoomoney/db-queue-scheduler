@@ -14,6 +14,8 @@ import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTask;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskExecutionResult;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskIdentity;
 import ru.yoomoney.tech.dbqueue.scheduler.models.SimpleScheduledTask;
+import ru.yoomoney.tech.dbqueue.scheduler.models.SimpleStatefulScheduledTask;
+import ru.yoomoney.tech.dbqueue.scheduler.models.StatefulScheduledTaskExecutionResult;
 import ru.yoomoney.tech.dbqueue.scheduler.settings.FailureSettings;
 import ru.yoomoney.tech.dbqueue.settings.ExtSettings;
 import ru.yoomoney.tech.dbqueue.settings.FailRetryType;
@@ -60,6 +62,36 @@ class ScheduledTaskQueueConsumerTest {
         );
         ScheduledTaskDefinition scheduledTaskDefinition = ScheduledTaskDefinition.builder()
                 .withScheduledTask(scheduledTask)
+                .withFailureSettings(FailureSettings.linearBackoff(Duration.ofHours(1L)))
+                .withNextExecutionTimeProvider(new FixedRateNextExecutionTimeProvider(Duration.ZERO))
+                .build();
+        ScheduledTaskQueueConsumer scheduledTaskQueueConsumer = new ScheduledTaskQueueConsumer(
+                dummyQueueConfig(),
+                scheduledTaskDefinition,
+                NoopScheduledTaskLifecycleListener.getInstance(),
+                new DummyScheduledTaskQueueDao()
+        );
+
+        // when
+        scheduledTaskQueueConsumer.execute(dummyTask());
+
+        // then
+        assertThat(executed[0], equalTo(true));
+    }
+
+    @Test
+    public void should_execute_stateful_scheduledTask() {
+        // given
+        boolean[] executed = { false };
+        SimpleStatefulScheduledTask statefulScheduledTask = SimpleStatefulScheduledTask.create(
+                "scheduled-task",
+                state -> {
+                    executed[0] = true;
+                    return StatefulScheduledTaskExecutionResult.success(state);
+                }
+        );
+        ScheduledTaskDefinition scheduledTaskDefinition = ScheduledTaskDefinition.builder()
+                .withStatefulScheduledTask(statefulScheduledTask)
                 .withFailureSettings(FailureSettings.linearBackoff(Duration.ofHours(1L)))
                 .withNextExecutionTimeProvider(new FixedRateNextExecutionTimeProvider(Duration.ZERO))
                 .build();
@@ -249,6 +281,11 @@ class ScheduledTaskQueueConsumerTest {
 
         @Override
         public int updateNextProcessDate(@Nonnull QueueId queueId, @Nonnull Instant nextProcessDate) {
+            return 0;
+        }
+
+        @Override
+        public int updatePayload(@Nonnull QueueId queueId, @Nullable String payload) {
             return 0;
         }
 

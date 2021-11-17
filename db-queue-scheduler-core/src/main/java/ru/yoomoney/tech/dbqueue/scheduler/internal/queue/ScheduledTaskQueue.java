@@ -8,6 +8,7 @@ import ru.yoomoney.tech.dbqueue.api.QueueProducer;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.ScheduledTaskDefinition;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.db.ScheduledTaskQueueDao;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.schedule.ScheduledTaskExecutionContext;
+import ru.yoomoney.tech.dbqueue.scheduler.models.StatefulScheduledTask;
 import ru.yoomoney.tech.dbqueue.settings.QueueConfig;
 
 import javax.annotation.Nonnull;
@@ -64,9 +65,14 @@ public class ScheduledTaskQueue {
             return;
         }
 
+        String payload = taskDefinition.getStatefulScheduledTask()
+                .map(StatefulScheduledTask::getInitialState)
+                .map(state -> taskDefinition.getStatefulScheduledTask().orElseThrow().getTransformer().fromObject(state))
+                .orElse(null);
         ScheduledTaskExecutionContext taskExecutionContext = new ScheduledTaskExecutionContext();
         Instant nextExecutionTime = taskDefinition.getNextExecutionTimeProvider().getNextExecutionTime(taskExecutionContext);
-        queueProducer.enqueue(EnqueueParams.create("").withExecutionDelay(Duration.between(Instant.now(), nextExecutionTime)));
+        queueProducer.enqueue(new EnqueueParams<String>().withPayload(payload)
+                .withExecutionDelay(Duration.between(Instant.now(), nextExecutionTime)));
         log.debug("scheduled task enqueued: taskDefinition={}, nextExecutionTime={}", taskDefinition, nextExecutionTime);
     }
 

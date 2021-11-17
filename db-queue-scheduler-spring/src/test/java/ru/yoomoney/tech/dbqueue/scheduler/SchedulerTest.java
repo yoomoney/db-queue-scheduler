@@ -7,6 +7,9 @@ import ru.yoomoney.tech.dbqueue.scheduler.db.DatabaseAccess;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTask;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskExecutionResult;
 import ru.yoomoney.tech.dbqueue.scheduler.models.SimpleScheduledTask;
+import ru.yoomoney.tech.dbqueue.scheduler.models.SimpleStatefulScheduledTask;
+import ru.yoomoney.tech.dbqueue.scheduler.models.StatefulScheduledTask;
+import ru.yoomoney.tech.dbqueue.scheduler.models.StatefulScheduledTaskExecutionResult;
 import ru.yoomoney.tech.dbqueue.scheduler.models.info.ScheduledTaskInfo;
 import ru.yoomoney.tech.dbqueue.scheduler.settings.FailureSettings;
 import ru.yoomoney.tech.dbqueue.scheduler.settings.ScheduleSettings;
@@ -62,6 +65,39 @@ public class SchedulerTest extends BaseTest {
 
         // then
         await().atMost(Duration.ofSeconds(5L)).until(executed::get);
+    }
+
+    @ParameterizedTest
+    @MethodSource("databaseAccessStream")
+    void should_schedule_new_stateful_task(DatabaseAccess databaseAccess) {
+        // given
+        Scheduler scheduler = createScheduler(databaseAccess);
+        AtomicBoolean executed = new AtomicBoolean(false);
+        StatefulScheduledTask scheduledTask = SimpleStatefulScheduledTask.create(
+                "scheduled-task" + uniqueCounter.incrementAndGet(),
+                state -> {
+                    executed.set(true);
+                    return StatefulScheduledTaskExecutionResult.success("new_state");
+                }
+        );
+
+        // when
+        scheduler.start();
+        scheduler.schedule(
+                scheduledTask,
+                ScheduledTaskSettings.builder()
+                        .withScheduleSettings(ScheduleSettings.fixedDelay(Duration.ofSeconds(0L)))
+                        .withFailureSettings(FailureSettings.linearBackoff(Duration.ofHours(1L)))
+                        .build()
+        );
+
+        // then
+        await().atMost(Duration.ofSeconds(5L)).until(executed::get);
+        assertThat(
+                databaseAccess.getJdbcTemplate().queryForObject("select payload from scheduled_tasks where queue_name = ?",
+                        String.class, scheduledTask.getIdentity().asString()),
+                equalTo("new_state")
+        );
     }
 
     @ParameterizedTest

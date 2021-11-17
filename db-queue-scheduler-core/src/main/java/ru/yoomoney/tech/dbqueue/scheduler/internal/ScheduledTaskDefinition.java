@@ -3,9 +3,12 @@ package ru.yoomoney.tech.dbqueue.scheduler.internal;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.schedule.NextExecutionTimeProvider;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTask;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskIdentity;
+import ru.yoomoney.tech.dbqueue.scheduler.models.StatefulScheduledTask;
 import ru.yoomoney.tech.dbqueue.scheduler.settings.FailureSettings;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import java.util.Optional;
 
 import static java.util.Objects.requireNonNull;
 
@@ -38,20 +41,29 @@ public class ScheduledTaskDefinition {
     private final NextExecutionTimeProvider nextExecutionTimeProvider;
 
     /**
-     * Scheduled task
+     * Stateless scheduled task
      */
-    @Nonnull
+    @Nullable
     private final ScheduledTask scheduledTask;
 
+    /**
+     * Stateful scheduled task
+     */
+    @Nullable
+    private final StatefulScheduledTask statefulScheduledTask;
+
     private ScheduledTaskDefinition(boolean enabled,
+                                    @Nonnull ScheduledTaskIdentity identity,
                                     @Nonnull FailureSettings failureSettings,
                                     @Nonnull NextExecutionTimeProvider nextExecutionTimeProvider,
-                                    @Nonnull ScheduledTask scheduledTask) {
+                                    @Nullable ScheduledTask scheduledTask,
+                                    @Nullable StatefulScheduledTask statefulScheduledTask) {
         this.enabled = enabled;
+        this.identity = requireNonNull(identity, "identity");
         this.failureSettings = requireNonNull(failureSettings, "failureSettings");
         this.nextExecutionTimeProvider = requireNonNull(nextExecutionTimeProvider, "nextExecutionTimeProvider");
-        this.scheduledTask = requireNonNull(scheduledTask, "scheduledTask");
-        this.identity = scheduledTask.getIdentity();
+        this.scheduledTask = scheduledTask;
+        this.statefulScheduledTask = statefulScheduledTask;
     }
 
     /**
@@ -84,8 +96,13 @@ public class ScheduledTaskDefinition {
     }
 
     @Nonnull
-    public ScheduledTask getScheduledTask() {
-        return scheduledTask;
+    public Optional<ScheduledTask> getScheduledTask() {
+        return Optional.ofNullable(scheduledTask);
+    }
+
+    @Nonnull
+    public Optional<StatefulScheduledTask> getStatefulScheduledTask() {
+        return Optional.ofNullable(statefulScheduledTask);
     }
 
     @Override
@@ -96,6 +113,7 @@ public class ScheduledTaskDefinition {
                 ", failureSettings=" + failureSettings +
                 ", nextExecutionTimeProvider=" + nextExecutionTimeProvider +
                 ", scheduledTask=" + scheduledTask +
+                ", statefulScheduledTask=" + statefulScheduledTask +
                 '}';
     }
 
@@ -107,6 +125,7 @@ public class ScheduledTaskDefinition {
         private FailureSettings failureSettings;
         private NextExecutionTimeProvider nextExecutionTimeProvider;
         private ScheduledTask scheduledTask;
+        private StatefulScheduledTask statefulScheduledTask;
 
         private Builder() {
         }
@@ -131,6 +150,11 @@ public class ScheduledTaskDefinition {
             return this;
         }
 
+        public Builder withStatefulScheduledTask(@Nonnull StatefulScheduledTask statefulScheduledTask) {
+            this.statefulScheduledTask = statefulScheduledTask;
+            return this;
+        }
+
         /**
          * Creates an object
          *
@@ -138,7 +162,16 @@ public class ScheduledTaskDefinition {
          */
         @Nonnull
         public ScheduledTaskDefinition build() {
-            return new ScheduledTaskDefinition(enabled, failureSettings, nextExecutionTimeProvider, scheduledTask);
+            ScheduledTaskIdentity scheduledTaskIdentity;
+            if (scheduledTask != null) {
+                scheduledTaskIdentity = scheduledTask.getIdentity();
+            } else if (statefulScheduledTask != null) {
+                scheduledTaskIdentity = statefulScheduledTask.getIdentity();
+            } else {
+                throw new RuntimeException("scheduledTask or statefulScheduledTask must be set");
+            }
+            return new ScheduledTaskDefinition(enabled, scheduledTaskIdentity, failureSettings, nextExecutionTimeProvider,
+                    scheduledTask, statefulScheduledTask);
         }
     }
 }

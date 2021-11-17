@@ -1,5 +1,6 @@
-### NEXT_VERSION_TYPE=MAJOR|MINOR|PATCH
+### NEXT_VERSION_TYPE=MINOR
 ### NEXT_VERSION_DESCRIPTION_BEGIN
+* Stateful scheduled tasks implemented that allow storing and sharing states among their executions
 ### NEXT_VERSION_DESCRIPTION_END
 ## [2.0.1](https://github.com/yoomoney/db-queue-scheduler/pull/10) (11-11-2021)
 
