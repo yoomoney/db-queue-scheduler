@@ -11,13 +11,13 @@ Project uses [Semantic Versioning](http://semver.org/).
 Library is available on [Maven Central](https://search.maven.org/).
 
 ```
-implementation 'ru.yoomoney.tech:db-queue-scheduler-core:2.0.0',
-               'ru.yoomoney.tech:db-queue-scheduler-spring:2.0.0'
+implementation 'ru.yoomoney.tech:db-queue-scheduler-core:3.0.0',
+               'ru.yoomoney.tech:db-queue-scheduler-spring:3.0.0'
 ```
 
 ## Features
 
-* Persisted periodic stateful and stateless tasks;
+* Persisted periodic tasks;
 * **At most once task execution at the same time**;
 * Different schedule configuration: cron expressions, fixed rates, fixed delays, dynamic calculations;
 * Tracing support;
@@ -114,7 +114,7 @@ Scheduler scheduler = new SpringSchedulerConfigurator()
          
 ScheduledTask task = SimpleScheduledTask.create(
         "scheduled-task-id",
-        () -> {
+        context -> {
             System.out.println("Hello World!");
             return ScheduledTaskExecutionResult.success();
         });

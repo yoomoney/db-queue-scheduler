@@ -6,15 +6,12 @@ import ru.yoomoney.tech.dbqueue.scheduler.config.DatabaseDialect;
 import ru.yoomoney.tech.dbqueue.scheduler.db.DatabaseAccess;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTask;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskExecutionResult;
-import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskIdentity;
 import ru.yoomoney.tech.dbqueue.scheduler.models.SimpleScheduledTask;
 import ru.yoomoney.tech.dbqueue.scheduler.models.info.ScheduledTaskInfo;
 import ru.yoomoney.tech.dbqueue.scheduler.settings.FailureSettings;
 import ru.yoomoney.tech.dbqueue.scheduler.settings.ScheduleSettings;
 import ru.yoomoney.tech.dbqueue.scheduler.settings.ScheduledTaskSettings;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.Instant;
@@ -47,7 +44,7 @@ public class SchedulerTest extends BaseTest {
         AtomicBoolean executed = new AtomicBoolean(false);
         ScheduledTask scheduledTask = SimpleScheduledTask.create(
                 "scheduled-task" + uniqueCounter.incrementAndGet(),
-                () -> {
+                context -> {
                     executed.set(true);
                     return ScheduledTaskExecutionResult.success();
                 }
@@ -69,31 +66,17 @@ public class SchedulerTest extends BaseTest {
 
     @ParameterizedTest
     @MethodSource("databaseAccessStream")
-    void should_schedule_new_stateful_task(DatabaseAccess databaseAccess) {
+    void should_update_scheduled_task_state(DatabaseAccess databaseAccess) {
         // given
         Scheduler scheduler = createScheduler(databaseAccess);
         AtomicBoolean executed = new AtomicBoolean(false);
-        ScheduledTaskIdentity identity = ScheduledTaskIdentity.of("scheduled-task" + uniqueCounter.incrementAndGet());
-        ScheduledTask scheduledTask = new ScheduledTask() {
-            @Nonnull
-            @Override
-            public ScheduledTaskIdentity getIdentity() {
-                return identity;
-            }
-
-            @Nonnull
-            @Override
-            public ScheduledTaskExecutionResult execute(@Nullable String state) {
-                executed.set(true);
-                return ScheduledTaskExecutionResult.success().withState("new_state");
-            }
-
-            @Nonnull
-            @Override
-            public ScheduledTaskExecutionResult execute() {
-                throw new IllegalStateException("not implemented");
-            }
-        };
+        ScheduledTask scheduledTask = SimpleScheduledTask.create(
+                "scheduled-task" + uniqueCounter.incrementAndGet(),
+                context -> {
+                    executed.set(true);
+                    return ScheduledTaskExecutionResult.success().withState("new_state");
+                }
+        );
 
         // when
         scheduler.start();
@@ -122,7 +105,7 @@ public class SchedulerTest extends BaseTest {
         Scheduler scheduler2 = createScheduler(databaseAccess);
         ScheduledTask scheduledTask = SimpleScheduledTask.create(
                 "scheduled-task" + uniqueCounter.incrementAndGet(),
-                ScheduledTaskExecutionResult::success
+                context -> ScheduledTaskExecutionResult.success()
         );
 
         // when
@@ -180,7 +163,7 @@ public class SchedulerTest extends BaseTest {
         Scheduler scheduler = createScheduler(databaseAccess);
         ScheduledTask scheduledTask = SimpleScheduledTask.create(
                 "scheduled-task" + uniqueCounter.incrementAndGet(),
-                ScheduledTaskExecutionResult::success
+                context -> ScheduledTaskExecutionResult.success()
         );
 
         // when
@@ -208,7 +191,7 @@ public class SchedulerTest extends BaseTest {
         Scheduler scheduler = createScheduler(databaseAccess);
         ScheduledTask scheduledTask = SimpleScheduledTask.create(
                 "scheduled-task" + uniqueCounter.incrementAndGet(),
-                ScheduledTaskExecutionResult::success
+                context -> ScheduledTaskExecutionResult.success()
         );
 
         // when
@@ -238,7 +221,7 @@ public class SchedulerTest extends BaseTest {
         AtomicBoolean executed = new AtomicBoolean(false);
         ScheduledTask scheduledTask = SimpleScheduledTask.create(
                 "scheduled-task" + uniqueCounter.incrementAndGet(),
-                () -> {
+                context -> {
                     executed.set(true);
                     return ScheduledTaskExecutionResult.success();
                 }
@@ -267,7 +250,7 @@ public class SchedulerTest extends BaseTest {
         AtomicBoolean executed = new AtomicBoolean(false);
         ScheduledTask scheduledTask = SimpleScheduledTask.create(
                 "scheduled-task" + uniqueCounter.incrementAndGet(),
-                () -> {
+                context -> {
                     executed.set(true);
                     return ScheduledTaskExecutionResult.error();
                 }

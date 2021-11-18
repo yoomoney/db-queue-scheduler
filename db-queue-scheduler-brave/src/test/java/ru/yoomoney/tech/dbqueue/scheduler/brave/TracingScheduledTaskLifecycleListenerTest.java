@@ -3,6 +3,7 @@ package ru.yoomoney.tech.dbqueue.scheduler.brave;
 import brave.Tracing;
 import brave.propagation.TraceContext;
 import org.junit.jupiter.api.Test;
+import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskContext;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskExecutionResult;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskIdentity;
 
@@ -24,15 +25,16 @@ class TracingScheduledTaskLifecycleListenerTest {
         // given
         TracingScheduledTaskLifecycleListener listener = new TracingScheduledTaskLifecycleListener(tracing);
         ScheduledTaskIdentity scheduledTaskIdentity = ScheduledTaskIdentity.of("scheduled_task");
+        ScheduledTaskContext taskContext = ScheduledTaskContext.builder().withCreatedAt(Instant.now()).build();
 
         // when
-        listener.started(scheduledTaskIdentity);
+        listener.started(scheduledTaskIdentity, taskContext);
 
         // then
         TraceContext traceContext = tracing.tracer().currentSpan().context();
         assertThat(traceContext.traceId(), notNullValue());
         assertThat(traceContext.parentIdString(), equalTo(null));
 
-        listener.finished(scheduledTaskIdentity, ScheduledTaskExecutionResult.success(), Instant.now(), 0L);
+        listener.finished(scheduledTaskIdentity, taskContext, ScheduledTaskExecutionResult.success(), Instant.now(), 0L);
     }
 }

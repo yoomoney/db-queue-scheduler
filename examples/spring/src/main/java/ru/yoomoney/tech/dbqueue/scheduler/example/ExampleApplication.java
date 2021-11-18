@@ -77,11 +77,23 @@ public class ExampleApplication {
                         .build()
         );
 
+        // stateful task example
+        scheduler.schedule(
+                SimpleScheduledTask.create("stateful-task-example", context -> {
+                    log.info("execute(): taskName={}, state={}", "stateful-task-example", context.getState());
+                    return ScheduledTaskExecutionResult.success().withState(context.getState().orElse("") + 'x');
+                }),
+                ScheduledTaskSettings.builder()
+                        .withFailureSettings(FailureSettings.linearBackoff(Duration.ofHours(1L)))
+                        .withScheduleSettings(ScheduleSettings.fixedRate(Duration.ofMinutes(1L)))
+                        .build()
+        );
+
         return scheduler;
     }
 
     private ScheduledTask createScheduledTaskExample(String taskName) {
-        return SimpleScheduledTask.create(taskName, () -> {
+        return SimpleScheduledTask.create(taskName, context -> {
             log.info("execute(): taskName={}", taskName);
             try {
                 Thread.sleep(5_000);

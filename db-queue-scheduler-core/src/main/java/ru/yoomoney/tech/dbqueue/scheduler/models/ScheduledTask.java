@@ -1,7 +1,6 @@
 package ru.yoomoney.tech.dbqueue.scheduler.models;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 /**
  * Task executed periodically at a scheduled time
@@ -21,18 +20,9 @@ public interface ScheduledTask {
     /**
      * Executes scheduled task
      *
+     * @param context current context of the scheduled task
      * @return execution result
      */
     @Nonnull
-    ScheduledTaskExecutionResult execute();
-
-    /**
-     * Executes scheduled task with a state
-     *
-     * @return execution result
-     */
-    @Nonnull
-    default ScheduledTaskExecutionResult execute(@Nullable String state) {
-        return execute();
-    }
+    ScheduledTaskExecutionResult execute(@Nonnull ScheduledTaskContext context);
 }

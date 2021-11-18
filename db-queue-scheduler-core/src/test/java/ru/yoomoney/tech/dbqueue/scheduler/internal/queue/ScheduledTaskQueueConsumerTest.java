@@ -11,6 +11,7 @@ import ru.yoomoney.tech.dbqueue.scheduler.internal.db.ScheduledTaskQueueDao;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.db.ScheduledTaskRecord;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.schedule.impl.FixedRateNextExecutionTimeProvider;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTask;
+import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskContext;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskExecutionResult;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskIdentity;
 import ru.yoomoney.tech.dbqueue.scheduler.models.SimpleScheduledTask;
@@ -32,10 +33,13 @@ import javax.annotation.Nullable;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -53,7 +57,7 @@ class ScheduledTaskQueueConsumerTest {
         boolean[] executed = { false };
         ScheduledTask scheduledTask = SimpleScheduledTask.create(
                 "scheduled-task",
-                () -> {
+                context -> {
                     executed[0] = true;
                     return ScheduledTaskExecutionResult.success();
                 }
@@ -78,11 +82,52 @@ class ScheduledTaskQueueConsumerTest {
     }
 
     @Test
+    public void should_map_scheduledTaskContext() {
+        // given
+        AtomicReference<ScheduledTaskContext> contextRef = new AtomicReference<>();
+        ScheduledTask scheduledTask = SimpleScheduledTask.create(
+                "scheduled-task",
+                context -> {
+                    contextRef.set(context);
+                    return ScheduledTaskExecutionResult.success();
+                }
+        );
+        ScheduledTaskDefinition scheduledTaskDefinition = ScheduledTaskDefinition.builder()
+                .withScheduledTask(scheduledTask)
+                .withFailureSettings(FailureSettings.linearBackoff(Duration.ofHours(1L)))
+                .withNextExecutionTimeProvider(new FixedRateNextExecutionTimeProvider(Duration.ZERO))
+                .build();
+        ScheduledTaskQueueConsumer scheduledTaskQueueConsumer = new ScheduledTaskQueueConsumer(
+                dummyQueueConfig(),
+                scheduledTaskDefinition,
+                NoopScheduledTaskLifecycleListener.getInstance(),
+                new DummyScheduledTaskQueueDao()
+        );
+        Task<String> task = Task.<String>builder(new QueueShardId("shardId"))
+                .withPayload("state")
+                .withAttemptsCount(1L)
+                .withReenqueueAttemptsCount(2L)
+                .withTotalAttemptsCount(3L)
+                .withCreatedAt(LocalDateTime.of(2010, 1, 1, 0, 0, 0).atZone(ZoneOffset.UTC))
+                .build();
+
+        // when
+        scheduledTaskQueueConsumer.execute(task);
+
+        // then
+        assertThat(contextRef.get().getState().orElseThrow(), equalTo("state"));
+        assertThat(contextRef.get().getAttemptsCount(), equalTo(1L));
+        assertThat(contextRef.get().getSuccessfulAttemptsCount(), equalTo(2L));
+        assertThat(contextRef.get().getTotalAttemptsCount(), equalTo(3L));
+        assertThat(contextRef.get().getCreatedAt(), equalTo(LocalDateTime.of(2010, 1, 1, 0, 0, 0).toInstant(ZoneOffset.UTC)));
+    }
+
+    @Test
     public void should_handle_RuntimeException_during_executing_scheduledTask() {
         // given
         ScheduledTask scheduledTask = SimpleScheduledTask.create(
                 "scheduled-task",
-                () -> {
+                context -> {
                     throw new RuntimeException("test exception");
                 }
         );
@@ -109,7 +154,10 @@ class ScheduledTaskQueueConsumerTest {
     public void should_postpone_execution_according_to_nextExectutionTimeProvider() {
         // given
         Clock clock = Clock.fixed(Instant.now(), ZoneId.systemDefault());
-        ScheduledTask scheduledTask = SimpleScheduledTask.create("scheduled-task", ScheduledTaskExecutionResult::success);
+        ScheduledTask scheduledTask = SimpleScheduledTask.create(
+                "scheduled-task",
+                context -> ScheduledTaskExecutionResult.success()
+        );
         ScheduledTaskDefinition scheduledTaskDefinition = ScheduledTaskDefinition.builder()
                 .withScheduledTask(scheduledTask)
                 .withFailureSettings(FailureSettings.linearBackoff(Duration.ofHours(1L)))
@@ -137,7 +185,7 @@ class ScheduledTaskQueueConsumerTest {
         Clock clock = Clock.fixed(Instant.now(), ZoneId.systemDefault());
         ScheduledTask scheduledTask = SimpleScheduledTask.create(
                 "scheduled-task",
-                () -> ScheduledTaskExecutionResult.success().shiftExecutionTime(clock.instant().plus(Duration.ofDays(10L)))
+                context -> ScheduledTaskExecutionResult.success().shiftExecutionTime(clock.instant().plus(Duration.ofDays(10L)))
         );
         ScheduledTaskDefinition scheduledTaskDefinition = ScheduledTaskDefinition.builder()
                 .withScheduledTask(scheduledTask)
@@ -168,7 +216,7 @@ class ScheduledTaskQueueConsumerTest {
         RuntimeException exception = new RuntimeException("test exception");
         ScheduledTask scheduledTask = SimpleScheduledTask.create(
                 "scheduled-task",
-                () -> {
+                context -> {
                     throw exception;
                 }
         );
@@ -273,12 +321,13 @@ class ScheduledTaskQueueConsumerTest {
         private Throwable throwable;
 
         @Override
-        public void started(@Nonnull ScheduledTaskIdentity taskIdentity) {
+        public void started(@Nonnull ScheduledTaskIdentity taskIdentity, @Nonnull ScheduledTaskContext taskContext) {
             this.startedTaskIdentity = taskIdentity;
         }
 
         @Override
         public void finished(@Nonnull ScheduledTaskIdentity taskIdentity,
+                             @Nonnull ScheduledTaskContext taskContext,
                              @Nonnull ScheduledTaskExecutionResult executionResult,
                              @Nonnull Instant nextExecutionTime,
                              long processTaskTimeInMills) {
@@ -289,7 +338,9 @@ class ScheduledTaskQueueConsumerTest {
         }
 
         @Override
-        public void crashed(@Nonnull ScheduledTaskIdentity taskIdentity, @Nullable Throwable exc) {
+        public void crashed(@Nonnull ScheduledTaskIdentity taskIdentity,
+                            @Nonnull ScheduledTaskContext taskContext,
+                            @Nullable Throwable exc) {
             this.crashedTaskIdentity = taskIdentity;
             this.throwable = exc;
         }

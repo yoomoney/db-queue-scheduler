@@ -1,6 +1,7 @@
 package ru.yoomoney.tech.dbqueue.scheduler.config.impl;
 
 import ru.yoomoney.tech.dbqueue.scheduler.config.ScheduledTaskLifecycleListener;
+import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskContext;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskExecutionResult;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskIdentity;
 
@@ -18,12 +19,13 @@ public class NoopScheduledTaskLifecycleListener implements ScheduledTaskLifecycl
     private static final NoopScheduledTaskLifecycleListener INSTANCE = new NoopScheduledTaskLifecycleListener();
 
     @Override
-    public void started(@Nonnull ScheduledTaskIdentity taskIdentity) {
+    public void started(@Nonnull ScheduledTaskIdentity taskIdentity, @Nonnull ScheduledTaskContext taskContext) {
         // do nothing
     }
 
     @Override
     public void finished(@Nonnull ScheduledTaskIdentity taskIdentity,
+                         @Nonnull ScheduledTaskContext taskContext,
                          @Nonnull ScheduledTaskExecutionResult executionResult,
                          @Nonnull Instant nextExecutionTime,
                          long processTaskTimeInMills) {
@@ -31,7 +33,9 @@ public class NoopScheduledTaskLifecycleListener implements ScheduledTaskLifecycl
     }
 
     @Override
-    public void crashed(@Nonnull ScheduledTaskIdentity taskIdentity, @Nullable Throwable exc) {
+    public void crashed(@Nonnull ScheduledTaskIdentity taskIdentity,
+                        @Nonnull ScheduledTaskContext taskContext,
+                        @Nullable Throwable exc) {
         // do nothing
     }
 
