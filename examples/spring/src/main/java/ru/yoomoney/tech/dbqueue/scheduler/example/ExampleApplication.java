@@ -15,8 +15,6 @@ import ru.yoomoney.tech.dbqueue.scheduler.config.impl.LoggingScheduledTaskLifecy
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTask;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskExecutionResult;
 import ru.yoomoney.tech.dbqueue.scheduler.models.SimpleScheduledTask;
-import ru.yoomoney.tech.dbqueue.scheduler.models.SimpleStatefulScheduledTask;
-import ru.yoomoney.tech.dbqueue.scheduler.models.StatefulScheduledTaskExecutionResult;
 import ru.yoomoney.tech.dbqueue.scheduler.settings.FailureSettings;
 import ru.yoomoney.tech.dbqueue.scheduler.settings.ScheduleSettings;
 import ru.yoomoney.tech.dbqueue.scheduler.settings.ScheduledTaskSettings;
@@ -73,23 +71,6 @@ public class ExampleApplication {
         // fixed-rate example
         scheduler.schedule(
                 createScheduledTaskExample("fixed-rate-example"),
-                ScheduledTaskSettings.builder()
-                        .withFailureSettings(FailureSettings.linearBackoff(Duration.ofHours(1L)))
-                        .withScheduleSettings(ScheduleSettings.fixedRate(Duration.ofMinutes(1L)))
-                        .build()
-        );
-
-        // stateful scheduled task
-        scheduler.schedule(
-                SimpleStatefulScheduledTask.create("stateful-task", state -> {
-                    log.info("execute(): taskName={}, state={}", "stateful-task", state);
-                    try {
-                        Thread.sleep(5_000);
-                    } catch (InterruptedException e) {
-                        throw new RuntimeException("thread interrupted: taskName=stateful-task", e);
-                    }
-                    return StatefulScheduledTaskExecutionResult.success(state == null ? "x" : state + 'x');
-                }),
                 ScheduledTaskSettings.builder()
                         .withFailureSettings(FailureSettings.linearBackoff(Duration.ofHours(1L)))
                         .withScheduleSettings(ScheduleSettings.fixedRate(Duration.ofMinutes(1L)))

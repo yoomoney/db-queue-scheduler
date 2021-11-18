@@ -2,7 +2,6 @@ package ru.yoomoney.tech.dbqueue.scheduler;
 
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTask;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskIdentity;
-import ru.yoomoney.tech.dbqueue.scheduler.models.StatefulScheduledTask;
 import ru.yoomoney.tech.dbqueue.scheduler.models.info.ScheduledTaskInfo;
 import ru.yoomoney.tech.dbqueue.scheduler.settings.ScheduledTaskSettings;
 
@@ -32,18 +31,6 @@ public interface Scheduler {
      */
     void schedule(@Nonnull ScheduledTask scheduledTask,
                   @Nonnull ScheduledTaskSettings scheduledTaskSettings);
-
-
-    /**
-     * Registers a stateful task for periodic executions
-     *
-     * @param statefulScheduledTask task for periodic executions
-     * @param scheduledTaskSettings settings of the scheduled task
-     * @param <StateT> type of the scheduling task's state
-     * @throws RuntimeException if any scheduled task with the same identity already registered
-     */
-    <StateT> void schedule(@Nonnull StatefulScheduledTask<StateT> statefulScheduledTask,
-                           @Nonnull ScheduledTaskSettings scheduledTaskSettings);
 
     /**
      * Updates next execution time of a scheduled task

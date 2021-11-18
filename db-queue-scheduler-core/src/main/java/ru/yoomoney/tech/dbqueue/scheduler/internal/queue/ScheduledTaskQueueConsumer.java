@@ -14,8 +14,6 @@ import ru.yoomoney.tech.dbqueue.scheduler.internal.db.ScheduledTaskRecord;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.schedule.ScheduledTaskExecutionContext;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTask;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskExecutionResult;
-import ru.yoomoney.tech.dbqueue.scheduler.models.StatefulScheduledTask;
-import ru.yoomoney.tech.dbqueue.scheduler.models.StatefulScheduledTaskExecutionResult;
 import ru.yoomoney.tech.dbqueue.settings.QueueConfig;
 
 import javax.annotation.Nonnull;
@@ -73,15 +71,7 @@ class ScheduledTaskQueueConsumer implements QueueConsumer<String> {
 
         long start = clock.millis();
         ScheduledTaskExecutionContext context = new ScheduledTaskExecutionContext();
-        ScheduledTaskExecutionResult executionResult;
-        if (scheduledTaskDefinition.getScheduledTask().isPresent()) {
-            executionResult = executeTask(scheduledTaskDefinition.getScheduledTask().orElseThrow(), context);
-        } else if (scheduledTaskDefinition.getStatefulScheduledTask().isPresent()) {
-            executionResult = executeTask(scheduledTaskDefinition.getStatefulScheduledTask().orElseThrow(),
-                    task.getPayload().orElse(null), context);
-        } else {
-            throw new RuntimeException("scheduled task not found. identity=" + scheduledTaskDefinition.getIdentity());
-        }
+        ScheduledTaskExecutionResult executionResult = executeTask(task.getPayload().orElse(null), context);
 
         long processingTaskTime = clock.millis() - start;
 
@@ -102,33 +92,17 @@ class ScheduledTaskQueueConsumer implements QueueConsumer<String> {
         return TaskExecutionResult.reenqueue(Duration.between(clock.instant(), nextExecutionTime));
     }
 
-    private ScheduledTaskExecutionResult executeTask(ScheduledTask scheduledTask, ScheduledTaskExecutionContext context) {
-        context.setLastExecutionStartTime(clock.instant());
-        try {
-            return scheduledTask.execute();
-        } catch (RuntimeException ex) {
-            scheduledTaskLifecycleListener.crashed(scheduledTaskDefinition.getIdentity(), ex);
-            log.debug("failed to execute scheduled task: scheduledTask={}", scheduledTaskDefinition, ex);
-            return ScheduledTaskExecutionResult.error();
-        } finally {
-            context.setLastExecutionFinishTime(clock.instant());
-        }
-    }
-
-    private ScheduledTaskExecutionResult executeTask(StatefulScheduledTask statefulScheduledTask,
-                                                     String queueTaskPayload,
+    private ScheduledTaskExecutionResult executeTask(String queueTaskPayload,
                                                      ScheduledTaskExecutionContext context) {
 
 
         context.setLastExecutionStartTime(clock.instant());
         try {
-            Object state = statefulScheduledTask.getTransformer().toObject(queueTaskPayload);
-            StatefulScheduledTaskExecutionResult executionResult = statefulScheduledTask.execute(state);
-            scheduledTaskQueueDao.updatePayload(
-                    queueConfig.getLocation().getQueueId(),
-                    statefulScheduledTask.getTransformer().fromObject(executionResult.getState().orElse(null))
-            );
-            return executionResult.getExecutionResult();
+            ScheduledTaskExecutionResult result = scheduledTaskDefinition.getScheduledTask().execute(queueTaskPayload);
+            if (result.getState().isPresent()) {
+                scheduledTaskQueueDao.updatePayload(queueConfig.getLocation().getQueueId(), result.getState().orElseThrow());
+            }
+            return result;
         } catch (RuntimeException ex) {
             scheduledTaskLifecycleListener.crashed(scheduledTaskDefinition.getIdentity(), ex);
             log.debug("failed to execute scheduled task: scheduledTask={}", scheduledTaskDefinition, ex);

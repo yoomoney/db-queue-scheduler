@@ -6,15 +6,15 @@ import ru.yoomoney.tech.dbqueue.scheduler.config.DatabaseDialect;
 import ru.yoomoney.tech.dbqueue.scheduler.db.DatabaseAccess;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTask;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskExecutionResult;
+import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskIdentity;
 import ru.yoomoney.tech.dbqueue.scheduler.models.SimpleScheduledTask;
-import ru.yoomoney.tech.dbqueue.scheduler.models.SimpleStatefulScheduledTask;
-import ru.yoomoney.tech.dbqueue.scheduler.models.StatefulScheduledTask;
-import ru.yoomoney.tech.dbqueue.scheduler.models.StatefulScheduledTaskExecutionResult;
 import ru.yoomoney.tech.dbqueue.scheduler.models.info.ScheduledTaskInfo;
 import ru.yoomoney.tech.dbqueue.scheduler.settings.FailureSettings;
 import ru.yoomoney.tech.dbqueue.scheduler.settings.ScheduleSettings;
 import ru.yoomoney.tech.dbqueue.scheduler.settings.ScheduledTaskSettings;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.Instant;
@@ -73,13 +73,27 @@ public class SchedulerTest extends BaseTest {
         // given
         Scheduler scheduler = createScheduler(databaseAccess);
         AtomicBoolean executed = new AtomicBoolean(false);
-        StatefulScheduledTask scheduledTask = SimpleStatefulScheduledTask.create(
-                "scheduled-task" + uniqueCounter.incrementAndGet(),
-                state -> {
-                    executed.set(true);
-                    return StatefulScheduledTaskExecutionResult.success("new_state");
-                }
-        );
+        ScheduledTaskIdentity identity = ScheduledTaskIdentity.of("scheduled-task" + uniqueCounter.incrementAndGet());
+        ScheduledTask scheduledTask = new ScheduledTask() {
+            @Nonnull
+            @Override
+            public ScheduledTaskIdentity getIdentity() {
+                return identity;
+            }
+
+            @Nonnull
+            @Override
+            public ScheduledTaskExecutionResult execute(@Nullable String state) {
+                executed.set(true);
+                return ScheduledTaskExecutionResult.success().withState("new_state");
+            }
+
+            @Nonnull
+            @Override
+            public ScheduledTaskExecutionResult execute() {
+                throw new IllegalStateException("not implemented");
+            }
+        };
 
         // when
         scheduler.start();

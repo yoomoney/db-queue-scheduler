@@ -16,8 +16,8 @@ import static java.util.Objects.requireNonNull;
  * @since 19.10.2021
  */
 public class ScheduledTaskExecutionResult {
-    private static final ScheduledTaskExecutionResult SUCCESS_RESULT = new ScheduledTaskExecutionResult(Type.SUCCESS, null);
-    private static final ScheduledTaskExecutionResult ERROR_RESULT = new ScheduledTaskExecutionResult(Type.ERROR, null);
+    private static final ScheduledTaskExecutionResult SUCCESS_RESULT = new ScheduledTaskExecutionResult(Type.SUCCESS, null, null);
+    private static final ScheduledTaskExecutionResult ERROR_RESULT = new ScheduledTaskExecutionResult(Type.ERROR, null, null);
 
     /**
      * Execution result type
@@ -33,9 +33,16 @@ public class ScheduledTaskExecutionResult {
     @Nullable
     private final Instant nextExecutionTime;
 
-    private ScheduledTaskExecutionResult(@Nonnull Type type, @Nullable Instant nextExecutionTime) {
+    /**
+     * Scheduled task state
+     */
+    @Nullable
+    private final String state;
+
+    private ScheduledTaskExecutionResult(@Nonnull Type type, @Nullable Instant nextExecutionTime, @Nullable String state) {
         this.type = requireNonNull(type, "type");
         this.nextExecutionTime = nextExecutionTime;
+        this.state = state;
     }
 
     /**
@@ -59,6 +66,18 @@ public class ScheduledTaskExecutionResult {
     }
 
     /**
+     * Set new state of a scheduled task
+     *
+     * @param state state of the scheduled task
+     * @return new instance of {@link ScheduledTaskExecutionResult} with the new state
+     */
+    @Nonnull
+    public ScheduledTaskExecutionResult withState(@Nonnull String state) {
+        requireNonNull(state, "state");
+        return new ScheduledTaskExecutionResult(type, nextExecutionTime, state);
+    }
+
+    /**
      * Shift next execution time
      *
      * @param nextExecutionTime date time at which related scheduled task should be executed again
@@ -67,12 +86,17 @@ public class ScheduledTaskExecutionResult {
     @Nonnull
     public ScheduledTaskExecutionResult shiftExecutionTime(@Nonnull Instant nextExecutionTime) {
         requireNonNull(nextExecutionTime, "nextExecutionTime");
-        return new ScheduledTaskExecutionResult(type, nextExecutionTime);
+        return new ScheduledTaskExecutionResult(type, nextExecutionTime, state);
     }
 
     @Nonnull
     public Type getType() {
         return type;
+    }
+
+    @Nonnull
+    public Optional<String> getState() {
+        return Optional.ofNullable(state);
     }
 
     @Nonnull
@@ -85,6 +109,7 @@ public class ScheduledTaskExecutionResult {
         return "ScheduledTaskExecutionResult{" +
                 "type=" + type +
                 ", nextExecutionTime=" + nextExecutionTime +
+                ", state='" + state + '\'' +
                 '}';
     }
 
