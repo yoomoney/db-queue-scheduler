@@ -1,11 +1,11 @@
-### NEXT_VERSION_TYPE=MAJOR
-### NEXT_VERSION_DESCRIPTION_BEGIN
+## [3.0.0]() (19-11-2021)
+
 * Scheduled task states added that allows implementing stateful scheduled tasks;
-* Scheduled task context added that contains its meta-information; 
+* Scheduled task context added that contains its meta-information;
 * **breaking changes**
 * `ScheduledTask.execute` method contract changed. Method receives `ScheduledTaskContext context` argument.
 * `ScheduledTaskLifecycleListener` method contracts changed. Methods receive `ScheduledTaskContext context` arguments.
-### NEXT_VERSION_DESCRIPTION_END
+
 ## [2.0.1](https://github.com/yoomoney/db-queue-scheduler/pull/10) (11-11-2021)
 
 * H2, MSSQL, Oracle databases support added;
