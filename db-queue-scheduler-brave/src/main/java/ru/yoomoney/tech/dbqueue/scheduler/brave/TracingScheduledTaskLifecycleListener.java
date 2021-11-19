@@ -5,6 +5,7 @@ import brave.Tracer;
 import brave.Tracing;
 import brave.propagation.TraceContext;
 import ru.yoomoney.tech.dbqueue.scheduler.config.ScheduledTaskLifecycleListener;
+import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskContext;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskExecutionResult;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskIdentity;
 
@@ -30,7 +31,7 @@ public class TracingScheduledTaskLifecycleListener implements ScheduledTaskLifec
     }
 
     @Override
-    public void started(@Nonnull ScheduledTaskIdentity taskIdentity) {
+    public void started(@Nonnull ScheduledTaskIdentity taskIdentity, @Nonnull ScheduledTaskContext taskContext) {
         Tracer tracer = tracing.tracer();
         TraceContext traceContext = tracer.newTrace().context().toBuilder().build();
         Span span = tracer.toSpan(traceContext)
@@ -43,6 +44,7 @@ public class TracingScheduledTaskLifecycleListener implements ScheduledTaskLifec
 
     @Override
     public void finished(@Nonnull ScheduledTaskIdentity taskIdentity,
+                         @Nonnull ScheduledTaskContext taskContext,
                          @Nonnull ScheduledTaskExecutionResult executionResult,
                          @Nonnull Instant nextExecutionTime,
                          long processTaskTimeInMills) {
@@ -56,7 +58,9 @@ public class TracingScheduledTaskLifecycleListener implements ScheduledTaskLifec
     }
 
     @Override
-    public void crashed(@Nonnull ScheduledTaskIdentity taskIdentity, @Nullable Throwable exc) {
+    public void crashed(@Nonnull ScheduledTaskIdentity taskIdentity,
+                        @Nonnull ScheduledTaskContext taskContext,
+                        @Nullable Throwable exc) {
         SpanAndScope spanAndScope = threadLocalSpan.get();
         if (spanAndScope == null) {
             return;

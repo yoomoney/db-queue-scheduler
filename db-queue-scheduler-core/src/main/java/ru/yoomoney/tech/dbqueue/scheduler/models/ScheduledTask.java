@@ -20,8 +20,9 @@ public interface ScheduledTask {
     /**
      * Executes scheduled task
      *
+     * @param context current context of the scheduled task
      * @return execution result
      */
     @Nonnull
-    ScheduledTaskExecutionResult execute();
+    ScheduledTaskExecutionResult execute(@Nonnull ScheduledTaskContext context);
 }

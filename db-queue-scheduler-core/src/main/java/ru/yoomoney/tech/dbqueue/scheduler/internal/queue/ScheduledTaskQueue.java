@@ -66,7 +66,7 @@ public class ScheduledTaskQueue {
 
         ScheduledTaskExecutionContext taskExecutionContext = new ScheduledTaskExecutionContext();
         Instant nextExecutionTime = taskDefinition.getNextExecutionTimeProvider().getNextExecutionTime(taskExecutionContext);
-        queueProducer.enqueue(EnqueueParams.create("").withExecutionDelay(Duration.between(Instant.now(), nextExecutionTime)));
+        queueProducer.enqueue(new EnqueueParams<String>().withExecutionDelay(Duration.between(Instant.now(), nextExecutionTime)));
         log.debug("scheduled task enqueued: taskDefinition={}, nextExecutionTime={}", taskDefinition, nextExecutionTime);
     }
 

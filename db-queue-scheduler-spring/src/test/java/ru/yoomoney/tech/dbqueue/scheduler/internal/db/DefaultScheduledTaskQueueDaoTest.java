@@ -24,6 +24,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 
 /**
  * @author Petr Zinin pgzinin@yoomoney.ru
@@ -92,6 +93,44 @@ class DefaultScheduledTaskQueueDaoTest extends BaseTest {
                 .orElseThrow();
         assertThat(location1Record.getNextProcessAt(), equalTo(nextProcessingDate));
         assertThat(location2Record.getNextProcessAt(), not(equalTo(nextProcessingDate)));
+    }
+
+    @ParameterizedTest
+    @MethodSource("databaseAccessStream")
+    void should_update_payload(DatabaseAccess databaseAccess) {
+        // given
+        ScheduledTaskQueueDao scheduledTaskQueueDao = scheduledTaskQueueDao(databaseAccess);
+        DatabaseAccessLayer databaseAccessLayer = databaseAccessLayer(databaseAccess);
+        QueueLocation location1 = queueLocation(databaseAccess, "queue-" + uniqueCounter.incrementAndGet());
+        QueueLocation location2 = queueLocation(databaseAccess, "queue-" + uniqueCounter.incrementAndGet());
+        QueueLocation location3 = queueLocation(databaseAccess, "queue-" + uniqueCounter.incrementAndGet());
+
+        // when
+        databaseAccessLayer.getQueueDao().enqueue(location1, EnqueueParams.create("payload_1"));
+        databaseAccessLayer.getQueueDao().enqueue(location2, EnqueueParams.create("payload_2"));
+        databaseAccessLayer.getQueueDao().enqueue(location3, EnqueueParams.create("payload_2"));
+        scheduledTaskQueueDao.updatePayload(location1.getQueueId(), "new_payload");
+        scheduledTaskQueueDao.updatePayload(location3.getQueueId(), null);
+
+        // then
+        String payload1 = databaseAccess.getJdbcTemplate().queryForObject(
+                "select payload from scheduled_tasks where queue_name=?",
+                String.class,
+                location1.getQueueId().asString()
+        );
+        String payload2 = databaseAccess.getJdbcTemplate().queryForObject(
+                "select payload from scheduled_tasks where queue_name=?",
+                String.class,
+                location2.getQueueId().asString()
+        );
+        String payload3 = databaseAccess.getJdbcTemplate().queryForObject(
+                "select payload from scheduled_tasks where queue_name=?",
+                String.class,
+                location3.getQueueId().asString()
+        );
+        assertThat(payload1, equalTo("new_payload"));
+        assertThat(payload2, equalTo("payload_2"));
+        assertThat(payload3, nullValue());
     }
 
     @ParameterizedTest

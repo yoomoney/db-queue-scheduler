@@ -1,6 +1,7 @@
 package ru.yoomoney.tech.dbqueue.scheduler.models;
 
 import javax.annotation.Nonnull;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static java.util.Objects.requireNonNull;
@@ -22,10 +23,10 @@ public class SimpleScheduledTask implements ScheduledTask {
     /**
      * Task body that should be executed periodically
      */
-    private final Supplier<ScheduledTaskExecutionResult> body;
+    private final Function<ScheduledTaskContext, ScheduledTaskExecutionResult> body;
 
     private SimpleScheduledTask(@Nonnull ScheduledTaskIdentity identity, 
-                                @Nonnull Supplier<ScheduledTaskExecutionResult> body) {
+                                @Nonnull Function<ScheduledTaskContext, ScheduledTaskExecutionResult> body) {
         this.identity = requireNonNull(identity, "identity");
         this.body = requireNonNull(body, "body");
     }
@@ -37,7 +38,8 @@ public class SimpleScheduledTask implements ScheduledTask {
      * @param body job that should be executed
      * @return prepared scheduled task
      */
-    public static SimpleScheduledTask create(@Nonnull String taskName, @Nonnull Supplier<ScheduledTaskExecutionResult> body) {
+    public static SimpleScheduledTask create(@Nonnull String taskName,
+                                             @Nonnull Function<ScheduledTaskContext, ScheduledTaskExecutionResult> body) {
         requireNonNull(taskName, "taskName");
         requireNonNull(body, "body");
         return new SimpleScheduledTask(ScheduledTaskIdentity.of(taskName), body);
@@ -51,7 +53,7 @@ public class SimpleScheduledTask implements ScheduledTask {
 
     @Nonnull
     @Override
-    public ScheduledTaskExecutionResult execute() {
-        return body.get();
+    public ScheduledTaskExecutionResult execute(@Nonnull ScheduledTaskContext context) {
+        return body.apply(context);
     }
 }

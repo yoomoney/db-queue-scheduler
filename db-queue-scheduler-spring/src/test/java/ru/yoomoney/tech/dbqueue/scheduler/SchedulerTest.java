@@ -44,7 +44,7 @@ public class SchedulerTest extends BaseTest {
         AtomicBoolean executed = new AtomicBoolean(false);
         ScheduledTask scheduledTask = SimpleScheduledTask.create(
                 "scheduled-task" + uniqueCounter.incrementAndGet(),
-                () -> {
+                context -> {
                     executed.set(true);
                     return ScheduledTaskExecutionResult.success();
                 }
@@ -66,13 +66,46 @@ public class SchedulerTest extends BaseTest {
 
     @ParameterizedTest
     @MethodSource("databaseAccessStream")
+    void should_update_scheduled_task_state(DatabaseAccess databaseAccess) {
+        // given
+        Scheduler scheduler = createScheduler(databaseAccess);
+        AtomicBoolean executed = new AtomicBoolean(false);
+        ScheduledTask scheduledTask = SimpleScheduledTask.create(
+                "scheduled-task" + uniqueCounter.incrementAndGet(),
+                context -> {
+                    executed.set(true);
+                    return ScheduledTaskExecutionResult.success().withState("new_state");
+                }
+        );
+
+        // when
+        scheduler.start();
+        scheduler.schedule(
+                scheduledTask,
+                ScheduledTaskSettings.builder()
+                        .withScheduleSettings(ScheduleSettings.fixedDelay(Duration.ofSeconds(0L)))
+                        .withFailureSettings(FailureSettings.linearBackoff(Duration.ofHours(1L)))
+                        .build()
+        );
+
+        // then
+        await().atMost(Duration.ofSeconds(5L)).until(executed::get);
+        assertThat(
+                databaseAccess.getJdbcTemplate().queryForObject("select payload from scheduled_tasks where queue_name = ?",
+                        String.class, scheduledTask.getIdentity().asString()),
+                equalTo("new_state")
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("databaseAccessStream")
     void should_schedule_task_once(DatabaseAccess databaseAccess) throws InterruptedException {
         // given
         Scheduler scheduler1 = createScheduler(databaseAccess);
         Scheduler scheduler2 = createScheduler(databaseAccess);
         ScheduledTask scheduledTask = SimpleScheduledTask.create(
                 "scheduled-task" + uniqueCounter.incrementAndGet(),
-                ScheduledTaskExecutionResult::success
+                context -> ScheduledTaskExecutionResult.success()
         );
 
         // when
@@ -130,7 +163,7 @@ public class SchedulerTest extends BaseTest {
         Scheduler scheduler = createScheduler(databaseAccess);
         ScheduledTask scheduledTask = SimpleScheduledTask.create(
                 "scheduled-task" + uniqueCounter.incrementAndGet(),
-                ScheduledTaskExecutionResult::success
+                context -> ScheduledTaskExecutionResult.success()
         );
 
         // when
@@ -158,7 +191,7 @@ public class SchedulerTest extends BaseTest {
         Scheduler scheduler = createScheduler(databaseAccess);
         ScheduledTask scheduledTask = SimpleScheduledTask.create(
                 "scheduled-task" + uniqueCounter.incrementAndGet(),
-                ScheduledTaskExecutionResult::success
+                context -> ScheduledTaskExecutionResult.success()
         );
 
         // when
@@ -188,7 +221,7 @@ public class SchedulerTest extends BaseTest {
         AtomicBoolean executed = new AtomicBoolean(false);
         ScheduledTask scheduledTask = SimpleScheduledTask.create(
                 "scheduled-task" + uniqueCounter.incrementAndGet(),
-                () -> {
+                context -> {
                     executed.set(true);
                     return ScheduledTaskExecutionResult.success();
                 }
@@ -217,7 +250,7 @@ public class SchedulerTest extends BaseTest {
         AtomicBoolean executed = new AtomicBoolean(false);
         ScheduledTask scheduledTask = SimpleScheduledTask.create(
                 "scheduled-task" + uniqueCounter.incrementAndGet(),
-                () -> {
+                context -> {
                     executed.set(true);
                     return ScheduledTaskExecutionResult.error();
                 }

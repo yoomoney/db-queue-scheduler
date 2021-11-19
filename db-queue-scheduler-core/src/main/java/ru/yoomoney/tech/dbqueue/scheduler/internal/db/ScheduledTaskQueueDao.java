@@ -3,6 +3,7 @@ package ru.yoomoney.tech.dbqueue.scheduler.internal.db;
 import ru.yoomoney.tech.dbqueue.settings.QueueId;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -30,6 +31,15 @@ public interface ScheduledTaskQueueDao {
      * @return count of updated rows
      */
     int updateNextProcessDate(@Nonnull QueueId queueId, @Nonnull Instant nextProcessDate);
+
+    /**
+     * Updates payload column of a queue tasks
+     *
+     * @param queueId identity of the queue
+     * @param payload new payload
+     * @return count of updated rows
+     */
+    int updatePayload(@Nonnull QueueId queueId, @Nullable String payload);
 
     /**
      * Finds all records.

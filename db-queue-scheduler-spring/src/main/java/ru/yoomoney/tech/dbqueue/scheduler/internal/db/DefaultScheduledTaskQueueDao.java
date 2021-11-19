@@ -8,9 +8,11 @@ import ru.yoomoney.tech.dbqueue.scheduler.config.DatabaseDialect;
 import ru.yoomoney.tech.dbqueue.settings.QueueId;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -99,6 +101,24 @@ public class DefaultScheduledTaskQueueDao implements ScheduledTaskQueueDao {
                 rescheduleQuery,
                 Map.<String, Object>of("queueName", queueId.asString(), "nextProcessDate", calendar)
         ));
+        return updatedRows == null ? 0 : updatedRows;
+    }
+
+    @Override
+    public int updatePayload(@Nonnull QueueId queueId, @Nullable String payload) {
+        requireNonNull(queueId, "queueId");
+
+        String updatePayloadQuery = String.format(
+                "update %s set %s = :payload where %s = :queueName",
+                tableName,
+                queueTableSchema.getPayloadField(),
+                queueTableSchema.getQueueNameField()
+        );
+        Map<String, Object> params = new HashMap<>();
+        params.put("queueName", queueId.asString());
+        params.put("payload", payload);
+        Integer updatedRows = transactionOperations.execute(status -> namedParameterJdbcTemplate.update(updatePayloadQuery,
+                params));
         return updatedRows == null ? 0 : updatedRows;
     }
 

@@ -2,6 +2,7 @@ package ru.yoomoney.tech.dbqueue.scheduler.config.impl;
 
 import org.junit.jupiter.api.Test;
 import ru.yoomoney.tech.dbqueue.scheduler.config.ScheduledTaskLifecycleListener;
+import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskContext;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskExecutionResult;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskIdentity;
 
@@ -20,6 +21,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
  */
 class CompositeScheduledTaskLifecycleListenerTest {
 
+    private final ScheduledTaskContext taskContext = ScheduledTaskContext.builder().withCreatedAt(Instant.now()).build();
+
     @Test
     public void should_handle_started_event_in_order() {
         // given
@@ -30,7 +33,7 @@ class CompositeScheduledTaskLifecycleListenerTest {
                 listener1, listener2));
 
         // when
-        listener.started(ScheduledTaskIdentity.of("task_name"));
+        listener.started(ScheduledTaskIdentity.of("task_name"), taskContext);
 
         // then
         assertThat(events, equalTo(List.of("1:started", "2:started")));
@@ -46,7 +49,8 @@ class CompositeScheduledTaskLifecycleListenerTest {
                 listener1, listener2));
 
         // when
-        listener.finished(ScheduledTaskIdentity.of("task_name"), ScheduledTaskExecutionResult.success(), Instant.now(), 0L);
+        listener.finished(ScheduledTaskIdentity.of("task_name"), taskContext,
+                ScheduledTaskExecutionResult.success(), Instant.now(), 0L);
 
         // then
         assertThat(events, equalTo(List.of("2:finished", "1:finished")));
@@ -62,7 +66,7 @@ class CompositeScheduledTaskLifecycleListenerTest {
                 listener1, listener2));
 
         // when
-        listener.crashed(ScheduledTaskIdentity.of("task_name"), new RuntimeException());
+        listener.crashed(ScheduledTaskIdentity.of("task_name"), taskContext, new RuntimeException());
 
         // then
         assertThat(events, equalTo(List.of("2:crashed", "1:crashed")));
@@ -78,19 +82,22 @@ class CompositeScheduledTaskLifecycleListenerTest {
         }
 
         @Override
-        public void started(@Nonnull ScheduledTaskIdentity taskIdentity) {
+        public void started(@Nonnull ScheduledTaskIdentity taskIdentity, @Nonnull ScheduledTaskContext taskContext) {
             events.add(id + ":started");
         }
 
         @Override
         public void finished(@Nonnull ScheduledTaskIdentity taskIdentity,
+                             @Nonnull ScheduledTaskContext taskContext,
                              @Nonnull ScheduledTaskExecutionResult executionResult,
                              @Nonnull Instant nextExecutionTime, long processTaskTimeInMills) {
             events.add(id + ":finished");
         }
 
         @Override
-        public void crashed(@Nonnull ScheduledTaskIdentity taskIdentity, @Nullable Throwable exc) {
+        public void crashed(@Nonnull ScheduledTaskIdentity taskIdentity,
+                            @Nonnull ScheduledTaskContext taskContext,
+                            @Nullable Throwable exc) {
             events.add(id + ":crashed");
         }
     }

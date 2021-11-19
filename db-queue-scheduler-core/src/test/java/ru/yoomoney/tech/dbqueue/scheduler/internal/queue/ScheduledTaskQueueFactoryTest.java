@@ -49,7 +49,7 @@ class ScheduledTaskQueueFactoryTest {
         // given
         ScheduledTask scheduledTask = SimpleScheduledTask.create(
                 "scheduled-task-id",
-                ScheduledTaskExecutionResult::success
+                context -> ScheduledTaskExecutionResult.success()
         );
         ScheduledTaskDefinition scheduledTaskDefinition = ScheduledTaskDefinition.builder()
                 .withScheduledTask(scheduledTask)

@@ -1,5 +1,6 @@
 package ru.yoomoney.tech.dbqueue.scheduler.config;
 
+import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskContext;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskExecutionResult;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskIdentity;
 
@@ -22,8 +23,9 @@ public interface ScheduledTaskLifecycleListener {
      * <p> Might be useful for updating a logging context.
      *
      * @param taskIdentity identity of executing task
+     * @param taskContext executing task context
      */
-    void started(@Nonnull ScheduledTaskIdentity taskIdentity);
+    void started(@Nonnull ScheduledTaskIdentity taskIdentity, @Nonnull ScheduledTaskContext taskContext);
 
     /**
      * Event for completion of client logic when task processing.
@@ -33,11 +35,13 @@ public interface ScheduledTaskLifecycleListener {
      * <p> Might be useful for recovery of initial logging context state.
      *
      * @param taskIdentity identity of executing task
+     * @param taskContext executing task context
      * @param executionResult result of task processing
      * @param nextExecutionTime task next execution date
      * @param processTaskTimeInMills time spent on task processing in millis
      */
     void finished(@Nonnull ScheduledTaskIdentity taskIdentity,
+                  @Nonnull ScheduledTaskContext taskContext,
                   @Nonnull ScheduledTaskExecutionResult executionResult,
                   @Nonnull Instant nextExecutionTime,
                   long processTaskTimeInMills);
@@ -50,7 +54,8 @@ public interface ScheduledTaskLifecycleListener {
      * <p> Might be useful for tracking and monitoring errors in the system.
      *
      * @param taskIdentity identity of executing task
+     * @param taskContext executing task context
      * @param exc an error caused the crash.
      */
-    void crashed(@Nonnull ScheduledTaskIdentity taskIdentity, @Nullable Throwable exc);
+    void crashed(@Nonnull ScheduledTaskIdentity taskIdentity, @Nonnull ScheduledTaskContext taskContext, @Nullable Throwable exc);
 }

@@ -2,6 +2,7 @@ package ru.yoomoney.tech.dbqueue.scheduler.config.impl;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskContext;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskExecutionResult;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskIdentity;
 
@@ -26,7 +27,8 @@ class LoggingScheduledTaskLifecycleListenerTest {
     public static final Path LOG_PATH = Paths.get("target/scheduled-task-listener.log");
 
     private final LoggingScheduledTaskLifecycleListener listener = new LoggingScheduledTaskLifecycleListener();
-    private final  ScheduledTaskIdentity identity = ScheduledTaskIdentity.of("taskIdentity");
+    private final ScheduledTaskIdentity identity = ScheduledTaskIdentity.of("taskIdentity");
+    private final ScheduledTaskContext taskContext = ScheduledTaskContext.builder().withCreatedAt(Instant.now()).build();
 
     @BeforeEach
     public void setUp() throws IOException {
@@ -38,7 +40,7 @@ class LoggingScheduledTaskLifecycleListenerTest {
     @Test
     public void should_log_start_event() throws IOException {
         // when
-        listener.started(identity);
+        listener.started(identity, taskContext);
 
         // then
         assertThat(
@@ -53,7 +55,7 @@ class LoggingScheduledTaskLifecycleListenerTest {
         Instant nextExecutionTime = LocalDateTime.of(2010, 1, 1, 0, 0, 0).toInstant(ZoneOffset.UTC);
 
         // when
-        listener.finished(identity, ScheduledTaskExecutionResult.success(), nextExecutionTime, 800L);
+        listener.finished(identity, taskContext, ScheduledTaskExecutionResult.success(), nextExecutionTime, 800L);
 
         // then
         assertThat(
@@ -69,7 +71,7 @@ class LoggingScheduledTaskLifecycleListenerTest {
         Instant nextExecutionTime = LocalDateTime.of(2010, 1, 1, 0, 0, 0).toInstant(ZoneOffset.UTC);
 
         // when
-        listener.finished(identity, ScheduledTaskExecutionResult.error(), nextExecutionTime, 800L);
+        listener.finished(identity, taskContext, ScheduledTaskExecutionResult.error(), nextExecutionTime, 800L);
 
         // then
         assertThat(
@@ -82,7 +84,7 @@ class LoggingScheduledTaskLifecycleListenerTest {
     @Test
     public void should_log_crash_event() throws IOException {
         // when
-        listener.crashed(identity, null);
+        listener.crashed(identity, taskContext, null);
 
         // then
         assertThat(

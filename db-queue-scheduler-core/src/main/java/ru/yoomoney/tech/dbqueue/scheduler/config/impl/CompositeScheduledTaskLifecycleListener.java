@@ -1,6 +1,7 @@
 package ru.yoomoney.tech.dbqueue.scheduler.config.impl;
 
 import ru.yoomoney.tech.dbqueue.scheduler.config.ScheduledTaskLifecycleListener;
+import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskContext;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskExecutionResult;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskIdentity;
 
@@ -33,21 +34,24 @@ public class CompositeScheduledTaskLifecycleListener implements ScheduledTaskLif
     }
 
     @Override
-    public void started(@Nonnull ScheduledTaskIdentity taskIdentity) {
-        listeners.forEach(listener -> listener.started(taskIdentity));
+    public void started(@Nonnull ScheduledTaskIdentity taskIdentity, @Nonnull ScheduledTaskContext taskContext) {
+        listeners.forEach(listener -> listener.started(taskIdentity, taskContext));
     }
 
     @Override
     public void finished(@Nonnull ScheduledTaskIdentity taskIdentity,
+                         @Nonnull ScheduledTaskContext taskContext,
                          @Nonnull ScheduledTaskExecutionResult executionResult,
                          @Nonnull Instant nextExecutionTime,
                          long processTaskTimeInMills) {
-        reverseListeners.forEach(listener -> listener.finished(taskIdentity, executionResult, nextExecutionTime,
+        reverseListeners.forEach(listener -> listener.finished(taskIdentity, taskContext, executionResult, nextExecutionTime,
                 processTaskTimeInMills));
     }
 
     @Override
-    public void crashed(@Nonnull ScheduledTaskIdentity taskIdentity, @Nullable Throwable exc) {
-        reverseListeners.forEach(listener -> listener.crashed(taskIdentity, exc));
+    public void crashed(@Nonnull ScheduledTaskIdentity taskIdentity,
+                        @Nonnull ScheduledTaskContext taskContext,
+                        @Nullable Throwable exc) {
+        reverseListeners.forEach(listener -> listener.crashed(taskIdentity, taskContext, exc));
     }
 }
