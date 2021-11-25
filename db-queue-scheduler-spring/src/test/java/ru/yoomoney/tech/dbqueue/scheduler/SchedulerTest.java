@@ -12,6 +12,7 @@ import ru.yoomoney.tech.dbqueue.scheduler.settings.FailureSettings;
 import ru.yoomoney.tech.dbqueue.scheduler.settings.ScheduleSettings;
 import ru.yoomoney.tech.dbqueue.scheduler.settings.ScheduledTaskSettings;
 
+import java.lang.reflect.Field;
 import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.Instant;
@@ -21,6 +22,7 @@ import java.util.Objects;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static org.awaitility.Awaitility.await;
@@ -134,6 +136,59 @@ public class SchedulerTest extends BaseTest {
                         Long.class, scheduledTask.getIdentity().asString()),
                 equalTo(1L)
         );
+    }
+
+    @ParameterizedTest
+    @MethodSource("databaseAccessStream")
+    void should_task_executed_once(DatabaseAccess databaseAccess) throws Exception {
+        // given
+        Scheduler scheduler1 = createScheduler(databaseAccess);
+        Scheduler scheduler2 = createScheduler(databaseAccess);
+        AtomicInteger counter = new AtomicInteger();
+
+        Class<?> scheduledTaskQueueConsumerClass =
+                Class.forName("ru.yoomoney.tech.dbqueue.scheduler.internal.queue.ScheduledTaskQueueConsumer");
+        Field heartbeatIntervalField = scheduledTaskQueueConsumerClass.getDeclaredField("HEARTBEAT_INTERVAL");
+        heartbeatIntervalField.setAccessible(true);
+        Duration heartbeatInterval = (Duration) heartbeatIntervalField.get(null);
+
+        ScheduledTask scheduledTask = SimpleScheduledTask.create(
+                "scheduled-task" + uniqueCounter.incrementAndGet(),
+                context -> {
+                    counter.incrementAndGet();
+                    try {
+                        Thread.sleep(heartbeatInterval.multipliedBy(2L).toMillis());
+                    } catch (InterruptedException ex) {
+                        throw new RuntimeException("got interrupted exception", ex);
+                    }
+                    return ScheduledTaskExecutionResult.success();
+                }
+        );
+
+        // when
+        scheduler1.schedule(
+                scheduledTask,
+                ScheduledTaskSettings.builder()
+                        .withFailureSettings(FailureSettings.none())
+                        .withScheduleSettings(ScheduleSettings.fixedDelay(Duration.ofSeconds(1L)))
+                        .build()
+        );
+        scheduler2.schedule(
+                scheduledTask,
+                ScheduledTaskSettings.builder()
+                        .withFailureSettings(FailureSettings.linearBackoff(Duration.ofHours(1L)))
+                        .withScheduleSettings(ScheduleSettings.fixedDelay(Duration.ofSeconds(1L)))
+                        .build()
+        );
+        runConcurrently(
+                () -> scheduler1.start(),
+                () -> scheduler2.start()
+        );
+
+        Thread.sleep(heartbeatInterval.multipliedBy(2L).toMillis());
+
+        // then
+        assertThat(counter.get(), equalTo(1));
     }
 
     private void runConcurrently(Runnable... bodies) throws InterruptedException {

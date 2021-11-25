@@ -2,9 +2,12 @@ package ru.yoomoney.tech.dbqueue.scheduler.internal.schedule;
 
 import org.junit.jupiter.api.Test;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.schedule.impl.CronNextExecutionTimeProvider;
+import ru.yoomoney.tech.dbqueue.scheduler.internal.schedule.impl.FailureAwareNextExecutionTimeProvider;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.schedule.impl.FixedDelayNextExecutionTimeProvider;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.schedule.impl.FixedRateNextExecutionTimeProvider;
+import ru.yoomoney.tech.dbqueue.scheduler.settings.FailureSettings;
 import ru.yoomoney.tech.dbqueue.scheduler.settings.ScheduleSettings;
+import ru.yoomoney.tech.dbqueue.scheduler.settings.ScheduledTaskSettings;
 
 import java.time.Duration;
 import java.time.ZoneId;
@@ -22,10 +25,13 @@ class NextExecutionTimeProviderFactoryTest {
     @Test
     public void should_create_CronNextExecutionTimeProvider() {
         // given
-        ScheduleSettings fixedDelaySchedule = ScheduleSettings.cron("0 * * * * MON-FRI", ZoneId.systemDefault());
+        ScheduledTaskSettings scheduledTaskSettings = ScheduledTaskSettings.builder()
+                .withScheduleSettings(ScheduleSettings.cron("0 * * * * MON-FRI", ZoneId.systemDefault()))
+                .withFailureSettings(FailureSettings.none())
+                .build();
 
         // when
-        NextExecutionTimeProvider executionTimeProvider = factory.createExecutionTimeProvider(fixedDelaySchedule);
+        NextExecutionTimeProvider executionTimeProvider = factory.createExecutionTimeProvider(scheduledTaskSettings);
 
         // then
         assertThat(executionTimeProvider, instanceOf(CronNextExecutionTimeProvider.class));
@@ -34,10 +40,13 @@ class NextExecutionTimeProviderFactoryTest {
     @Test
     public void should_create_FixedDelayNextExecutionTimeProvider() {
         // given
-        ScheduleSettings fixedDelaySchedule = ScheduleSettings.fixedDelay(Duration.ZERO);
+        ScheduledTaskSettings scheduledTaskSettings = ScheduledTaskSettings.builder()
+                .withScheduleSettings(ScheduleSettings.fixedDelay(Duration.ZERO))
+                .withFailureSettings(FailureSettings.none())
+                .build();
 
         // when
-        NextExecutionTimeProvider executionTimeProvider = factory.createExecutionTimeProvider(fixedDelaySchedule);
+        NextExecutionTimeProvider executionTimeProvider = factory.createExecutionTimeProvider(scheduledTaskSettings);
 
         // then
         assertThat(executionTimeProvider, instanceOf(FixedDelayNextExecutionTimeProvider.class));
@@ -46,12 +55,30 @@ class NextExecutionTimeProviderFactoryTest {
     @Test
     public void should_create_FixedRateNextExecutionTimeProvider() {
         // given
-        ScheduleSettings fixedDelaySchedule = ScheduleSettings.fixedRate(Duration.ZERO);
+        ScheduledTaskSettings scheduledTaskSettings = ScheduledTaskSettings.builder()
+                .withScheduleSettings(ScheduleSettings.fixedRate(Duration.ZERO))
+                .withFailureSettings(FailureSettings.none())
+                .build();
 
         // when
-        NextExecutionTimeProvider executionTimeProvider = factory.createExecutionTimeProvider(fixedDelaySchedule);
+        NextExecutionTimeProvider executionTimeProvider = factory.createExecutionTimeProvider(scheduledTaskSettings);
 
         // then
         assertThat(executionTimeProvider, instanceOf(FixedRateNextExecutionTimeProvider.class));
+    }
+
+    @Test
+    public void should_create_FailureAwareNextExecutionTimeProvider() {
+        // given
+        ScheduledTaskSettings scheduledTaskSettings = ScheduledTaskSettings.builder()
+                .withScheduleSettings(ScheduleSettings.fixedRate(Duration.ZERO))
+                .withFailureSettings(FailureSettings.linearBackoff(Duration.ZERO))
+                .build();
+
+        // when
+        NextExecutionTimeProvider executionTimeProvider = factory.createExecutionTimeProvider(scheduledTaskSettings);
+
+        // then
+        assertThat(executionTimeProvider, instanceOf(FailureAwareNextExecutionTimeProvider.class));
     }
 }

@@ -22,13 +22,13 @@ public class ScheduleSettings {
     private final CronSettings cronSettings;
 
     /**
-     * Fixed execution interval between start of the last execution and start of the next one
+     * Fixed execution interval between start of the last execution (failed or successes one) and start of the next one
      */
     @Nullable
     private final Duration fixedRate;
 
     /**
-     * Fixed execution interval between end of the last execution and start of the next one
+     * Fixed execution interval between end of the last (failed or successes one) execution and start of the next one
      */
     @Nullable
     private final Duration fixedDelay;
@@ -66,6 +66,18 @@ public class ScheduleSettings {
      *  <li>month</li>
      *  <li>day of week</li>
      *  </ul>
+     *
+     *  <pre>
+     *   ┌───────────── second (0-59)
+     *   │ ┌───────────── minute (0 - 59)
+     *   │ │ ┌───────────── hour (0 - 23)
+     *   │ │ │ ┌───────────── day of the month (1 - 31)
+     *   │ │ │ │ ┌───────────── month (1 - 12) (or JAN-DEC)
+     *   │ │ │ │ │ ┌───────────── day of the week (0 - 7)
+     *   │ │ │ │ │ │          (0 or 7 is Sunday, or MON-SUN)
+     *   │ │ │ │ │ │
+     *   * * * * * *
+     *  </pre>
      *
      *  <p>For example, {@code "0 * * * * MON-FRI"} means once per minute on weekdays
      *

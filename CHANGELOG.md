@@ -1,5 +1,9 @@
-### NEXT_VERSION_TYPE=MAJOR|MINOR|PATCH
+### NEXT_VERSION_TYPE=MINOR
 ### NEXT_VERSION_DESCRIPTION_BEGIN
+* `FailRetryType.NONE` added that does not add extra execution attempts in case of a failure - 
+  a task is strictly executed according to the schedule;
+* `FailureSettings.maxAttempts` added that boards maximum of extra execution attempts in case of a failure - 
+  if limit is exceeded, a task will be executed according to the schedule;
 ### NEXT_VERSION_DESCRIPTION_END
 ## [3.0.0]() (19-11-2021)
 

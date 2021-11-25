@@ -10,7 +10,6 @@ import ru.yoomoney.tech.dbqueue.api.impl.NoopPayloadTransformer;
 import ru.yoomoney.tech.dbqueue.scheduler.config.ScheduledTaskLifecycleListener;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.ScheduledTaskDefinition;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.db.ScheduledTaskQueueDao;
-import ru.yoomoney.tech.dbqueue.scheduler.internal.db.ScheduledTaskRecord;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.schedule.ScheduledTaskExecutionContext;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTask;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskContext;
@@ -36,7 +35,10 @@ import static java.util.Objects.requireNonNull;
 class ScheduledTaskQueueConsumer implements QueueConsumer<String> {
     private static final Logger log = LoggerFactory.getLogger(ScheduledTaskQueueConsumer.class);
 
+    private static final Duration HEARTBEAT_INTERVAL = Duration.ofSeconds(5L);
+
     private final QueueConfig queueConfig;
+    private final HeartbeatAgent heartbeatAgent;
     private final ScheduledTaskDefinition scheduledTaskDefinition;
     private final ScheduledTaskLifecycleListener scheduledTaskLifecycleListener;
     private final ScheduledTaskQueueDao scheduledTaskQueueDao;
@@ -60,6 +62,11 @@ class ScheduledTaskQueueConsumer implements QueueConsumer<String> {
         this.scheduledTaskLifecycleListener = requireNonNull(scheduledTaskLifecycleListener, "scheduledTaskLifecycleListener");
         this.scheduledTaskQueueDao = requireNonNull(scheduledTaskQueueDao, "scheduledTaskQueueDao");
         this.clock = requireNonNull(clock, "clock");
+        this.heartbeatAgent = new HeartbeatAgent(
+                scheduledTaskDefinition.getIdentity().asString(),
+                HEARTBEAT_INTERVAL,
+                () -> shiftNextExecutionTime(HEARTBEAT_INTERVAL.multipliedBy(2L))
+        );
     }
 
     @Nonnull
@@ -76,49 +83,51 @@ class ScheduledTaskQueueConsumer implements QueueConsumer<String> {
         scheduledTaskLifecycleListener.started(scheduledTaskDefinition.getIdentity(), scheduledTaskContext);
         log.debug("execute(): scheduledTaskIdentity={}, task={}", scheduledTaskDefinition.getIdentity(), task);
 
-        ScheduledTaskRecord queueTask = scheduledTaskQueueDao.findQueueTask(queueConfig.getLocation().getQueueId()).orElseThrow();
-
         long start = clock.millis();
         ScheduledTaskExecutionContext internalContext = new ScheduledTaskExecutionContext();
+        internalContext.setAttemptsCount(task.getAttemptsCount());
         ScheduledTaskExecutionResult executionResult = executeTask(scheduledTaskContext, internalContext);
-
         long processingTaskTime = clock.millis() - start;
 
-        if (executionResult.getType() == ScheduledTaskExecutionResult.Type.ERROR) {
-            log.debug("task executed: executionResult={}, nextExecutionTime={}", executionResult, queueTask.getNextProcessAt());
-            executionResult.getNextExecutionTime().ifPresent(nextExecutionTime ->
-                    scheduledTaskQueueDao.updateNextProcessDate(queueConfig.getLocation().getQueueId(), nextExecutionTime));
-            scheduledTaskLifecycleListener.finished(scheduledTaskDefinition.getIdentity(), scheduledTaskContext, executionResult,
-                    queueTask.getNextProcessAt(), processingTaskTime);
-            return TaskExecutionResult.fail();
-        }
-
         Instant nextExecutionTime = executionResult.getNextExecutionTime().orElseGet(() ->
-                        scheduledTaskDefinition.getNextExecutionTimeProvider().getNextExecutionTime(internalContext));
+                scheduledTaskDefinition.getNextExecutionTimeProvider().getNextExecutionTime(internalContext));
 
         log.debug("task executed: executionResult={}, nextExecutionTime={}", executionResult, nextExecutionTime);
+
         scheduledTaskLifecycleListener.finished(scheduledTaskDefinition.getIdentity(), scheduledTaskContext, executionResult,
                 nextExecutionTime, processingTaskTime);
+        if (executionResult.getType() == ScheduledTaskExecutionResult.Type.ERROR) {
+            scheduledTaskQueueDao.updateNextProcessDate(queueConfig.getLocation().getQueueId(), nextExecutionTime);
+            return TaskExecutionResult.fail();
+        }
         return TaskExecutionResult.reenqueue(Duration.between(clock.instant(), nextExecutionTime));
     }
 
     private ScheduledTaskExecutionResult executeTask(ScheduledTaskContext scheduledTaskContext,
                                                      ScheduledTaskExecutionContext internalContext) {
 
+        ScheduledTaskExecutionResult result;
         internalContext.setLastExecutionStartTime(clock.instant());
         try {
-            ScheduledTaskExecutionResult result = scheduledTaskDefinition.getScheduledTask().execute(scheduledTaskContext);
+            heartbeatAgent.start();
+            result = scheduledTaskDefinition.getScheduledTask().execute(scheduledTaskContext);
             if (result.getState().isPresent()) {
                 scheduledTaskQueueDao.updatePayload(queueConfig.getLocation().getQueueId(), result.getState().orElseThrow());
             }
-            return result;
         } catch (RuntimeException ex) {
             scheduledTaskLifecycleListener.crashed(scheduledTaskDefinition.getIdentity(), scheduledTaskContext, ex);
             log.debug("failed to execute scheduled task: scheduledTask={}", scheduledTaskDefinition, ex);
-            return ScheduledTaskExecutionResult.error();
+            result = ScheduledTaskExecutionResult.error();
         } finally {
             internalContext.setLastExecutionFinishTime(clock.instant());
+            heartbeatAgent.stop();
         }
+        internalContext.setExecutionResultType(result.getType());
+        return result;
+    }
+
+    private void shiftNextExecutionTime(Duration interval) {
+        scheduledTaskQueueDao.updateNextProcessDate(queueConfig.getLocation().getQueueId(), clock.instant().plus(interval));
     }
 
     @Nonnull

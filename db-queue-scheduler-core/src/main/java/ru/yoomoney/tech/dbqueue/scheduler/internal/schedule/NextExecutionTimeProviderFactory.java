@@ -1,9 +1,12 @@
 package ru.yoomoney.tech.dbqueue.scheduler.internal.schedule;
 
 import ru.yoomoney.tech.dbqueue.scheduler.internal.schedule.impl.CronNextExecutionTimeProvider;
+import ru.yoomoney.tech.dbqueue.scheduler.internal.schedule.impl.FailureAwareNextExecutionTimeProvider;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.schedule.impl.FixedDelayNextExecutionTimeProvider;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.schedule.impl.FixedRateNextExecutionTimeProvider;
+import ru.yoomoney.tech.dbqueue.scheduler.settings.FailRetryType;
 import ru.yoomoney.tech.dbqueue.scheduler.settings.ScheduleSettings;
+import ru.yoomoney.tech.dbqueue.scheduler.settings.ScheduledTaskSettings;
 
 import javax.annotation.Nonnull;
 
@@ -19,12 +22,21 @@ public class NextExecutionTimeProviderFactory {
     /**
      * Creates a next execution time provider according to passed schedule settings
      *
-     * @param scheduleSettings schedule settings
+     * @param scheduledTaskSettings scheduled task settings
      * @return created next execution time provider
      */
-    public NextExecutionTimeProvider createExecutionTimeProvider(@Nonnull ScheduleSettings scheduleSettings) {
-        requireNonNull(scheduleSettings, "scheduleSettings");
+    public NextExecutionTimeProvider createExecutionTimeProvider(@Nonnull ScheduledTaskSettings scheduledTaskSettings) {
+        requireNonNull(scheduledTaskSettings, "scheduledTaskSettings");
+        NextExecutionTimeProvider executionTimeProvider =
+                createExecutionTimeProvider(scheduledTaskSettings.getScheduleSettings());
 
+        return scheduledTaskSettings.getFailureSettings().getRetryType() == FailRetryType.NONE
+                ? executionTimeProvider
+                : new FailureAwareNextExecutionTimeProvider(executionTimeProvider, scheduledTaskSettings.getFailureSettings());
+    }
+
+    private NextExecutionTimeProvider createExecutionTimeProvider(@Nonnull ScheduleSettings scheduleSettings) {
+        requireNonNull(scheduleSettings, "scheduleSettings");
         if (scheduleSettings.getCronSettings().isPresent()) {
             return new CronNextExecutionTimeProvider(
                     scheduleSettings.getCronSettings().orElseThrow().getCronExpression(),

@@ -1,7 +1,6 @@
 package ru.yoomoney.tech.dbqueue.scheduler.internal.queue;
 
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.api.Test;
 import ru.yoomoney.tech.dbqueue.api.impl.SingleQueueShardRouter;
 import ru.yoomoney.tech.dbqueue.scheduler.config.impl.NoopScheduledTaskLifecycleListener;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.ScheduledTaskDefinition;
@@ -11,7 +10,6 @@ import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTask;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskExecutionResult;
 import ru.yoomoney.tech.dbqueue.scheduler.models.SimpleScheduledTask;
 import ru.yoomoney.tech.dbqueue.scheduler.settings.FailureSettings;
-import ru.yoomoney.tech.dbqueue.scheduler.settings.FailRetryType;
 import ru.yoomoney.tech.dbqueue.settings.ExtSettings;
 import ru.yoomoney.tech.dbqueue.settings.PollSettings;
 import ru.yoomoney.tech.dbqueue.settings.ProcessingMode;
@@ -43,9 +41,8 @@ class ScheduledTaskQueueFactoryTest {
             NoopScheduledTaskLifecycleListener.getInstance()
     );
 
-    @ParameterizedTest
-    @EnumSource(FailRetryType.class)
-    void should_create_scheduled_tasks_queue(FailRetryType type) {
+    @Test
+    void should_create_scheduled_tasks_queue() {
         // given
         ScheduledTask scheduledTask = SimpleScheduledTask.create(
                 "scheduled-task-id",
@@ -53,11 +50,7 @@ class ScheduledTaskQueueFactoryTest {
         );
         ScheduledTaskDefinition scheduledTaskDefinition = ScheduledTaskDefinition.builder()
                 .withScheduledTask(scheduledTask)
-                .withFailureSettings(FailureSettings.builder()
-                        .withRetryType(type)
-                        .withRetryInterval(Duration.ofHours(1L))
-                        .build()
-                )
+                .withFailureSettings(FailureSettings.none())
                 .withNextExecutionTimeProvider(new FixedRateNextExecutionTimeProvider(Duration.ZERO))
                 .build();
 
@@ -68,10 +61,6 @@ class ScheduledTaskQueueFactoryTest {
         QueueLocation location = scheduledTasksQueue.getQueueConsumer().getQueueConfig().getLocation();
         assertThat(location.getTableName(), equalTo("scheduled_tasks_table"));
         assertThat(location.getQueueId().asString(), equalTo("scheduled-task-id"));
-
-        QueueSettings settings = scheduledTasksQueue.getQueueConsumer().getQueueConfig().getSettings();
-        assertThat(settings.getFailureSettings().getRetryType().name(), equalTo(type.name()));
-        assertThat(settings.getFailureSettings().getRetryInterval(), equalTo(Duration.ofHours(1L)));
     }
 
     private QueueSettings dummyQueueSettings() {

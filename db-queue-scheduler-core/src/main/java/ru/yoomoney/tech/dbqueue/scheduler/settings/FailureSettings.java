@@ -1,7 +1,9 @@
 package ru.yoomoney.tech.dbqueue.scheduler.settings;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.time.Duration;
+import java.util.Optional;
 
 import static java.util.Objects.requireNonNull;
 
@@ -21,18 +23,25 @@ public class FailureSettings {
     private final FailRetryType failRetryType;
 
     /**
-     * Retry interval for task execution in case of failure or freezing.
-     *
-     * During that interval task is not executed again unless task is rescheduled or the interval exceeded.
-     *
-     * <p>PAY ATTENTION, small interval may lead to a concurrent execution of the same task by different nodes.
+     * Retry interval for task execution in case of failure.
      */
     @Nonnull
     private final Duration retryInterval;
 
-    private FailureSettings(@Nonnull FailRetryType failRetryType, @Nonnull Duration retryInterval) {
+    /**
+     * Max count of retry attempts
+     *
+     * <p>If counter exceeded next execution time is calculated according to a related task scheduler
+     */
+    @Nullable
+    private final Integer maxAttempts;
+
+    private FailureSettings(@Nonnull FailRetryType failRetryType,
+                            @Nonnull Duration retryInterval,
+                            @Nullable Integer maxAttempts) {
         this.failRetryType = requireNonNull(failRetryType, "retryType");
         this.retryInterval = requireNonNull(retryInterval, "retryInterval");
+        this.maxAttempts = maxAttempts;
     }
 
     /**
@@ -52,7 +61,7 @@ public class FailureSettings {
      * @return new instance of {@link FailureSettings}
      */
     public static FailureSettings linearBackoff(@Nonnull Duration retryInterval) {
-        return new FailureSettings(FailRetryType.LINEAR_BACKOFF, retryInterval);
+        return new FailureSettings(FailRetryType.LINEAR_BACKOFF, retryInterval, null);
     }
 
     /**
@@ -62,7 +71,7 @@ public class FailureSettings {
      * @return new instance of {@link FailureSettings}
      */
     public static FailureSettings arithmeticBackoff(@Nonnull Duration initialInterval) {
-        return new FailureSettings(FailRetryType.ARITHMETIC_BACKOFF, initialInterval);
+        return new FailureSettings(FailRetryType.ARITHMETIC_BACKOFF, initialInterval, null);
     }
 
     /**
@@ -72,7 +81,27 @@ public class FailureSettings {
      * @return new instance of {@link FailureSettings}
      */
     public static FailureSettings geometricBackoff(@Nonnull Duration initialInterval) {
-        return new FailureSettings(FailRetryType.GEOMETRIC_BACKOFF, initialInterval);
+        return new FailureSettings(FailRetryType.GEOMETRIC_BACKOFF, initialInterval, null);
+    }
+
+    /**
+     * Creates empty failure strategy that defers task execution according to its schedule algorithm
+     * in spite of any execution result
+     *
+     * @return new instance of {@link FailureSettings}
+     */
+    public static FailureSettings none() {
+        return new FailureSettings(FailRetryType.NONE, Duration.ZERO, null);
+    }
+
+    /**
+     * Creates a new FailureSettings with configured max count of retry attempts
+     *
+     * @param maxAttempts max count of retry attempts
+     * @return new instance of {@link FailureSettings}
+     */
+    public FailureSettings withMaxAttempts(@Nonnull Integer maxAttempts) {
+        return new FailureSettings(failRetryType, retryInterval, maxAttempts);
     }
 
     @Nonnull
@@ -85,11 +114,17 @@ public class FailureSettings {
         return retryInterval;
     }
 
+    @Nonnull
+    public Optional<Integer> getMaxAttempts() {
+        return Optional.ofNullable(maxAttempts);
+    }
+
     @Override
     public String toString() {
         return "FailureSettings{" +
                 "failRetryType=" + failRetryType +
                 ", retryInterval=" + retryInterval +
+                ", maxAttempts=" + maxAttempts +
                 '}';
     }
 
@@ -99,6 +134,7 @@ public class FailureSettings {
     public static final class Builder {
         private FailRetryType failRetryType;
         private Duration retryInterval;
+        private Integer maxAttempts;
 
         private Builder() {
         }
@@ -113,6 +149,11 @@ public class FailureSettings {
             return this;
         }
 
+        public Builder withMaxAttempts(@Nonnull Integer maxAttempts) {
+            this.maxAttempts = maxAttempts;
+            return this;
+        }
+
         /**
          * Creates an object
          *
@@ -120,7 +161,7 @@ public class FailureSettings {
          */
         @Nonnull
         public FailureSettings build() {
-            return new FailureSettings(failRetryType, retryInterval);
+            return new FailureSettings(failRetryType, retryInterval, maxAttempts);
         }
     }
 }
