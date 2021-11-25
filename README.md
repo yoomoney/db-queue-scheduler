@@ -120,8 +120,8 @@ ScheduledTask task = SimpleScheduledTask.create(
         });
 
 ScheduledTaskSettings settings = ScheduledTaskSettings.builder()
-        .withFailureSettings(FailureSettings.linearBackoff(Duration.ofHours(1L)))
-        .withScheduleSettings(ScheduleSettings.fixedDelay(Duration.ofSeconds(0L)))
+        .withScheduleSettings(ScheduleSettings.fixedDelay(Duration.ofHours(1L)))
+        .withFailureSettings(FailureSettings.none())
         .build()
 
 scheduler.schedule(task, settings);
