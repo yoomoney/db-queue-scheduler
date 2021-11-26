@@ -17,18 +17,25 @@ import static java.util.Objects.requireNonNull;
 public class ScheduleSettings {
     /**
      * A cron-like expression settings
+     *
+     * <p><strong>Pay attention!</strong> {@link FailureSettings} overrides the next schedule interval if only a failure happened
+     * and calculated next execution time via {@link FailureSettings} is earlier than the time calculated by {@link CronSettings}.
      */
     @Nullable
     private final CronSettings cronSettings;
 
     /**
-     * Fixed execution interval between start of the last execution (failed or successes one) and start of the next one
+     * Fixed execution interval between start of the last success execution and start of the next one
+     *
+     * <p><strong>Pay attention!</strong> {@link FailureSettings} overrides next schedule interval in case of failure.
      */
     @Nullable
     private final Duration fixedRate;
 
     /**
-     * Fixed execution interval between end of the last (failed or successes one) execution and start of the next one
+     * Fixed execution interval between end of the last success execution and start of the next one
+     *
+     * <p><strong>Pay attention!</strong> {@link FailureSettings} overrides next schedule interval in case of failure.
      */
     @Nullable
     private final Duration fixedDelay;

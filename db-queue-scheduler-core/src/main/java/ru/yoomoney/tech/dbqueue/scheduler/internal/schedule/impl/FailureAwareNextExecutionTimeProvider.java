@@ -39,9 +39,17 @@ public class FailureAwareNextExecutionTimeProvider implements NextExecutionTimeP
     public Instant getNextExecutionTime(@Nonnull ScheduledTaskExecutionContext executionContext) {
         requireNonNull(executionContext, "executionContext");
         if (isFailRetryIntervalNeeded(executionContext)) {
-            return resolveFailRetryInterval(executionContext);
+            Instant failRetryInterval = resolveFailRetryInterval(executionContext);
+            if (delegate instanceof CronNextExecutionTimeProvider) {
+                return earliest(delegate.getNextExecutionTime(executionContext), failRetryInterval);
+            }
+            return failRetryInterval;
         }
         return delegate.getNextExecutionTime(executionContext);
+    }
+
+    private Instant earliest(Instant left, Instant right) {
+        return left.isBefore(right) ? left : right;
     }
 
     private boolean isFailRetryIntervalNeeded(ScheduledTaskExecutionContext executionContext) {

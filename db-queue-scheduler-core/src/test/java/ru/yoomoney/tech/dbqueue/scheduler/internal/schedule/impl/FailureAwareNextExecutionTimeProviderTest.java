@@ -9,9 +9,12 @@ import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskExecutionResult;
 import ru.yoomoney.tech.dbqueue.scheduler.settings.FailureSettings;
 
 import java.time.Clock;
+import java.time.DayOfWeek;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.temporal.TemporalAdjusters;
 import java.util.stream.Stream;
 
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -22,7 +25,10 @@ import static org.hamcrest.MatcherAssert.assertThat;
  * @since 09.11.2021
  */
 class FailureAwareNextExecutionTimeProviderTest {
-    private final Clock clock = Clock.fixed(Instant.now(), ZoneId.systemDefault());
+    private final ZoneId zoneId =  ZoneId.of("Europe/Moscow");
+    private final ZonedDateTime now = ZonedDateTime.of(2010, 1, 1, 0, 0, 0, 0, zoneId)
+            .with(TemporalAdjusters.next(DayOfWeek.MONDAY));
+    private final Clock clock = Clock.fixed(now.toInstant(), zoneId);
 
     private static Stream<Arguments> backoffData() {
         return Stream.of(
@@ -109,5 +115,30 @@ class FailureAwareNextExecutionTimeProviderTest {
         // then
         assertThat(Duration.between(clock.instant(), nextExecutionTime1), equalTo(Duration.ofSeconds(1L)));
         assertThat(Duration.between(clock.instant(), nextExecutionTime2), equalTo(Duration.ofDays(1L)));
+    }
+
+    @Test
+    void should_override_fail_settings_when_cron_next_execution_time_earlier() {
+        // given
+        FailureAwareNextExecutionTimeProvider nextExecutionTimeProvider1 = new FailureAwareNextExecutionTimeProvider(
+                new CronNextExecutionTimeProvider("0 0 3 * * *", zoneId, clock),
+                FailureSettings.linearBackoff(Duration.ofSeconds(1L)),
+                clock
+        );
+        FailureAwareNextExecutionTimeProvider nextExecutionTimeProvider2 = new FailureAwareNextExecutionTimeProvider(
+                new CronNextExecutionTimeProvider("0 0 3 * * *", zoneId, clock),
+                FailureSettings.linearBackoff(Duration.ofDays(1L)),
+                clock
+        );
+        ScheduledTaskExecutionContext context = new ScheduledTaskExecutionContext();
+        context.setExecutionResultType(ScheduledTaskExecutionResult.Type.ERROR);
+
+        // when
+        Instant nextExecutionTime1 = nextExecutionTimeProvider1.getNextExecutionTime(context);
+        Instant nextExecutionTime2 = nextExecutionTimeProvider2.getNextExecutionTime(context);
+
+        // then
+        assertThat(nextExecutionTime1, equalTo(now.plus(Duration.ofSeconds(1L)).toInstant()));
+        assertThat(nextExecutionTime2, equalTo(now.withHour(3).toInstant()));
     }
 }
