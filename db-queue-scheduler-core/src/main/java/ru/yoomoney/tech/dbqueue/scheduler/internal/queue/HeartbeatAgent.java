@@ -18,15 +18,15 @@ class HeartbeatAgent {
     private static final Logger log = LoggerFactory.getLogger(HeartbeatAgent.class);
 
     private final String name;
+    private final Duration heartbeatInterval;
     private final Runnable heartbeatAction;
-    private final Duration beatInterval;
     private volatile boolean isTaskRunning;
 
     HeartbeatAgent(@Nonnull String name,
-                   @Nonnull Duration beatInterval,
+                   @Nonnull Duration heartbeatInterval,
                    @Nonnull Runnable heartbeatAction) {
         this.name = requireNonNull(name, "name");
-        this.beatInterval = requireNonNull(beatInterval, "beatInterval");
+        this.heartbeatInterval = requireNonNull(heartbeatInterval, "heartbeatInterval");
         this.heartbeatAction = requireNonNull(heartbeatAction, "heartbeatAction");
         this.isTaskRunning = false;
     }
@@ -36,7 +36,7 @@ class HeartbeatAgent {
      */
     public void start() {
         if (isTaskRunning) {
-            throw new RuntimeException("unexpected agent state. the previous execution must be finished");
+            throw new RuntimeException("unexpected agent state. the previous execution must be finished: name=" + name);
         }
         isTaskRunning = true;
         // tasks are rarely executed
@@ -53,7 +53,7 @@ class HeartbeatAgent {
                 log.warn("failed to run heartbeat action. that might lead to race conditions: name={}", name, ex);
             }
             try {
-                Thread.sleep(beatInterval.toMillis());
+                Thread.sleep(heartbeatInterval.toMillis());
             } catch (InterruptedException ex) {
                 log.info("agent thread interrupted: name={}", name, ex);
                 Thread.currentThread().interrupt();

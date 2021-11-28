@@ -25,7 +25,7 @@ public class ScheduleSettings {
     private final CronSettings cronSettings;
 
     /**
-     * Fixed execution interval between start of the last success execution and start of the next one
+     * Fixed execution interval between start of the last successful execution and start of the next one
      *
      * <p><strong>Pay attention!</strong> {@link FailureSettings} overrides next schedule interval in case of failure.
      */
@@ -33,7 +33,7 @@ public class ScheduleSettings {
     private final Duration fixedRate;
 
     /**
-     * Fixed execution interval between end of the last success execution and start of the next one
+     * Fixed execution interval between end of the last successful execution and start of the next one
      *
      * <p><strong>Pay attention!</strong> {@link FailureSettings} overrides next schedule interval in case of failure.
      */
@@ -137,6 +137,29 @@ public class ScheduleSettings {
     public static class CronSettings {
         /**
          * A cron-like expression
+         *
+         * <p>The fields read from left to right are interpreted as follows.
+         * <ul>
+         * <li>second</li>
+         * <li>minute</li>
+         * <li>hour</li>
+         * <li>day of month</li>
+         * <li>month</li>
+         * <li>day of week</li>
+         * </ul>
+         ** <pre>
+         *  ┌───────────── second (0-59)
+         *  │ ┌───────────── minute (0 - 59)
+         *  │ │ ┌───────────── hour (0 - 23)
+         *  │ │ │ ┌───────────── day of the month (1 - 31)
+         *  │ │ │ │ ┌───────────── month (1 - 12) (or JAN-DEC)
+         *  │ │ │ │ │ ┌───────────── day of the week (0 - 7)
+         *  │ │ │ │ │ │          (0 or 7 is Sunday, or MON-SUN)
+         *  │ │ │ │ │ │
+         *  * * * * * *
+         * </pre>
+         *
+         *  <p>For example, {@code "0 * * * * MON-FRI"} means once per minute on weekdays
          */
         @Nonnull
         private final String cronExpression;

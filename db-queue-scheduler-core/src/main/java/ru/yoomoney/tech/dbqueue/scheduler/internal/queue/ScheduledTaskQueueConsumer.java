@@ -35,10 +35,9 @@ import static java.util.Objects.requireNonNull;
 class ScheduledTaskQueueConsumer implements QueueConsumer<String> {
     private static final Logger log = LoggerFactory.getLogger(ScheduledTaskQueueConsumer.class);
 
-    private static final Duration HEARTBEAT_INTERVAL = Duration.ofSeconds(5L);
+    private static final Duration MIN_HEARTBEAT_INTERVAL = Duration.ofSeconds(10L);
 
     private final QueueConfig queueConfig;
-    private final HeartbeatAgent heartbeatAgent;
     private final ScheduledTaskDefinition scheduledTaskDefinition;
     private final ScheduledTaskLifecycleListener scheduledTaskLifecycleListener;
     private final ScheduledTaskQueueDao scheduledTaskQueueDao;
@@ -62,11 +61,6 @@ class ScheduledTaskQueueConsumer implements QueueConsumer<String> {
         this.scheduledTaskLifecycleListener = requireNonNull(scheduledTaskLifecycleListener, "scheduledTaskLifecycleListener");
         this.scheduledTaskQueueDao = requireNonNull(scheduledTaskQueueDao, "scheduledTaskQueueDao");
         this.clock = requireNonNull(clock, "clock");
-        this.heartbeatAgent = new HeartbeatAgent(
-                scheduledTaskDefinition.getIdentity().asString(),
-                HEARTBEAT_INTERVAL,
-                () -> shiftNextExecutionTime(HEARTBEAT_INTERVAL.multipliedBy(2L))
-        );
     }
 
     @Nonnull
@@ -108,6 +102,8 @@ class ScheduledTaskQueueConsumer implements QueueConsumer<String> {
 
         ScheduledTaskExecutionResult result;
         internalContext.setLastExecutionStartTime(clock.instant());
+
+        HeartbeatAgent heartbeatAgent = createHeartbeatAgent(internalContext);
         try {
             heartbeatAgent.start();
             result = scheduledTaskDefinition.getScheduledTask().execute(scheduledTaskContext);
@@ -124,6 +120,30 @@ class ScheduledTaskQueueConsumer implements QueueConsumer<String> {
         }
         internalContext.setExecutionResultType(result.getType());
         return result;
+    }
+
+    /**
+     * Creates heartbeat agent that helps to postpone next execution date-time of the task in case of time-consuming
+     * execution of the current one. That helps to prevent concurrent execution of the same task.
+     *
+     * @param internalContext internal context of a current execution
+     * @return prepared heartbeat agent
+     */
+    private HeartbeatAgent createHeartbeatAgent(ScheduledTaskExecutionContext internalContext) {
+        Duration precomputeNextExecutionDelay = Duration.between(
+                clock.instant(),
+                scheduledTaskDefinition.getNextExecutionTimeProvider().getNextExecutionTime(internalContext)
+        );
+
+        Duration heartbeatInterval = MIN_HEARTBEAT_INTERVAL.compareTo(precomputeNextExecutionDelay) > 0
+                ? MIN_HEARTBEAT_INTERVAL
+                : precomputeNextExecutionDelay.dividedBy(2);
+
+        return new HeartbeatAgent(
+                scheduledTaskDefinition.getIdentity().asString(),
+                heartbeatInterval,
+                () -> shiftNextExecutionTime(heartbeatInterval.multipliedBy(2))
+        );
     }
 
     private void shiftNextExecutionTime(Duration interval) {
