@@ -140,7 +140,7 @@ public class SchedulerTest extends BaseTest {
 
     @ParameterizedTest
     @MethodSource("databaseAccessStream")
-    void should_task_executed_once(DatabaseAccess databaseAccess) throws Exception {
+    void should_not_execute_the_same_task_concurrently(DatabaseAccess databaseAccess) throws Exception {
         // given
         Scheduler scheduler1 = createScheduler(databaseAccess);
         Scheduler scheduler2 = createScheduler(databaseAccess);
@@ -148,7 +148,7 @@ public class SchedulerTest extends BaseTest {
 
         Class<?> scheduledTaskQueueConsumerClass =
                 Class.forName("ru.yoomoney.tech.dbqueue.scheduler.internal.queue.ScheduledTaskQueueConsumer");
-        Field heartbeatIntervalField = scheduledTaskQueueConsumerClass.getDeclaredField("HEARTBEAT_INTERVAL");
+        Field heartbeatIntervalField = scheduledTaskQueueConsumerClass.getDeclaredField("MIN_HEARTBEAT_INTERVAL");
         heartbeatIntervalField.setAccessible(true);
         Duration heartbeatInterval = (Duration) heartbeatIntervalField.get(null);
 
@@ -176,7 +176,7 @@ public class SchedulerTest extends BaseTest {
         scheduler2.schedule(
                 scheduledTask,
                 ScheduledTaskSettings.builder()
-                        .withFailureSettings(FailureSettings.linearBackoff(Duration.ofHours(1L)))
+                        .withFailureSettings(FailureSettings.none())
                         .withScheduleSettings(ScheduleSettings.fixedDelay(Duration.ofSeconds(1L)))
                         .build()
         );

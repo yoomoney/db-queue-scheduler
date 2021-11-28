@@ -130,19 +130,22 @@ class ScheduledTaskQueueConsumer implements QueueConsumer<String> {
      * @return prepared heartbeat agent
      */
     private HeartbeatAgent createHeartbeatAgent(ScheduledTaskExecutionContext internalContext) {
+        ScheduledTaskExecutionContext failInternalContext = internalContext.copy();
+        failInternalContext.setExecutionResultType(ScheduledTaskExecutionResult.Type.ERROR);
+
         Duration precomputeNextExecutionDelay = Duration.between(
                 clock.instant(),
-                scheduledTaskDefinition.getNextExecutionTimeProvider().getNextExecutionTime(internalContext)
+                scheduledTaskDefinition.getNextExecutionTimeProvider().getNextExecutionTime(failInternalContext)
         );
 
-        Duration heartbeatInterval = MIN_HEARTBEAT_INTERVAL.compareTo(precomputeNextExecutionDelay) > 0
+        Duration heartbeatInterval = MIN_HEARTBEAT_INTERVAL.compareTo(precomputeNextExecutionDelay.dividedBy(2L)) > 0
                 ? MIN_HEARTBEAT_INTERVAL
-                : precomputeNextExecutionDelay.dividedBy(2);
+                : precomputeNextExecutionDelay.dividedBy(2L);
 
         return new HeartbeatAgent(
                 scheduledTaskDefinition.getIdentity().asString(),
                 heartbeatInterval,
-                () -> shiftNextExecutionTime(heartbeatInterval.multipliedBy(2))
+                () -> shiftNextExecutionTime(heartbeatInterval.multipliedBy(2L))
         );
     }
 

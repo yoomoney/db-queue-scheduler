@@ -29,6 +29,19 @@ public class ScheduledTaskExecutionContext {
     @Nullable
     private Long attemptsCount;
 
+    public ScheduledTaskExecutionContext() {
+    }
+
+    private ScheduledTaskExecutionContext(@Nullable Instant lastExecutionStartTime,
+                                          @Nullable Instant lastExecutionFinishTime,
+                                          @Nullable ScheduledTaskExecutionResult.Type executionResultType,
+                                          @Nullable Long attemptsCount) {
+        this.lastExecutionStartTime = lastExecutionStartTime;
+        this.lastExecutionFinishTime = lastExecutionFinishTime;
+        this.executionResultType = executionResultType;
+        this.attemptsCount = attemptsCount;
+    }
+
     public void setLastExecutionStartTime(@Nonnull Instant lastExecutionStartTime) {
         this.lastExecutionStartTime = requireNonNull(lastExecutionStartTime, "lastExecutionStartTime");
     }
@@ -63,6 +76,15 @@ public class ScheduledTaskExecutionContext {
     @Nonnull
     public Optional<Long> getAttemptsCount() {
         return Optional.ofNullable(attemptsCount);
+    }
+
+    /**
+     * Copy current {@link ScheduledTaskExecutionContext}
+     * @return new instance of the context
+     */
+    public ScheduledTaskExecutionContext copy() {
+        return new ScheduledTaskExecutionContext(lastExecutionStartTime, lastExecutionFinishTime, executionResultType,
+                attemptsCount);
     }
 
     @Override
