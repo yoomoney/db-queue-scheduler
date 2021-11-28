@@ -131,6 +131,35 @@ scheduler.start();
 
 See also our [runnable example](/examples/spring/src/main/java/ru/yoomoney/tech/dbqueue/scheduler/example/ExampleApplication.java).
 
+## How it works
+
+### Overview
+
+1. When a new [scheduled task](db-queue-scheduler-core/src/main/java/ru/yoomoney/tech/dbqueue/scheduler/models/ScheduledTask.java) 
+   is registered, the library creates a new `db-queue` queue that linked exactly to the registered `scheduled task`;
+2. If the `db-queue` queue does not have a task, the library creates a new one and postpones it according to the linked 
+   [schedule settings](db-queue-scheduler-core/src/main/java/ru/yoomoney/tech/dbqueue/scheduler/settings/ScheduleSettings.java);
+3. Each `db-queue` queue have a [consumer](db-queue-scheduler-core/src/main/java/ru/yoomoney/tech/dbqueue/scheduler/internal/queue/ScheduledTaskQueueConsumer.java) 
+   that executes its linked `scheduled task`;
+4. When the consumer got a `db-queue` task it does the following steps:
+   1. Postponing the next execution time of the `db-queue` task according to the linked [schedule settings](db-queue-scheduler-core/src/main/java/ru/yoomoney/tech/dbqueue/scheduler/settings/ScheduleSettings.java)
+   and [failure settings](db-queue-scheduler-core/src/main/java/ru/yoomoney/tech/dbqueue/scheduler/settings/FailureSettings.java);
+   2. Starting [HeartbeatAgent](db-queue-scheduler-core/src/main/java/ru/yoomoney/tech/dbqueue/scheduler/internal/queue/HeartbeatAgent.java)
+   to prevent concurrent execution of the same task by different application nodes in case of a time-consuming execution; 
+   3. Executing the linked `scheduled task`;
+   4. Postponing `db-queue` task according to the result of the last execution of the linked `scheduled task`. 
+
+### Schedule and failure settings 
+
+The library lets configure [`ScheduleSettings`](db-queue-scheduler-core/src/main/java/ru/yoomoney/tech/dbqueue/scheduler/settings/ScheduleSettings.java)
+and [`FailureSettings`](db-queue-scheduler-core/src/main/java/ru/yoomoney/tech/dbqueue/scheduler/settings/FailureSettings.java).
+
+`FailureSettings` is applied each time when an execution result is `ERROR` and the following conditions are true:
+
+1. The execution task attempts since the last successful one is less than [`FailureSettings.maxAttempts`](https://github.com/yoomoney/db-queue-scheduler/blob/feature/none-failure-settings/db-queue-scheduler-core/src/main/java/ru/yoomoney/tech/dbqueue/scheduler/settings/FailureSettings.java#L37);
+2. [`ScheduleSettings.CronSettings`](db-queue-scheduler-core/src/main/java/ru/yoomoney/tech/dbqueue/scheduler/settings/ScheduleSettings.java#L137) 
+   is not configured, or the next execution time computed via `FailureSettings` is earlier than the one computed via `ScheduleSettings.CronSettings`.
+
 ## How to contribute?
 
 Just fork the repo and send us a pull request.
