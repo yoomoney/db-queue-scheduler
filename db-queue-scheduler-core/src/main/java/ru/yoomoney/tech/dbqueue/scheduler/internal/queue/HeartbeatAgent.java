@@ -17,10 +17,13 @@ import static java.util.Objects.requireNonNull;
 class HeartbeatAgent {
     private static final Logger log = LoggerFactory.getLogger(HeartbeatAgent.class);
 
+    private static final long ALLOWABLE_WAITING_ERROR_IN_MILLS = 50L;
+
     private final String name;
     private final Duration heartbeatInterval;
     private final Runnable heartbeatAction;
     private volatile boolean isTaskRunning;
+    private final Object mutex;
 
     HeartbeatAgent(@Nonnull String name,
                    @Nonnull Duration heartbeatInterval,
@@ -29,6 +32,7 @@ class HeartbeatAgent {
         this.heartbeatInterval = requireNonNull(heartbeatInterval, "heartbeatInterval");
         this.heartbeatAction = requireNonNull(heartbeatAction, "heartbeatAction");
         this.isTaskRunning = false;
+        this.mutex = new Object();
     }
 
     /**
@@ -53,7 +57,14 @@ class HeartbeatAgent {
                 log.warn("failed to run heartbeat action. that might lead to race conditions: name={}", name, ex);
             }
             try {
-                Thread.sleep(heartbeatInterval.toMillis());
+                synchronized (mutex) {
+                    long remainingMills = heartbeatInterval.toMillis();
+                    while (isTaskRunning && remainingMills > ALLOWABLE_WAITING_ERROR_IN_MILLS) {
+                        long start = System.currentTimeMillis();
+                        mutex.wait(remainingMills);
+                        remainingMills -= System.currentTimeMillis() - start;
+                    }
+                }
             } catch (InterruptedException ex) {
                 log.info("agent thread interrupted: name={}", name, ex);
                 Thread.currentThread().interrupt();
@@ -66,6 +77,9 @@ class HeartbeatAgent {
      * Stop heart beating
      */
     public void stop() {
-        isTaskRunning = false;
+        synchronized (mutex) {
+            isTaskRunning = false;
+            mutex.notifyAll();
+        }
     }
 }

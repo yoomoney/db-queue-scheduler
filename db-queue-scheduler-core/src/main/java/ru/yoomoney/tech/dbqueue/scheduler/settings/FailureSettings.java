@@ -31,7 +31,7 @@ public class FailureSettings {
     /**
      * Max count of retry attempts
      *
-     * <p>If counter exceeded next execution time is calculated according to a related task scheduler
+     * <p>If the counter is exceeded, the next execution time is calculated according to a related task schedule
      */
     @Nullable
     private final Integer maxAttempts;
@@ -149,7 +149,7 @@ public class FailureSettings {
             return this;
         }
 
-        public Builder withMaxAttempts(@Nonnull Integer maxAttempts) {
+        public Builder withMaxAttempts(@Nullable Integer maxAttempts) {
             this.maxAttempts = maxAttempts;
             return this;
         }

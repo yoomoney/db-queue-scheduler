@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -33,5 +34,19 @@ class HeartbeatAgentTest {
 
         assertThat(counter.get(), greaterThanOrEqualTo(4));
         assertThat(counter.get(), lessThanOrEqualTo(6));
+    }
+
+    @Test
+    void should_release_thread() throws InterruptedException {
+        AtomicReference<Thread> threadRef = new AtomicReference<>();
+        HeartbeatAgent heartbeatAgent = new HeartbeatAgent("name", Duration.ofMinutes(10L), () ->
+                threadRef.set(Thread.currentThread()));
+
+        heartbeatAgent.start();
+        Thread.sleep(100L);
+        heartbeatAgent.stop();
+
+        Thread.sleep(100L);
+        assertThat(threadRef.get().isAlive(), equalTo(false));
     }
 }
