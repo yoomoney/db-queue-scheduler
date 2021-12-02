@@ -1,13 +1,13 @@
-### NEXT_VERSION_TYPE=MINOR
-### NEXT_VERSION_DESCRIPTION_BEGIN
-* `FailRetryType.NONE` added that does not add extra execution attempts in case of a failure - 
-  a task is strictly executed according to the schedule;
-* `FailureSettings.maxAttempts` added that boards maximum of extra execution attempts in case of a failure - 
-  if limit is exceeded, a task will be executed according to the schedule;
-* `fixedRate`, `fixedDelay` and `cron` schedule settings clarified - `FailureSettings` always override `fixedRate` 
-  and `fixedDelay` but it does not override `cron` in case of the calculated date time via `FailureSettings` is later 
-  than the time calculated by `cron`.
-### NEXT_VERSION_DESCRIPTION_END
+## [3.1.0]() (02-12-2021)
+
+* `FailRetryType.NONE` added that does not add extra execution attempts in case of a failure -
+a task is strictly executed according to the schedule;
+* `FailureSettings.maxAttempts` added that boards maximum of extra execution attempts in case of a failure -
+if limit is exceeded, a task will be executed according to the schedule;
+* `fixedRate`, `fixedDelay` and `cron` schedule settings clarified - `FailureSettings` always override `fixedRate`
+and `fixedDelay` but it does not override `cron` in case of the calculated date time via `FailureSettings` is later
+than the time calculated by `cron`.
+
 ## [3.0.0]() (19-11-2021)
 
 * Scheduled task states added that allows implementing stateful scheduled tasks;
