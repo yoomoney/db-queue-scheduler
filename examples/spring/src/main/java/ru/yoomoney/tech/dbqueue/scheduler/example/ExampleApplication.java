@@ -54,8 +54,8 @@ public class ExampleApplication {
         scheduler.schedule(
                 createScheduledTaskExample("cron-example"),
                 ScheduledTaskSettings.builder()
-                        .withFailureSettings(FailureSettings.linearBackoff(Duration.ofHours(1L)))
                         .withScheduleSettings(ScheduleSettings.cron("*/30 * * * * *", ZoneId.systemDefault()))
+                        .withFailureSettings(FailureSettings.none())
                         .build()
         );
 
@@ -63,8 +63,8 @@ public class ExampleApplication {
         scheduler.schedule(
                 createScheduledTaskExample("fixed-delay-example"),
                 ScheduledTaskSettings.builder()
-                        .withFailureSettings(FailureSettings.linearBackoff(Duration.ofHours(1L)))
                         .withScheduleSettings(ScheduleSettings.fixedRate(Duration.ofMinutes(1L)))
+                        .withFailureSettings(FailureSettings.none())
                         .build()
         );
 
@@ -72,8 +72,8 @@ public class ExampleApplication {
         scheduler.schedule(
                 createScheduledTaskExample("fixed-rate-example"),
                 ScheduledTaskSettings.builder()
-                        .withFailureSettings(FailureSettings.linearBackoff(Duration.ofHours(1L)))
                         .withScheduleSettings(ScheduleSettings.fixedRate(Duration.ofMinutes(1L)))
+                        .withFailureSettings(FailureSettings.none())
                         .build()
         );
 
@@ -84,8 +84,20 @@ public class ExampleApplication {
                     return ScheduledTaskExecutionResult.success().withState(context.getState().orElse("") + 'x');
                 }),
                 ScheduledTaskSettings.builder()
-                        .withFailureSettings(FailureSettings.linearBackoff(Duration.ofHours(1L)))
                         .withScheduleSettings(ScheduleSettings.fixedRate(Duration.ofMinutes(1L)))
+                        .withFailureSettings(FailureSettings.none())
+                        .build()
+        );
+
+        // linear-backoff task example
+        scheduler.schedule(
+                SimpleScheduledTask.create("linear-backoff", context -> {
+                    log.info("execute(): taskName={}", "linear-backoff");
+                    return ScheduledTaskExecutionResult.error();
+                }),
+                ScheduledTaskSettings.builder()
+                        .withScheduleSettings(ScheduleSettings.fixedRate(Duration.ofMinutes(1L)))
+                        .withFailureSettings(FailureSettings.linearBackoff(Duration.ofSeconds(1L)).withMaxAttempts(5))
                         .build()
         );
 

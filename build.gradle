@@ -39,6 +39,7 @@ subprojects {
 
     test {
         useJUnitPlatform()
+        enabled = true
     }
 
     rootProject.tasks.getByName('build').dependsOn(tasks.getByName('build'))

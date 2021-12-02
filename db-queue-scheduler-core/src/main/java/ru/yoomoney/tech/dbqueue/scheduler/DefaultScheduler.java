@@ -43,7 +43,7 @@ class DefaultScheduler implements Scheduler {
         requireNonNull(scheduledTask, "scheduledTask");
 
         NextExecutionTimeProvider executionTimeProvider = nextExecutionTimeProviderFactory
-                .createExecutionTimeProvider(scheduledTaskSettings.getScheduleSettings());
+                .createExecutionTimeProvider(scheduledTaskSettings);
 
         ScheduledTaskDefinition scheduledTaskDefinition = ScheduledTaskDefinition.builder()
                 .withEnabled(scheduledTaskSettings.isEnabled())

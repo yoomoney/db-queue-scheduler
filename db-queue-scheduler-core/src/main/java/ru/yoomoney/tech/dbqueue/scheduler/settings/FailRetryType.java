@@ -34,5 +34,10 @@ public enum FailRetryType {
      *
      * <p>Fixed delay value is set through {@link FailureSettings#getRetryInterval()}
      */
-    LINEAR_BACKOFF
+    LINEAR_BACKOFF,
+
+    /**
+     * The task is deferred according to its schedule algorithm in spite of any execution result
+     */
+    NONE
 }

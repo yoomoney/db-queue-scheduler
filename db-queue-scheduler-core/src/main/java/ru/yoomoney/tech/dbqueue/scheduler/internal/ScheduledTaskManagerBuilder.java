@@ -37,7 +37,7 @@ import static java.util.Objects.requireNonNull;
 public class ScheduledTaskManagerBuilder {
     private static final QueueShardId DEFAULT_DB_QUEUE_SHARD_ID = new QueueShardId("db-queue-scheduler");
     private static final Duration DEFAULT_DB_QUEUE_FETCH_TASK_TIMEOUT = Duration.ofSeconds(1L);
-    private static final Duration DEFAULT_DB_QUEUE_TIMEOUT_AFTER_FAILURE = Duration.ofSeconds(1L);
+    private static final Duration DEFAULT_DB_QUEUE_TIMEOUT_AFTER_FAILURE = Duration.ofMinutes(1L);
 
     private String tableName;
     private String idSequenceName;
@@ -149,7 +149,7 @@ public class ScheduledTaskManagerBuilder {
                         .build()
                 )
                 .withFailureSettings(FailureSettings.builder()
-                        .withRetryType(FailRetryType.GEOMETRIC_BACKOFF)
+                        .withRetryType(FailRetryType.LINEAR_BACKOFF)
                         .withRetryInterval(DEFAULT_DB_QUEUE_TIMEOUT_AFTER_FAILURE)
                         .build()
                 )
