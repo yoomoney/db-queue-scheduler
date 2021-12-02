@@ -1,3 +1,6 @@
+### NEXT_VERSION_TYPE=MAJOR|MINOR|PATCH
+### NEXT_VERSION_DESCRIPTION_BEGIN
+### NEXT_VERSION_DESCRIPTION_END
 ## [3.1.0]() (02-12-2021)
 
 * `FailRetryType.NONE` added that does not add extra execution attempts in case of a failure -
