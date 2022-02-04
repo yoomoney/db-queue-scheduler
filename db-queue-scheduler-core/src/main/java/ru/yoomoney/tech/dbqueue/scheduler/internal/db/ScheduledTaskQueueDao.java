@@ -4,7 +4,7 @@ import ru.yoomoney.tech.dbqueue.settings.QueueId;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.time.Instant;
+import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 
@@ -27,10 +27,10 @@ public interface ScheduledTaskQueueDao {
      * Updates next process date column of a queue tasks
      *
      * @param queueId identity of the queue
-     * @param nextProcessDate new column value
+     * @param executionDelay execution delay
      * @return count of updated rows
      */
-    int updateNextProcessDate(@Nonnull QueueId queueId, @Nonnull Instant nextProcessDate);
+    int updateNextProcessDate(@Nonnull QueueId queueId, @Nonnull Duration executionDelay);
 
     /**
      * Updates payload column of a queue tasks

@@ -1,11 +1,8 @@
 package ru.yoomoney.tech.dbqueue.scheduler;
 
-import org.junit.jupiter.api.BeforeAll;
 import org.testcontainers.containers.MSSQLServerContainer;
 import org.testcontainers.containers.OracleContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 import ru.yoomoney.tech.dbqueue.scheduler.db.DatabaseAccess;
 import ru.yoomoney.tech.dbqueue.scheduler.db.H2DatabaseAccessConfigurator;
 import ru.yoomoney.tech.dbqueue.scheduler.db.MsSqlDatabaseAccessConfigurator;
@@ -21,17 +18,10 @@ import java.util.stream.Stream;
  * @author Petr Zinin pgzinin@yoomoney.ru
  * @since 25.10.2021
  */
-@Testcontainers
 public abstract class BaseTest {
-    @Container
-    private static final MSSQLServerContainer<?> mssqlServerContainer =
-            new MSSQLServerContainer<>("mcr.microsoft.com/mssql/server:2019-CU1-ubuntu-16.04").acceptLicense();
-
-    @Container
-    private static final PostgreSQLContainer<?> postgresqlContainer = new PostgreSQLContainer<>("postgres:9.5");
-
-    @Container
-    private static final OracleContainer oracleContainer = new OracleContainer("gvenzl/oracle-xe:11.2.0.2-slim");
+    private static final MSSQLServerContainer<?> mssqlServerContainer;
+    private static final PostgreSQLContainer<?> postgresqlContainer;
+    private static final OracleContainer oracleContainer;
 
     protected static DatabaseAccess postgres;
     protected static DatabaseAccess oracle;
@@ -40,8 +30,16 @@ public abstract class BaseTest {
 
     protected static AtomicLong uniqueCounter = new AtomicLong();
 
-    @BeforeAll
-    public static void configureDatabases() {
+    static {
+        //noinspection resource
+        mssqlServerContainer = new MSSQLServerContainer<>("mcr.microsoft.com/mssql/server:2019-CU1-ubuntu-16.04").acceptLicense();
+        postgresqlContainer = new PostgreSQLContainer<>("postgres:9.5");
+        oracleContainer = new OracleContainer("gvenzl/oracle-xe:11.2.0.2-slim");
+
+        mssqlServerContainer.start();
+        postgresqlContainer.start();
+        oracleContainer.start();
+
         postgres = PostgresDatabaseAccessConfigurator.configure(postgresqlContainer);
         oracle = OracleDatabaseAccessConfigurator.configure(oracleContainer);
         mssql = MsSqlDatabaseAccessConfigurator.configure(mssqlServerContainer);

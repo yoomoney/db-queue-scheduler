@@ -84,7 +84,8 @@ public class ScheduledTaskManager {
         requireNonNull(taskIdentity, "taskIdentity");
         requireNonNull(nextExecutionTime, "nextExecutionTime");
 
-        scheduledTaskQueueDao.updateNextProcessDate(queueIdMapper.toQueueId(taskIdentity), nextExecutionTime);
+        Duration nextExecutionDelay = Duration.between(Instant.now(), nextExecutionTime);
+        scheduledTaskQueueDao.updateNextProcessDate(queueIdMapper.toQueueId(taskIdentity), nextExecutionDelay);
     }
 
     /**

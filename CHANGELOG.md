@@ -1,5 +1,6 @@
-### NEXT_VERSION_TYPE=MAJOR|MINOR|PATCH
+### NEXT_VERSION_TYPE=PATCH
 ### NEXT_VERSION_DESCRIPTION_BEGIN
+* Library relies on the database clock only which means it is application-database time lag neutral. 
 ### NEXT_VERSION_DESCRIPTION_END
 ## [3.1.0]() (02-12-2021)
 

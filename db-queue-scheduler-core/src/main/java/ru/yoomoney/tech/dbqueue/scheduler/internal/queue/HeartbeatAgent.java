@@ -22,8 +22,8 @@ class HeartbeatAgent {
     private final String name;
     private final Duration heartbeatInterval;
     private final Runnable heartbeatAction;
-    private volatile boolean isTaskRunning;
     private final Object mutex;
+    private volatile boolean isTaskRunning;
 
     HeartbeatAgent(@Nonnull String name,
                    @Nonnull Duration heartbeatInterval,
@@ -31,8 +31,8 @@ class HeartbeatAgent {
         this.name = requireNonNull(name, "name");
         this.heartbeatInterval = requireNonNull(heartbeatInterval, "heartbeatInterval");
         this.heartbeatAction = requireNonNull(heartbeatAction, "heartbeatAction");
-        this.isTaskRunning = false;
         this.mutex = new Object();
+        this.isTaskRunning = false;
     }
 
     /**

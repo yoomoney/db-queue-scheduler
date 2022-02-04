@@ -85,16 +85,17 @@ class ScheduledTaskQueueConsumer implements QueueConsumer<String> {
 
         Instant nextExecutionTime = executionResult.getNextExecutionTime().orElseGet(() ->
                 scheduledTaskDefinition.getNextExecutionTimeProvider().getNextExecutionTime(internalContext));
+        Duration nextExecutionDelay = Duration.between(clock.instant(), nextExecutionTime);
 
         log.debug("task executed: executionResult={}, nextExecutionTime={}", executionResult, nextExecutionTime);
 
         scheduledTaskLifecycleListener.finished(scheduledTaskDefinition.getIdentity(), scheduledTaskContext, executionResult,
                 nextExecutionTime, processingTaskTime);
         if (executionResult.getType() == ScheduledTaskExecutionResult.Type.ERROR) {
-            scheduledTaskQueueDao.updateNextProcessDate(queueConfig.getLocation().getQueueId(), nextExecutionTime);
+            scheduledTaskQueueDao.updateNextProcessDate(queueConfig.getLocation().getQueueId(), nextExecutionDelay);
             return TaskExecutionResult.fail();
         }
-        return TaskExecutionResult.reenqueue(Duration.between(clock.instant(), nextExecutionTime));
+        return TaskExecutionResult.reenqueue(nextExecutionDelay);
     }
 
     private ScheduledTaskExecutionResult executeTask(ScheduledTaskContext scheduledTaskContext,
@@ -150,7 +151,7 @@ class ScheduledTaskQueueConsumer implements QueueConsumer<String> {
     }
 
     private void shiftNextExecutionTime(Duration interval) {
-        scheduledTaskQueueDao.updateNextProcessDate(queueConfig.getLocation().getQueueId(), clock.instant().plus(interval));
+        scheduledTaskQueueDao.updateNextProcessDate(queueConfig.getLocation().getQueueId(), interval);
     }
 
     @Nonnull

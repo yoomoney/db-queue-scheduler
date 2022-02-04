@@ -9,14 +9,11 @@ import ru.yoomoney.tech.dbqueue.settings.QueueId;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.util.Calendar;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.TimeZone;
 
 import static java.util.Objects.requireNonNull;
 
@@ -77,31 +74,42 @@ public class DefaultScheduledTaskQueueDao implements ScheduledTaskQueueDao {
     }
 
     @Override
-    public int updateNextProcessDate(@Nonnull QueueId queueId, @Nonnull Instant nextProcessDate) {
+    public int updateNextProcessDate(@Nonnull QueueId queueId, @Nonnull Duration executionDelay) {
         requireNonNull(queueId, "queueId");
-        requireNonNull(nextProcessDate, "nextProcessDate");
+        requireNonNull(executionDelay, "executionDelay");
 
-        String rescheduleQuery = String.format(
-                "update %s set %s = :nextProcessDate where %s = :queueName",
-                tableName,
-                queueTableSchema.getNextProcessAtField(),
-                queueTableSchema.getQueueNameField()
-        );
-        Calendar calendar;
-        if (databaseDialect == DatabaseDialect.MSSQL) {
-            // https://github.com/Microsoft/mssql-jdbc/issues/758
-            calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
-            calendar.setTime(Timestamp.from(nextProcessDate));
-        } else {
-            // on the other hand oracle and h2 can't process calendar properly
-            calendar = Calendar.getInstance();
-            calendar.setTime(Timestamp.from(nextProcessDate));
-        }
+        String rescheduleQuery = createUpdateNextProcessDateQuery();
         Integer updatedRows = transactionOperations.execute(status -> namedParameterJdbcTemplate.update(
                 rescheduleQuery,
-                Map.<String, Object>of("queueName", queueId.asString(), "nextProcessDate", calendar)
+                Map.<String, Object>of("queueName", queueId.asString(), "executionDelay", executionDelay.getSeconds())
         ));
         return updatedRows == null ? 0 : updatedRows;
+    }
+
+    private String createUpdateNextProcessDateQuery() {
+        switch (databaseDialect) {
+            case POSTGRESQL:
+                return String.format(
+                        "update %s set %s = now() + :executionDelay * INTERVAL '1 SECOND' where %s = :queueName",
+                        tableName, queueTableSchema.getNextProcessAtField(), queueTableSchema.getQueueNameField());
+
+            case MSSQL:
+                return String.format(
+                        "update %s set %s = dateadd(ss, :executionDelay, SYSDATETIMEOFFSET()) where %s = :queueName",
+                        tableName, queueTableSchema.getNextProcessAtField(), queueTableSchema.getQueueNameField());
+
+            case ORACLE_11G:
+                return String.format(
+                        "update %s set %s = CURRENT_TIMESTAMP + :executionDelay * INTERVAL '1' SECOND where %s = :queueName",
+                        tableName, queueTableSchema.getNextProcessAtField(), queueTableSchema.getQueueNameField());
+
+            case H2:
+                return String.format(
+                        "update %s set %s = TIMESTAMPADD(SECOND, :executionDelay , NOW()) where %s = :queueName",
+                        tableName, queueTableSchema.getNextProcessAtField(), queueTableSchema.getQueueNameField());
+            default:
+                throw new IllegalStateException("got unexpected databaseDialect: dialect=" + databaseDialect);
+        }
     }
 
     @Override

@@ -12,9 +12,8 @@ import ru.yoomoney.tech.dbqueue.settings.QueueId;
 import ru.yoomoney.tech.dbqueue.settings.QueueLocation;
 import ru.yoomoney.tech.dbqueue.spring.dao.SpringDatabaseAccessLayer;
 
+import java.time.Duration;
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
@@ -22,7 +21,8 @@ import java.util.stream.Collectors;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.lessThan;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 
@@ -31,6 +31,8 @@ import static org.hamcrest.Matchers.nullValue;
  * @since 01.11.2021
  */
 class DefaultScheduledTaskQueueDaoTest extends BaseTest {
+    private static final Duration ALLOWABLE_DATE_COMPARISON_ERROR = Duration.ofMinutes(1L);
+
     @ParameterizedTest
     @MethodSource("databaseAccessStream")
     void findQueueTask_should_return_empty_when_no_queue_tasks(DatabaseAccess databaseAccess) {
@@ -75,12 +77,12 @@ class DefaultScheduledTaskQueueDaoTest extends BaseTest {
         DatabaseAccessLayer databaseAccessLayer = databaseAccessLayer(databaseAccess);
         QueueLocation location1 = queueLocation(databaseAccess, "queue-" + uniqueCounter.incrementAndGet());
         QueueLocation location2 = queueLocation(databaseAccess, "queue-" + uniqueCounter.incrementAndGet());
-        Instant nextProcessingDate = LocalDateTime.of(2010, 1, 1, 0, 0).toInstant(ZoneOffset.UTC);
+        Duration executionDelay = Duration.ofHours(1L);
 
         // when
         databaseAccessLayer.getQueueDao().enqueue(location1, EnqueueParams.create(""));
         databaseAccessLayer.getQueueDao().enqueue(location2, EnqueueParams.create(""));
-        scheduledTaskQueueDao.updateNextProcessDate(location1.getQueueId(), nextProcessingDate);
+        scheduledTaskQueueDao.updateNextProcessDate(location1.getQueueId(), executionDelay);
 
         // then
         ScheduledTaskRecord location1Record = scheduledTaskQueueDao.findAll().stream()
@@ -91,8 +93,10 @@ class DefaultScheduledTaskQueueDaoTest extends BaseTest {
                 .filter(it -> it.getQueueName().equals(location2.getQueueId().asString()))
                 .findFirst()
                 .orElseThrow();
-        assertThat(location1Record.getNextProcessAt(), equalTo(nextProcessingDate));
-        assertThat(location2Record.getNextProcessAt(), not(equalTo(nextProcessingDate)));
+        Instant expectedNextProcessAt = Instant.now().plus(executionDelay);
+        assertThat(location1Record.getNextProcessAt(), lessThan(expectedNextProcessAt.plus(ALLOWABLE_DATE_COMPARISON_ERROR)));
+        assertThat(location1Record.getNextProcessAt(), greaterThan(expectedNextProcessAt.minus(ALLOWABLE_DATE_COMPARISON_ERROR)));
+        assertThat(location2Record.getNextProcessAt(), lessThan(expectedNextProcessAt.minus(ALLOWABLE_DATE_COMPARISON_ERROR)));
     }
 
     @ParameterizedTest

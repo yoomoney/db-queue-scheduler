@@ -296,7 +296,7 @@ class ScheduledTaskQueueConsumerTest {
         }
 
         @Override
-        public int updateNextProcessDate(@Nonnull QueueId queueId, @Nonnull Instant nextProcessDate) {
+        public int updateNextProcessDate(@Nonnull QueueId queueId, @Nonnull Duration executionDelay) {
             return 0;
         }
 
