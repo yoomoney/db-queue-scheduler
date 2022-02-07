@@ -77,26 +77,31 @@ class DefaultScheduledTaskQueueDaoTest extends BaseTest {
         DatabaseAccessLayer databaseAccessLayer = databaseAccessLayer(databaseAccess);
         QueueLocation location1 = queueLocation(databaseAccess, "queue-" + uniqueCounter.incrementAndGet());
         QueueLocation location2 = queueLocation(databaseAccess, "queue-" + uniqueCounter.incrementAndGet());
-        Duration executionDelay = Duration.ofHours(1L);
+        Duration executionDelay1 = Duration.ofHours(1L);
+        Duration executionDelay2 = Duration.ofHours(-30L);
 
         // when
         databaseAccessLayer.getQueueDao().enqueue(location1, EnqueueParams.create(""));
         databaseAccessLayer.getQueueDao().enqueue(location2, EnqueueParams.create(""));
-        scheduledTaskQueueDao.updateNextProcessDate(location1.getQueueId(), executionDelay);
+        scheduledTaskQueueDao.updateNextProcessDate(location1.getQueueId(), executionDelay1);
+        scheduledTaskQueueDao.updateNextProcessDate(location2.getQueueId(), executionDelay2);
 
         // then
         ScheduledTaskRecord location1Record = scheduledTaskQueueDao.findAll().stream()
                 .filter(it -> it.getQueueName().equals(location1.getQueueId().asString()))
                 .findFirst()
                 .orElseThrow();
+        Instant expectedNextProcessAt1 = Instant.now().plus(executionDelay1);
+        assertThat(location1Record.getNextProcessAt(), lessThan(expectedNextProcessAt1.plus(ALLOWABLE_DATE_COMPARISON_ERROR)));
+        assertThat(location1Record.getNextProcessAt(), greaterThan(expectedNextProcessAt1.minus(ALLOWABLE_DATE_COMPARISON_ERROR)));
+
         ScheduledTaskRecord location2Record = scheduledTaskQueueDao.findAll().stream()
                 .filter(it -> it.getQueueName().equals(location2.getQueueId().asString()))
                 .findFirst()
                 .orElseThrow();
-        Instant expectedNextProcessAt = Instant.now().plus(executionDelay);
-        assertThat(location1Record.getNextProcessAt(), lessThan(expectedNextProcessAt.plus(ALLOWABLE_DATE_COMPARISON_ERROR)));
-        assertThat(location1Record.getNextProcessAt(), greaterThan(expectedNextProcessAt.minus(ALLOWABLE_DATE_COMPARISON_ERROR)));
-        assertThat(location2Record.getNextProcessAt(), lessThan(expectedNextProcessAt.minus(ALLOWABLE_DATE_COMPARISON_ERROR)));
+        Instant expectedNextProcessAt2 = Instant.now().plus(executionDelay2);
+        assertThat(location2Record.getNextProcessAt(), lessThan(expectedNextProcessAt2.plus(ALLOWABLE_DATE_COMPARISON_ERROR)));
+        assertThat(location2Record.getNextProcessAt(), greaterThan(expectedNextProcessAt2.minus(ALLOWABLE_DATE_COMPARISON_ERROR)));
     }
 
     @ParameterizedTest
@@ -159,6 +164,16 @@ class DefaultScheduledTaskQueueDaoTest extends BaseTest {
 
         assertThat(scheduledTasks.containsKey(taskId2), equalTo(true));
         assertThat(scheduledTasks.get(taskId2).getQueueName(), equalTo(location2.getQueueId().asString()));
+    }
+
+    @ParameterizedTest
+    @MethodSource("databaseAccessStream")
+    void should_get_database_current_time(DatabaseAccess databaseAccess) {
+        ScheduledTaskQueueDao scheduledTaskQueueDao = scheduledTaskQueueDao(databaseAccess);
+
+        Instant databaseCurrentTime = scheduledTaskQueueDao.getDatabaseCurrentTime();
+        assertThat(databaseCurrentTime, lessThan(Instant.now().plus(ALLOWABLE_DATE_COMPARISON_ERROR)));
+        assertThat(databaseCurrentTime, greaterThan(Instant.now().minus(ALLOWABLE_DATE_COMPARISON_ERROR)));
     }
 
     private QueueLocation queueLocation(DatabaseAccess databaseAccess, String queueName) {

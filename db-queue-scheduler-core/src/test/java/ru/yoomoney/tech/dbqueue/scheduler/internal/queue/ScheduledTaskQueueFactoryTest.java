@@ -5,7 +5,7 @@ import ru.yoomoney.tech.dbqueue.api.impl.SingleQueueShardRouter;
 import ru.yoomoney.tech.dbqueue.scheduler.config.impl.NoopScheduledTaskLifecycleListener;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.ScheduledTaskDefinition;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.db.ScheduledTaskQueueDao;
-import ru.yoomoney.tech.dbqueue.scheduler.internal.schedule.impl.FixedRateNextExecutionTimeProvider;
+import ru.yoomoney.tech.dbqueue.scheduler.internal.schedule.impl.FixedRateNextExecutionDelayProvider;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTask;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskExecutionResult;
 import ru.yoomoney.tech.dbqueue.scheduler.models.SimpleScheduledTask;
@@ -51,7 +51,7 @@ class ScheduledTaskQueueFactoryTest {
         ScheduledTaskDefinition scheduledTaskDefinition = ScheduledTaskDefinition.builder()
                 .withScheduledTask(scheduledTask)
                 .withFailureSettings(FailureSettings.none())
-                .withNextExecutionTimeProvider(new FixedRateNextExecutionTimeProvider(Duration.ZERO))
+                .withNextExecutionTimeProvider(new FixedRateNextExecutionDelayProvider(Duration.ZERO))
                 .build();
 
         // when

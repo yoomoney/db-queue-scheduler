@@ -5,6 +5,7 @@ import ru.yoomoney.tech.dbqueue.settings.QueueId;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -49,4 +50,11 @@ public interface ScheduledTaskQueueDao {
      * @return list of all records
      */
     List<ScheduledTaskRecord> findAll();
+
+    /**
+     * Get database current time
+     *
+     * @return current time at the database clock
+     */
+    Instant getDatabaseCurrentTime();
 }

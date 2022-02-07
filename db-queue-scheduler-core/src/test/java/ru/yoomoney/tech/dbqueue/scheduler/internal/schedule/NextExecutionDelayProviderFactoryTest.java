@@ -1,10 +1,10 @@
 package ru.yoomoney.tech.dbqueue.scheduler.internal.schedule;
 
 import org.junit.jupiter.api.Test;
-import ru.yoomoney.tech.dbqueue.scheduler.internal.schedule.impl.CronNextExecutionTimeProvider;
-import ru.yoomoney.tech.dbqueue.scheduler.internal.schedule.impl.FailureAwareNextExecutionTimeProvider;
-import ru.yoomoney.tech.dbqueue.scheduler.internal.schedule.impl.FixedDelayNextExecutionTimeProvider;
-import ru.yoomoney.tech.dbqueue.scheduler.internal.schedule.impl.FixedRateNextExecutionTimeProvider;
+import ru.yoomoney.tech.dbqueue.scheduler.internal.schedule.impl.CronNextExecutionDelayProvider;
+import ru.yoomoney.tech.dbqueue.scheduler.internal.schedule.impl.FailureAwareNextExecutionDelayProvider;
+import ru.yoomoney.tech.dbqueue.scheduler.internal.schedule.impl.FixedDelayNextExecutionDelayProvider;
+import ru.yoomoney.tech.dbqueue.scheduler.internal.schedule.impl.FixedRateNextExecutionDelayProvider;
 import ru.yoomoney.tech.dbqueue.scheduler.settings.FailureSettings;
 import ru.yoomoney.tech.dbqueue.scheduler.settings.ScheduleSettings;
 import ru.yoomoney.tech.dbqueue.scheduler.settings.ScheduledTaskSettings;
@@ -19,11 +19,11 @@ import static org.hamcrest.Matchers.instanceOf;
  * @author Petr Zinin pgzinin@yoomoney.ru
  * @since 26.10.2021
  */
-class NextExecutionTimeProviderFactoryTest {
-    private final NextExecutionTimeProviderFactory factory = new NextExecutionTimeProviderFactory();
+class NextExecutionDelayProviderFactoryTest {
+    private final NextExecutionDelayProviderFactory factory = new NextExecutionDelayProviderFactory();
 
     @Test
-    public void should_create_CronNextExecutionTimeProvider() {
+    void should_create_CronNextExecutionDelayProvider() {
         // given
         ScheduledTaskSettings scheduledTaskSettings = ScheduledTaskSettings.builder()
                 .withScheduleSettings(ScheduleSettings.cron("0 * * * * MON-FRI", ZoneId.systemDefault()))
@@ -31,14 +31,14 @@ class NextExecutionTimeProviderFactoryTest {
                 .build();
 
         // when
-        NextExecutionTimeProvider executionTimeProvider = factory.createExecutionTimeProvider(scheduledTaskSettings);
+        NextExecutionDelayProvider executionTimeProvider = factory.createExecutionDelayProvider(scheduledTaskSettings);
 
         // then
-        assertThat(executionTimeProvider, instanceOf(CronNextExecutionTimeProvider.class));
+        assertThat(executionTimeProvider, instanceOf(CronNextExecutionDelayProvider.class));
     }
 
     @Test
-    public void should_create_FixedDelayNextExecutionTimeProvider() {
+    void should_create_FixedDelayNextExecutionDelayProvider() {
         // given
         ScheduledTaskSettings scheduledTaskSettings = ScheduledTaskSettings.builder()
                 .withScheduleSettings(ScheduleSettings.fixedDelay(Duration.ZERO))
@@ -46,14 +46,14 @@ class NextExecutionTimeProviderFactoryTest {
                 .build();
 
         // when
-        NextExecutionTimeProvider executionTimeProvider = factory.createExecutionTimeProvider(scheduledTaskSettings);
+        NextExecutionDelayProvider executionTimeProvider = factory.createExecutionDelayProvider(scheduledTaskSettings);
 
         // then
-        assertThat(executionTimeProvider, instanceOf(FixedDelayNextExecutionTimeProvider.class));
+        assertThat(executionTimeProvider, instanceOf(FixedDelayNextExecutionDelayProvider.class));
     }
 
     @Test
-    public void should_create_FixedRateNextExecutionTimeProvider() {
+    void should_create_FixedRateNextExecutionDelayProvider() {
         // given
         ScheduledTaskSettings scheduledTaskSettings = ScheduledTaskSettings.builder()
                 .withScheduleSettings(ScheduleSettings.fixedRate(Duration.ZERO))
@@ -61,14 +61,14 @@ class NextExecutionTimeProviderFactoryTest {
                 .build();
 
         // when
-        NextExecutionTimeProvider executionTimeProvider = factory.createExecutionTimeProvider(scheduledTaskSettings);
+        NextExecutionDelayProvider executionTimeProvider = factory.createExecutionDelayProvider(scheduledTaskSettings);
 
         // then
-        assertThat(executionTimeProvider, instanceOf(FixedRateNextExecutionTimeProvider.class));
+        assertThat(executionTimeProvider, instanceOf(FixedRateNextExecutionDelayProvider.class));
     }
 
     @Test
-    public void should_create_FailureAwareNextExecutionTimeProvider() {
+    void should_create_FailureAwareNextExecutionDelayProvider() {
         // given
         ScheduledTaskSettings scheduledTaskSettings = ScheduledTaskSettings.builder()
                 .withScheduleSettings(ScheduleSettings.fixedRate(Duration.ZERO))
@@ -76,9 +76,9 @@ class NextExecutionTimeProviderFactoryTest {
                 .build();
 
         // when
-        NextExecutionTimeProvider executionTimeProvider = factory.createExecutionTimeProvider(scheduledTaskSettings);
+        NextExecutionDelayProvider executionTimeProvider = factory.createExecutionDelayProvider(scheduledTaskSettings);
 
         // then
-        assertThat(executionTimeProvider, instanceOf(FailureAwareNextExecutionTimeProvider.class));
+        assertThat(executionTimeProvider, instanceOf(FailureAwareNextExecutionDelayProvider.class));
     }
 }

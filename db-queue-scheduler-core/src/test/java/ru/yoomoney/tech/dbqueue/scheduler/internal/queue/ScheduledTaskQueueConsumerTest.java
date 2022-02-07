@@ -9,7 +9,7 @@ import ru.yoomoney.tech.dbqueue.scheduler.config.impl.NoopScheduledTaskLifecycle
 import ru.yoomoney.tech.dbqueue.scheduler.internal.ScheduledTaskDefinition;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.db.ScheduledTaskQueueDao;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.db.ScheduledTaskRecord;
-import ru.yoomoney.tech.dbqueue.scheduler.internal.schedule.impl.FixedRateNextExecutionTimeProvider;
+import ru.yoomoney.tech.dbqueue.scheduler.internal.schedule.impl.FixedRateNextExecutionDelayProvider;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTask;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskContext;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskExecutionResult;
@@ -65,7 +65,7 @@ class ScheduledTaskQueueConsumerTest {
         ScheduledTaskDefinition scheduledTaskDefinition = ScheduledTaskDefinition.builder()
                 .withScheduledTask(scheduledTask)
                 .withFailureSettings(FailureSettings.linearBackoff(Duration.ofHours(1L)))
-                .withNextExecutionTimeProvider(new FixedRateNextExecutionTimeProvider(Duration.ZERO))
+                .withNextExecutionTimeProvider(new FixedRateNextExecutionDelayProvider(Duration.ZERO))
                 .build();
         ScheduledTaskQueueConsumer scheduledTaskQueueConsumer = new ScheduledTaskQueueConsumer(
                 dummyQueueConfig(),
@@ -95,7 +95,7 @@ class ScheduledTaskQueueConsumerTest {
         ScheduledTaskDefinition scheduledTaskDefinition = ScheduledTaskDefinition.builder()
                 .withScheduledTask(scheduledTask)
                 .withFailureSettings(FailureSettings.linearBackoff(Duration.ofHours(1L)))
-                .withNextExecutionTimeProvider(new FixedRateNextExecutionTimeProvider(Duration.ZERO))
+                .withNextExecutionTimeProvider(new FixedRateNextExecutionDelayProvider(Duration.ZERO))
                 .build();
         ScheduledTaskQueueConsumer scheduledTaskQueueConsumer = new ScheduledTaskQueueConsumer(
                 dummyQueueConfig(),
@@ -134,7 +134,7 @@ class ScheduledTaskQueueConsumerTest {
         ScheduledTaskDefinition scheduledTaskDefinition = ScheduledTaskDefinition.builder()
                 .withScheduledTask(scheduledTask)
                 .withFailureSettings(FailureSettings.linearBackoff(Duration.ofHours(1L)))
-                .withNextExecutionTimeProvider(new FixedRateNextExecutionTimeProvider(Duration.ZERO))
+                .withNextExecutionTimeProvider(new FixedRateNextExecutionDelayProvider(Duration.ZERO))
                 .build();
         ScheduledTaskQueueConsumer scheduledTaskQueueConsumer = new ScheduledTaskQueueConsumer(
                 dummyQueueConfig(),
@@ -161,7 +161,7 @@ class ScheduledTaskQueueConsumerTest {
         ScheduledTaskDefinition scheduledTaskDefinition = ScheduledTaskDefinition.builder()
                 .withScheduledTask(scheduledTask)
                 .withFailureSettings(FailureSettings.linearBackoff(Duration.ofHours(1L)))
-                .withNextExecutionTimeProvider(new FixedRateNextExecutionTimeProvider(Duration.ofDays(1L), clock))
+                .withNextExecutionTimeProvider(new FixedRateNextExecutionDelayProvider(Duration.ofDays(1L)))
                 .build();
         ScheduledTaskQueueConsumer scheduledTaskQueueConsumer = new ScheduledTaskQueueConsumer(
                 dummyQueueConfig(),
@@ -190,7 +190,7 @@ class ScheduledTaskQueueConsumerTest {
         ScheduledTaskDefinition scheduledTaskDefinition = ScheduledTaskDefinition.builder()
                 .withScheduledTask(scheduledTask)
                 .withFailureSettings(FailureSettings.linearBackoff(Duration.ofHours(1L)))
-                .withNextExecutionTimeProvider(new FixedRateNextExecutionTimeProvider(Duration.ofDays(1L), clock))
+                .withNextExecutionTimeProvider(new FixedRateNextExecutionDelayProvider(Duration.ofDays(1L)))
                 .build();
         ScheduledTaskQueueConsumer scheduledTaskQueueConsumer = new ScheduledTaskQueueConsumer(
                 dummyQueueConfig(),
@@ -223,7 +223,7 @@ class ScheduledTaskQueueConsumerTest {
         ScheduledTaskDefinition scheduledTaskDefinition = ScheduledTaskDefinition.builder()
                 .withScheduledTask(scheduledTask)
                 .withFailureSettings(FailureSettings.linearBackoff(Duration.ofHours(1L)))
-                .withNextExecutionTimeProvider(new FixedRateNextExecutionTimeProvider(Duration.ofDays(1L), clock))
+                .withNextExecutionTimeProvider(new FixedRateNextExecutionDelayProvider(Duration.ofDays(1L)))
                 .build();
         DummyScheduledTaskLifecycleListener listener = new DummyScheduledTaskLifecycleListener();
         ScheduledTaskQueueConsumer scheduledTaskQueueConsumer = new ScheduledTaskQueueConsumer(
@@ -308,6 +308,11 @@ class ScheduledTaskQueueConsumerTest {
         @Override
         public List<ScheduledTaskRecord> findAll() {
             return Collections.emptyList();
+        }
+
+        @Override
+        public Instant getDatabaseCurrentTime() {
+            return Instant.now();
         }
     }
 

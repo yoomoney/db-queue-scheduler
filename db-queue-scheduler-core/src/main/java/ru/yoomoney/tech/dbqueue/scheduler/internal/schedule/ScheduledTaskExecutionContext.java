@@ -5,6 +5,7 @@ import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskExecutionResult;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.NotThreadSafe;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
 
@@ -21,9 +22,9 @@ import static java.util.Objects.requireNonNull;
 @NotThreadSafe
 public class ScheduledTaskExecutionContext {
     @Nullable
-    private Instant lastExecutionStartTime;
+    private Instant executionStartTime;
     @Nullable
-    private Instant lastExecutionFinishTime;
+    private Duration processingTime;
     @Nullable
     private ScheduledTaskExecutionResult.Type executionResultType;
     @Nullable
@@ -32,26 +33,26 @@ public class ScheduledTaskExecutionContext {
     public ScheduledTaskExecutionContext() {
     }
 
-    private ScheduledTaskExecutionContext(@Nullable Instant lastExecutionStartTime,
-                                          @Nullable Instant lastExecutionFinishTime,
+    private ScheduledTaskExecutionContext(@Nullable Instant executionStartTime,
+                                          @Nullable Duration processingTime,
                                           @Nullable ScheduledTaskExecutionResult.Type executionResultType,
                                           @Nullable Long attemptsCount) {
-        this.lastExecutionStartTime = lastExecutionStartTime;
-        this.lastExecutionFinishTime = lastExecutionFinishTime;
+        this.executionStartTime = executionStartTime;
+        this.processingTime = processingTime;
         this.executionResultType = executionResultType;
         this.attemptsCount = attemptsCount;
     }
 
-    public void setLastExecutionStartTime(@Nonnull Instant lastExecutionStartTime) {
-        this.lastExecutionStartTime = requireNonNull(lastExecutionStartTime, "lastExecutionStartTime");
+    public void setExecutionStartTime(@Nonnull Instant executionStartTime) {
+        this.executionStartTime = requireNonNull(executionStartTime, "executionStartTime");
     }
 
-    public void setLastExecutionFinishTime(@Nonnull Instant lastExecutionFinishTime) {
-        this.lastExecutionFinishTime = requireNonNull(lastExecutionFinishTime, "lastExecutionFinishTime");
+    public void setProcessingTime(@Nonnull Duration processingTime) {
+        this.processingTime = requireNonNull(processingTime, "processingTime");
     }
 
-    public void setExecutionResultType(@Nonnull ScheduledTaskExecutionResult.Type executionResultType) {
-        this.executionResultType = requireNonNull(executionResultType, "executionResultType");
+    public void setExecutionResultType(@Nullable ScheduledTaskExecutionResult.Type executionResultType) {
+        this.executionResultType = executionResultType;
     }
 
     public void setAttemptsCount(@Nullable Long attemptsCount) {
@@ -59,13 +60,13 @@ public class ScheduledTaskExecutionContext {
     }
 
     @Nonnull
-    public Optional<Instant> getLastExecutionStartTime() {
-        return Optional.ofNullable(lastExecutionStartTime);
+    public Optional<Instant> getExecutionStartTime() {
+        return Optional.ofNullable(executionStartTime);
     }
 
     @Nonnull
-    public Optional<Instant> getLastExecutionFinishTime() {
-        return Optional.ofNullable(lastExecutionFinishTime);
+    public Optional<Duration> getProcessingTime() {
+        return Optional.ofNullable(processingTime);
     }
 
     @Nonnull
@@ -83,15 +84,14 @@ public class ScheduledTaskExecutionContext {
      * @return new instance of the context
      */
     public ScheduledTaskExecutionContext copy() {
-        return new ScheduledTaskExecutionContext(lastExecutionStartTime, lastExecutionFinishTime, executionResultType,
-                attemptsCount);
+        return new ScheduledTaskExecutionContext(executionStartTime, processingTime, executionResultType, attemptsCount);
     }
 
     @Override
     public String toString() {
         return "ScheduledTaskExecutionContext{" +
-                "lastExecutionStartTime=" + lastExecutionStartTime +
-                ", lastExecutionFinishTime=" + lastExecutionFinishTime +
+                "executionStartTime=" + executionStartTime +
+                ", processingTime=" + processingTime +
                 ", executionResultType=" + executionResultType +
                 ", attemptsCount=" + attemptsCount +
                 '}';

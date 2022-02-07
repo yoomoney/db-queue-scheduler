@@ -2,7 +2,7 @@
 ### NEXT_VERSION_DESCRIPTION_BEGIN
 * Next execution time calculation was fixed. Large time difference between database and application or fast executions 
   of scheduled tasks might have led to repeated execution. That was possible because the execution time calculation 
-  relied on the application clock and the tasks picking mechanism relied on the database clock. 
+  relied on the application clock and the tasks picking mechanism relied on the database clock.
 ### NEXT_VERSION_DESCRIPTION_END
 ## [3.1.0]() (02-12-2021)
 

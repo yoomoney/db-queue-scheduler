@@ -9,12 +9,15 @@ import ru.yoomoney.tech.dbqueue.settings.QueueId;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.sql.Timestamp;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static java.util.Collections.emptyMap;
 import static java.util.Objects.requireNonNull;
 
 /**
@@ -146,5 +149,29 @@ public class DefaultScheduledTaskQueueDao implements ScheduledTaskQueueDao {
                         .withNextProcessAt(rs.getTimestamp("next_process_at").toInstant())
                         .build()
         );
+    }
+
+    @Override
+    public Instant getDatabaseCurrentTime() {
+        Timestamp databaseTime = namedParameterJdbcTemplate
+                .queryForObject(createGetDatabaseCurrentTimeQuery(), emptyMap(), Timestamp.class);
+        if (databaseTime == null) {
+            throw new RuntimeException("failed to retrieve date time from database");
+        }
+        return databaseTime.toInstant();
+    }
+
+    private String createGetDatabaseCurrentTimeQuery() {
+        switch (databaseDialect) {
+            case H2:
+            case POSTGRESQL:
+                return "select now()";
+            case MSSQL:
+                return "select sysdatetimeoffset()";
+            case ORACLE_11G:
+                return "select current_timestamp from dual";
+            default:
+                throw new IllegalStateException("got unexpected databaseDialect: dialect=" + databaseDialect);
+        }
     }
 }

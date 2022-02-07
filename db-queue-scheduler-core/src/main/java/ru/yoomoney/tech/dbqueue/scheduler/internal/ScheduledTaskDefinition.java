@@ -1,6 +1,6 @@
 package ru.yoomoney.tech.dbqueue.scheduler.internal;
 
-import ru.yoomoney.tech.dbqueue.scheduler.internal.schedule.NextExecutionTimeProvider;
+import ru.yoomoney.tech.dbqueue.scheduler.internal.schedule.NextExecutionDelayProvider;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTask;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskIdentity;
 import ru.yoomoney.tech.dbqueue.scheduler.settings.FailureSettings;
@@ -35,7 +35,7 @@ public class ScheduledTaskDefinition {
      * Next execution time provider
      */
     @Nonnull
-    private final NextExecutionTimeProvider nextExecutionTimeProvider;
+    private final NextExecutionDelayProvider nextExecutionDelayProvider;
 
     /**
      * Scheduled task
@@ -45,11 +45,11 @@ public class ScheduledTaskDefinition {
 
     private ScheduledTaskDefinition(boolean enabled,
                                     @Nonnull FailureSettings failureSettings,
-                                    @Nonnull NextExecutionTimeProvider nextExecutionTimeProvider,
+                                    @Nonnull NextExecutionDelayProvider nextExecutionDelayProvider,
                                     @Nonnull ScheduledTask scheduledTask) {
         this.enabled = enabled;
         this.failureSettings = requireNonNull(failureSettings, "failureSettings");
-        this.nextExecutionTimeProvider = requireNonNull(nextExecutionTimeProvider, "nextExecutionTimeProvider");
+        this.nextExecutionDelayProvider = requireNonNull(nextExecutionDelayProvider, "nextExecutionTimeProvider");
         this.scheduledTask = requireNonNull(scheduledTask, "scheduledTask");
         this.identity = scheduledTask.getIdentity();
     }
@@ -79,8 +79,8 @@ public class ScheduledTaskDefinition {
     }
 
     @Nonnull
-    public NextExecutionTimeProvider getNextExecutionTimeProvider() {
-        return nextExecutionTimeProvider;
+    public NextExecutionDelayProvider getNextExecutionDelayProvider() {
+        return nextExecutionDelayProvider;
     }
 
     @Nonnull
@@ -94,7 +94,7 @@ public class ScheduledTaskDefinition {
                 "enabled=" + enabled +
                 ", identity=" + identity +
                 ", failureSettings=" + failureSettings +
-                ", nextExecutionTimeProvider=" + nextExecutionTimeProvider +
+                ", nextExecutionTimeProvider=" + nextExecutionDelayProvider +
                 ", scheduledTask=" + scheduledTask +
                 '}';
     }
@@ -105,7 +105,7 @@ public class ScheduledTaskDefinition {
     public static final class Builder {
         private boolean enabled;
         private FailureSettings failureSettings;
-        private NextExecutionTimeProvider nextExecutionTimeProvider;
+        private NextExecutionDelayProvider nextExecutionDelayProvider;
         private ScheduledTask scheduledTask;
 
         private Builder() {
@@ -121,8 +121,8 @@ public class ScheduledTaskDefinition {
             return this;
         }
 
-        public Builder withNextExecutionTimeProvider(@Nonnull NextExecutionTimeProvider nextExecutionTimeProvider) {
-            this.nextExecutionTimeProvider = nextExecutionTimeProvider;
+        public Builder withNextExecutionTimeProvider(@Nonnull NextExecutionDelayProvider nextExecutionDelayProvider) {
+            this.nextExecutionDelayProvider = nextExecutionDelayProvider;
             return this;
         }
 
@@ -138,7 +138,7 @@ public class ScheduledTaskDefinition {
          */
         @Nonnull
         public ScheduledTaskDefinition build() {
-            return new ScheduledTaskDefinition(enabled, failureSettings, nextExecutionTimeProvider, scheduledTask);
+            return new ScheduledTaskDefinition(enabled, failureSettings, nextExecutionDelayProvider, scheduledTask);
         }
     }
 }
