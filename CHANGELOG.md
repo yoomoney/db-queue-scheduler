@@ -1,3 +1,6 @@
+### NEXT_VERSION_TYPE=MAJOR|MINOR|PATCH
+### NEXT_VERSION_DESCRIPTION_BEGIN
+### NEXT_VERSION_DESCRIPTION_END
 ## [3.1.1]() (09-02-2022)
 
 * Next execution time calculation was fixed. Large time difference between database and application or fast executions
