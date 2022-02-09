@@ -170,14 +170,14 @@ public class SchedulerTest extends BaseTest {
                 scheduledTask,
                 ScheduledTaskSettings.builder()
                         .withFailureSettings(FailureSettings.none())
-                        .withScheduleSettings(ScheduleSettings.fixedDelay(Duration.ofSeconds(1L)))
+                        .withScheduleSettings(ScheduleSettings.fixedDelay(Duration.ofSeconds(2L)))
                         .build()
         );
         scheduler2.schedule(
                 scheduledTask,
                 ScheduledTaskSettings.builder()
                         .withFailureSettings(FailureSettings.none())
-                        .withScheduleSettings(ScheduleSettings.fixedDelay(Duration.ofSeconds(1L)))
+                        .withScheduleSettings(ScheduleSettings.fixedDelay(Duration.ofSeconds(2L)))
                         .build()
         );
         runConcurrently(

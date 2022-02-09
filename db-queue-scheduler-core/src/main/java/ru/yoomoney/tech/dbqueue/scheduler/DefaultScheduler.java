@@ -4,8 +4,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.ScheduledTaskDefinition;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.ScheduledTaskManager;
-import ru.yoomoney.tech.dbqueue.scheduler.internal.schedule.NextExecutionTimeProvider;
-import ru.yoomoney.tech.dbqueue.scheduler.internal.schedule.NextExecutionTimeProviderFactory;
+import ru.yoomoney.tech.dbqueue.scheduler.internal.schedule.NextExecutionDelayProvider;
+import ru.yoomoney.tech.dbqueue.scheduler.internal.schedule.NextExecutionDelayProviderFactory;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTask;
 import ru.yoomoney.tech.dbqueue.scheduler.models.ScheduledTaskIdentity;
 import ru.yoomoney.tech.dbqueue.scheduler.models.info.ScheduledTaskInfo;
@@ -28,10 +28,10 @@ class DefaultScheduler implements Scheduler {
     private static final Logger log = LoggerFactory.getLogger(DefaultScheduler.class);
 
     private final ScheduledTaskManager scheduledTaskManager;
-    private final NextExecutionTimeProviderFactory nextExecutionTimeProviderFactory;
+    private final NextExecutionDelayProviderFactory nextExecutionTimeProviderFactory;
 
     DefaultScheduler(@Nonnull ScheduledTaskManager scheduledTaskManager,
-                     @Nonnull NextExecutionTimeProviderFactory nextExecutionTimeProviderFactory) {
+                     @Nonnull NextExecutionDelayProviderFactory nextExecutionTimeProviderFactory) {
         this.scheduledTaskManager = requireNonNull(scheduledTaskManager, "scheduledTaskManager");
         this.nextExecutionTimeProviderFactory = requireNonNull(nextExecutionTimeProviderFactory, "nextExecutionTimeProviderFactory");
     }
@@ -42,8 +42,8 @@ class DefaultScheduler implements Scheduler {
         requireNonNull(scheduledTaskSettings, "scheduledTaskSettings");
         requireNonNull(scheduledTask, "scheduledTask");
 
-        NextExecutionTimeProvider executionTimeProvider = nextExecutionTimeProviderFactory
-                .createExecutionTimeProvider(scheduledTaskSettings);
+        NextExecutionDelayProvider executionTimeProvider = nextExecutionTimeProviderFactory
+                .createExecutionDelayProvider(scheduledTaskSettings);
 
         ScheduledTaskDefinition scheduledTaskDefinition = ScheduledTaskDefinition.builder()
                 .withEnabled(scheduledTaskSettings.isEnabled())

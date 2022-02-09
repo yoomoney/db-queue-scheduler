@@ -19,7 +19,6 @@ import ru.yoomoney.tech.dbqueue.settings.QueueConfig;
 import javax.annotation.Nonnull;
 import java.time.Clock;
 import java.time.Duration;
-import java.time.Instant;
 
 import static java.util.Objects.requireNonNull;
 
@@ -80,46 +79,43 @@ class ScheduledTaskQueueConsumer implements QueueConsumer<String> {
         long start = clock.millis();
         ScheduledTaskExecutionContext internalContext = new ScheduledTaskExecutionContext();
         internalContext.setAttemptsCount(task.getAttemptsCount());
+        internalContext.setExecutionStartTime(scheduledTaskQueueDao.getDatabaseCurrentTime());
         ScheduledTaskExecutionResult executionResult = executeTask(scheduledTaskContext, internalContext);
-        long processingTaskTime = clock.millis() - start;
+        internalContext.setExecutionResultType(executionResult.getType());
+        internalContext.setProcessingTime(Duration.ofMillis(clock.millis() - start));
 
-        Instant nextExecutionTime = executionResult.getNextExecutionTime().orElseGet(() ->
-                scheduledTaskDefinition.getNextExecutionTimeProvider().getNextExecutionTime(internalContext));
+        Duration nextExecutionDelay = executionResult.getNextExecutionTime()
+                .map(nextExecutionTime -> Duration.between(clock.instant(), nextExecutionTime))
+                .orElseGet(() -> scheduledTaskDefinition.getNextExecutionDelayProvider().getNextExecutionDelay(internalContext));
 
-        log.debug("task executed: executionResult={}, nextExecutionTime={}", executionResult, nextExecutionTime);
-
+        log.debug("task executed: executionResult={}, nextExecutionDelay={}", executionResult, nextExecutionDelay);
         scheduledTaskLifecycleListener.finished(scheduledTaskDefinition.getIdentity(), scheduledTaskContext, executionResult,
-                nextExecutionTime, processingTaskTime);
+                clock.instant().plus(nextExecutionDelay), internalContext.getProcessingTime().orElseThrow().toMillis());
+
         if (executionResult.getType() == ScheduledTaskExecutionResult.Type.ERROR) {
-            scheduledTaskQueueDao.updateNextProcessDate(queueConfig.getLocation().getQueueId(), nextExecutionTime);
+            scheduledTaskQueueDao.updateNextProcessDate(queueConfig.getLocation().getQueueId(), nextExecutionDelay);
             return TaskExecutionResult.fail();
         }
-        return TaskExecutionResult.reenqueue(Duration.between(clock.instant(), nextExecutionTime));
+        return TaskExecutionResult.reenqueue(nextExecutionDelay);
     }
 
     private ScheduledTaskExecutionResult executeTask(ScheduledTaskContext scheduledTaskContext,
                                                      ScheduledTaskExecutionContext internalContext) {
-
-        ScheduledTaskExecutionResult result;
-        internalContext.setLastExecutionStartTime(clock.instant());
-
         HeartbeatAgent heartbeatAgent = createHeartbeatAgent(internalContext);
         try {
             heartbeatAgent.start();
-            result = scheduledTaskDefinition.getScheduledTask().execute(scheduledTaskContext);
+            ScheduledTaskExecutionResult result = scheduledTaskDefinition.getScheduledTask().execute(scheduledTaskContext);
             if (result.getState().isPresent()) {
                 scheduledTaskQueueDao.updatePayload(queueConfig.getLocation().getQueueId(), result.getState().orElseThrow());
             }
+            return result;
         } catch (RuntimeException ex) {
             scheduledTaskLifecycleListener.crashed(scheduledTaskDefinition.getIdentity(), scheduledTaskContext, ex);
             log.debug("failed to execute scheduled task: scheduledTask={}", scheduledTaskDefinition, ex);
-            result = ScheduledTaskExecutionResult.error();
+            return ScheduledTaskExecutionResult.error();
         } finally {
-            internalContext.setLastExecutionFinishTime(clock.instant());
             heartbeatAgent.stop();
         }
-        internalContext.setExecutionResultType(result.getType());
-        return result;
     }
 
     /**
@@ -133,10 +129,8 @@ class ScheduledTaskQueueConsumer implements QueueConsumer<String> {
         ScheduledTaskExecutionContext failInternalContext = internalContext.copy();
         failInternalContext.setExecutionResultType(ScheduledTaskExecutionResult.Type.ERROR);
 
-        Duration precomputeNextExecutionDelay = Duration.between(
-                clock.instant(),
-                scheduledTaskDefinition.getNextExecutionTimeProvider().getNextExecutionTime(failInternalContext)
-        );
+        Duration precomputeNextExecutionDelay =
+                scheduledTaskDefinition.getNextExecutionDelayProvider().getNextExecutionDelay(failInternalContext);
 
         Duration heartbeatInterval = MIN_HEARTBEAT_INTERVAL.compareTo(precomputeNextExecutionDelay.dividedBy(2L)) > 0
                 ? MIN_HEARTBEAT_INTERVAL
@@ -150,7 +144,7 @@ class ScheduledTaskQueueConsumer implements QueueConsumer<String> {
     }
 
     private void shiftNextExecutionTime(Duration interval) {
-        scheduledTaskQueueDao.updateNextProcessDate(queueConfig.getLocation().getQueueId(), clock.instant().plus(interval));
+        scheduledTaskQueueDao.updateNextProcessDate(queueConfig.getLocation().getQueueId(), interval);
     }
 
     @Nonnull

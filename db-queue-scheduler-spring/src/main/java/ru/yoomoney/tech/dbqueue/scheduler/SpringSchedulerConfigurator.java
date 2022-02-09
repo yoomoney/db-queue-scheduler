@@ -10,7 +10,7 @@ import ru.yoomoney.tech.dbqueue.scheduler.config.impl.NoopScheduledTaskLifecycle
 import ru.yoomoney.tech.dbqueue.scheduler.internal.ScheduledTaskManagerBuilder;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.db.ScheduledTaskQueueDao;
 import ru.yoomoney.tech.dbqueue.scheduler.internal.db.DefaultScheduledTaskQueueDao;
-import ru.yoomoney.tech.dbqueue.scheduler.internal.schedule.NextExecutionTimeProviderFactory;
+import ru.yoomoney.tech.dbqueue.scheduler.internal.schedule.NextExecutionDelayProviderFactory;
 import ru.yoomoney.tech.dbqueue.spring.dao.SpringDatabaseAccessLayer;
 
 import javax.annotation.Nonnull;
@@ -165,7 +165,7 @@ public class SpringSchedulerConfigurator implements SchedulerConfigurator {
                         .withDatabaseAccessLayer(databaseAccessLayer)
                         .withScheduledTaskLifecycleListener(scheduledTaskLifecycleListener)
                         .build(),
-                new NextExecutionTimeProviderFactory()
+                new NextExecutionDelayProviderFactory()
         );
     }
 

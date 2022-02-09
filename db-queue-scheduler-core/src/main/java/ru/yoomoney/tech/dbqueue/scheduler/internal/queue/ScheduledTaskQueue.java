@@ -12,7 +12,6 @@ import ru.yoomoney.tech.dbqueue.settings.QueueConfig;
 
 import javax.annotation.Nonnull;
 import java.time.Duration;
-import java.time.Instant;
 
 import static java.util.Objects.requireNonNull;
 
@@ -65,9 +64,9 @@ public class ScheduledTaskQueue {
         }
 
         ScheduledTaskExecutionContext taskExecutionContext = new ScheduledTaskExecutionContext();
-        Instant nextExecutionTime = taskDefinition.getNextExecutionTimeProvider().getNextExecutionTime(taskExecutionContext);
-        queueProducer.enqueue(new EnqueueParams<String>().withExecutionDelay(Duration.between(Instant.now(), nextExecutionTime)));
-        log.debug("scheduled task enqueued: taskDefinition={}, nextExecutionTime={}", taskDefinition, nextExecutionTime);
+        Duration nextExecutionDelay = taskDefinition.getNextExecutionDelayProvider().getNextExecutionDelay(taskExecutionContext);
+        queueProducer.enqueue(new EnqueueParams<String>().withExecutionDelay(nextExecutionDelay));
+        log.debug("scheduled task enqueued: taskDefinition={}, nextExecutionDelay={}", taskDefinition, nextExecutionDelay);
     }
 
     /**
