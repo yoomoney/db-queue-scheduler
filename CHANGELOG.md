@@ -1,9 +1,9 @@
-### NEXT_VERSION_TYPE=PATCH
-### NEXT_VERSION_DESCRIPTION_BEGIN
-* Next execution time calculation was fixed. Large time difference between database and application or fast executions 
-  of scheduled tasks might have led to repeated execution. That was possible because the execution time calculation 
-  relied on the application clock and the tasks picking mechanism relied on the database clock.
-### NEXT_VERSION_DESCRIPTION_END
+## [3.1.1]() (09-02-2022)
+
+* Next execution time calculation was fixed. Large time difference between database and application or fast executions
+of scheduled tasks might have led to repeated execution. That was possible because the execution time calculation
+relied on the application clock and the tasks picking mechanism relied on the database clock.
+
 ## [3.1.0]() (02-12-2021)
 
 * `FailRetryType.NONE` added that does not add extra execution attempts in case of a failure -
