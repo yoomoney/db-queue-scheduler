@@ -16,6 +16,7 @@ import java.lang.reflect.Field;
 import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -29,6 +30,7 @@ import static org.awaitility.Awaitility.await;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -71,13 +73,9 @@ public class SchedulerTest extends BaseTest {
     void should_update_scheduled_task_state(DatabaseAccess databaseAccess) {
         // given
         Scheduler scheduler = createScheduler(databaseAccess);
-        AtomicBoolean executed = new AtomicBoolean(false);
         ScheduledTask scheduledTask = SimpleScheduledTask.create(
                 "scheduled-task" + uniqueCounter.incrementAndGet(),
-                context -> {
-                    executed.set(true);
-                    return ScheduledTaskExecutionResult.success().withState("new_state");
-                }
+                context -> ScheduledTaskExecutionResult.success().withState("new_state")
         );
 
         // when
@@ -91,12 +89,13 @@ public class SchedulerTest extends BaseTest {
         );
 
         // then
-        await().atMost(Duration.ofSeconds(5L)).until(executed::get);
-        assertThat(
-                databaseAccess.getJdbcTemplate().queryForObject("select payload from scheduled_tasks where queue_name = ?",
-                        String.class, scheduledTask.getIdentity().asString()),
-                equalTo("new_state")
-        );
+        await().atMost(Duration.ofSeconds(5L))
+                .until(() -> "new_state".equals(findPayloadByQueueName(databaseAccess, scheduledTask.getIdentity().asString())));
+    }
+
+    private String findPayloadByQueueName(DatabaseAccess databaseAccess, String queueName) {
+        return databaseAccess.getJdbcTemplate().queryForObject("select payload from scheduled_tasks where queue_name = ?",
+                String.class, queueName);
     }
 
     @ParameterizedTest
@@ -332,6 +331,35 @@ public class SchedulerTest extends BaseTest {
         ).toInstant();
         assertTrue(nextExecutionDate.minus(Duration.ofMinutes(1L)).isBefore(Instant.now().plus(Duration.ofMinutes(1L))));
         assertTrue(nextExecutionDate.plus(Duration.ofMinutes(1L)).isAfter(Instant.now().plus(Duration.ofMinutes(1L))));
+    }
+
+    @ParameterizedTest
+    @MethodSource("databaseAccessStream")
+    void should_execute_task_once_a_scheduled_time(DatabaseAccess databaseAccess) {
+        AtomicInteger counter = new AtomicInteger();
+        Scheduler scheduler = createScheduler(databaseAccess);
+        ScheduledTask scheduledTask = SimpleScheduledTask.create(
+                "scheduled-task" + uniqueCounter.incrementAndGet(),
+                context -> {
+                    counter.incrementAndGet();
+                    return ScheduledTaskExecutionResult.success();
+                }
+        );
+
+        // when
+        scheduler.schedule(
+                scheduledTask,
+                ScheduledTaskSettings.builder()
+                        .withScheduleSettings(ScheduleSettings.cron("*/3 * * * * *", ZoneId.systemDefault()))
+                        .withFailureSettings(FailureSettings.none())
+                        .build()
+        );
+        scheduler.start();
+
+        // then
+        long start = System.currentTimeMillis();
+        await().atMost(Duration.ofSeconds(15L)).until(() -> counter.get() > 3);
+        assertThat(Duration.ofMillis(System.currentTimeMillis() - start), greaterThanOrEqualTo(Duration.ofSeconds(8L)));
     }
 
     private Scheduler createScheduler(DatabaseAccess databaseAccess) {

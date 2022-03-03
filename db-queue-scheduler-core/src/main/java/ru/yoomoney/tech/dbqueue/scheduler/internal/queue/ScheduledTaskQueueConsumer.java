@@ -19,6 +19,7 @@ import ru.yoomoney.tech.dbqueue.settings.QueueConfig;
 import javax.annotation.Nonnull;
 import java.time.Clock;
 import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 
 import static java.util.Objects.requireNonNull;
 
@@ -87,16 +88,22 @@ class ScheduledTaskQueueConsumer implements QueueConsumer<String> {
         Duration nextExecutionDelay = executionResult.getNextExecutionTime()
                 .map(nextExecutionTime -> Duration.between(clock.instant(), nextExecutionTime))
                 .orElseGet(() -> scheduledTaskDefinition.getNextExecutionDelayProvider().getNextExecutionDelay(internalContext));
+        Duration roundedNextExecutionDelay = roundToSeconds(nextExecutionDelay);
 
-        log.debug("task executed: executionResult={}, nextExecutionDelay={}", executionResult, nextExecutionDelay);
+        log.debug("task executed: executionResult={}, nextExecutionDelay={}", executionResult, roundedNextExecutionDelay);
         scheduledTaskLifecycleListener.finished(scheduledTaskDefinition.getIdentity(), scheduledTaskContext, executionResult,
-                clock.instant().plus(nextExecutionDelay), internalContext.getProcessingTime().orElseThrow().toMillis());
+                clock.instant().plus(roundedNextExecutionDelay), internalContext.getProcessingTime().orElseThrow().toMillis());
 
         if (executionResult.getType() == ScheduledTaskExecutionResult.Type.ERROR) {
-            scheduledTaskQueueDao.updateNextProcessDate(queueConfig.getLocation().getQueueId(), nextExecutionDelay);
+            scheduledTaskQueueDao.updateNextProcessDate(queueConfig.getLocation().getQueueId(), roundedNextExecutionDelay);
             return TaskExecutionResult.fail();
         }
-        return TaskExecutionResult.reenqueue(nextExecutionDelay);
+        return TaskExecutionResult.reenqueue(roundedNextExecutionDelay);
+    }
+
+    private Duration roundToSeconds(Duration duration) {
+        Duration truncatedToSeconds = duration.truncatedTo(ChronoUnit.SECONDS);
+        return truncatedToSeconds.equals(duration) ? truncatedToSeconds : truncatedToSeconds.plusSeconds(1L);
     }
 
     private ScheduledTaskExecutionResult executeTask(ScheduledTaskContext scheduledTaskContext,
