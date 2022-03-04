@@ -12,6 +12,7 @@ import ru.yoomoney.tech.dbqueue.settings.QueueConfig;
 
 import javax.annotation.Nonnull;
 import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 
 import static java.util.Objects.requireNonNull;
 
@@ -64,9 +65,15 @@ public class ScheduledTaskQueue {
         }
 
         ScheduledTaskExecutionContext taskExecutionContext = new ScheduledTaskExecutionContext();
-        Duration nextExecutionDelay = taskDefinition.getNextExecutionDelayProvider().getNextExecutionDelay(taskExecutionContext);
+        Duration nextExecutionDelay = roundToSeconds(
+                taskDefinition.getNextExecutionDelayProvider().getNextExecutionDelay(taskExecutionContext));
         queueProducer.enqueue(new EnqueueParams<String>().withExecutionDelay(nextExecutionDelay));
         log.debug("scheduled task enqueued: taskDefinition={}, nextExecutionDelay={}", taskDefinition, nextExecutionDelay);
+    }
+
+    private Duration roundToSeconds(Duration duration) {
+        Duration truncatedToSeconds = duration.truncatedTo(ChronoUnit.SECONDS);
+        return truncatedToSeconds.equals(duration) ? truncatedToSeconds : truncatedToSeconds.plusSeconds(1L);
     }
 
     /**
