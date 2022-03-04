@@ -1,10 +1,10 @@
-### NEXT_VERSION_TYPE=PATCH
-### NEXT_VERSION_DESCRIPTION_BEGIN
-* Next execution delay rounding type changed from flooring to ceiling. It prevents one-second early scheduled tasks 
-  execution. It might be crucial for instant cron tasks. 
-  For instance, a schedule is defined by the following cron expression "0 0 3 * * *" which means "every day at 3 AM".
-  If the task is executed at 2.59 AM and finished at 2.59 AM, it might be scheduled at 3 AM again.
-### NEXT_VERSION_DESCRIPTION_END
+## [3.1.2]() (04-03-2022)
+
+* Next execution delay rounding type changed from flooring to ceiling. It prevents one-second early scheduled tasks
+execution. It might be crucial for instant cron tasks.
+For instance, a schedule is defined by the following cron expression "0 0 3 * * *" which means "every day at 3 AM".
+If the task is executed at 2.59 AM and finished at 2.59 AM, it might be scheduled at 3 AM again.
+
 ## [3.1.1]() (09-02-2022)
 
 * Next execution time calculation was fixed. Large time difference between database and application or fast executions
