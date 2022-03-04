@@ -1,3 +1,6 @@
+### NEXT_VERSION_TYPE=MAJOR|MINOR|PATCH
+### NEXT_VERSION_DESCRIPTION_BEGIN
+### NEXT_VERSION_DESCRIPTION_END
 ## [3.1.2]() (04-03-2022)
 
 * Next execution delay rounding type changed from flooring to ceiling. It prevents one-second early scheduled tasks
