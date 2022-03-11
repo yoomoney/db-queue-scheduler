@@ -1,5 +1,7 @@
-### NEXT_VERSION_TYPE=MAJOR|MINOR|PATCH
+### NEXT_VERSION_TYPE=MAJOR
 ### NEXT_VERSION_DESCRIPTION_BEGIN
+* Upgrade to Spring Boot 2.6.4
+* Upgrade dependency versions
 ### NEXT_VERSION_DESCRIPTION_END
 ## [3.1.2]() (04-03-2022)
 
