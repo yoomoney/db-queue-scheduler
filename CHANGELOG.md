@@ -1,7 +1,9 @@
-### NEXT_VERSION_TYPE=MAJOR
+### NEXT_VERSION_TYPE=MINOR
 ### NEXT_VERSION_DESCRIPTION_BEGIN
-* Upgrade to Spring Boot 2.6.4
 * Upgrade dependency versions
+  * ru.yoomoney.tech:db-queue-core: 15.0.0 -> 15.1.0
+  * ru.yoomoney.tech:db-queue-spring: 15.0.0 -> 15.1.0
+  * com.cronutils:cron-utils: 9.1.5 -> 9.1.6
 ### NEXT_VERSION_DESCRIPTION_END
 ## [3.1.2]() (04-03-2022)
 
