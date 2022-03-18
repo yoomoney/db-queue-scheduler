@@ -1,10 +1,10 @@
-### NEXT_VERSION_TYPE=MINOR
-### NEXT_VERSION_DESCRIPTION_BEGIN
+## [3.2.0](https://github.com/yoomoney/db-queue-scheduler/pull/15) (18-03-2022)
+
 * Upgrade dependency versions
-  * ru.yoomoney.tech:db-queue-core: 15.0.0 -> 15.1.0
-  * ru.yoomoney.tech:db-queue-spring: 15.0.0 -> 15.1.0
-  * com.cronutils:cron-utils: 9.1.5 -> 9.1.6
-### NEXT_VERSION_DESCRIPTION_END
+* ru.yoomoney.tech:db-queue-core: 15.0.0 -> 15.1.0
+* ru.yoomoney.tech:db-queue-spring: 15.0.0 -> 15.1.0
+* com.cronutils:cron-utils: 9.1.5 -> 9.1.6
+
 ## [3.1.2]() (04-03-2022)
 
 * Next execution delay rounding type changed from flooring to ceiling. It prevents one-second early scheduled tasks
